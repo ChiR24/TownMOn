@@ -212,7 +212,7 @@ Why they look the way they do:
   Another flat's complaint or receipt is a 404.
 - **Validation at every boundary:** Zod schemas; uploads are checked by their bytes (JPEG/PNG/WebP only) and size.
 - **Payments:** signed callbacks with constant-time comparison; the browser never sets an amount.
-- **Gate API:** same-origin check plus guard role. **Cron:** bearer secret.
+- **Gate API:** same-origin check (the page's host must be the host the request went to) plus guard role. **Cron:** bearer secret.
 - **Headers and cookies:** `nosniff`, `DENY` framing, a strict referrer policy, and a permissions policy that lets only
   this site use the camera (photos) and nothing use the microphone or location; HttpOnly `SameSite=Lax` cookies.
 - **Races closed in the database, not in hope:** a one-time code's tries are counted in one conditional update (guesses
@@ -240,15 +240,34 @@ the AI against the Claude API (`npm run ai:check`, section 5):
 | Reports | The reconciliation identity to the paisa; on-time rate; the AI correction rate counting only the AI's calls; amenity rules |
 
 **End to end.** `npm run e2e` drives a real browser through every main flow as each role, against the running app on
-fresh demo data: 46 checks, all passing. They cover sign-in (a wrong code, an unknown number); a failed and a
+fresh demo data: 47 checks, all passing. They cover sign-in (a wrong code, an unknown number); a failed and a
 successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
 help desk (note, work started, fixed) and rated by the resident, and another reopened; the one-tap category fix on an
 unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower; guest codes (valid, used,
-wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline then synced; booking and
-cancelling an amenity; household members; Marathi; the bank import, a re-import that posts nothing, the three
-review-queue actions and a reversal; the committee report; and privacy between flats (receipts, complaints, photos). A
-crawl of every page reachable from each role's home found no error page, failed request or console error, and each
-role is kept out of the others' areas.
+wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline then synced, including
+one settled on the intercom while its upload was still in flight; booking and cancelling an amenity; household
+members; Marathi; the bank import, a re-import that posts nothing, the three review-queue actions and a reversal; the
+committee report; and privacy between flats (receipts, complaints, photos). The photos are what a phone takes: a 12 MP
+JPEG with the EXIF tag for a portrait shot, which must come back upright and at most 1280 px (complaints) or 960 px
+(gate). A crawl of every page reachable from each role's home found no error page, failed request or console error,
+and each role is kept out of the others' areas.
+
+**Production build.** The gate's service worker and the install prompt exist only in the production build, so they
+were checked against `next start`. With the network really cut (the browser reaches the server through a plug the
+test pulls, because Playwright's offline switch does not reach a service worker), a reload straight after the guard's
+first sign-in opens the gate screen, and a visitor logged then is synced when the network returns. Chrome's own
+installability check passes for the resident app, and every manifest icon loads at its stated size. This found two
+more bugs, both fixed. The service worker cached only what it served, and the first visit (a hop from the sign-in
+page) never passed through it, so the first offline reload showed the browser's error page; it now caches the gate
+screen and its files when it installs. And the gate API's same-origin check compared the page with the server's own
+name, not the address the tablet used, so a tablet opening the app by its network address had every entry refused,
+and the offline replay then threw those entries away. The check now follows the Host header, as Next does for its own
+server actions, and a refused replay keeps the entry until the guard signs in again.
+
+The Marathi and Hindi copy was read line by line against the English. 26 strings were corrected, most of them for
+one word spelled two ways; the real ones were a mistranslated "how urgent", a hint that promised where it should have
+helped, and an ungrammatical list. The keyword rules also learned the Hindi spellings of "window" and "door". A
+native speaker's read is still planned (A14).
 
 Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
 mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test

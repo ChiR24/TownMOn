@@ -1,0 +1,12 @@
+# What `vercel deploy` from this folder must never upload. (A deploy from GitHub only sees committed files anyway.)
+# Local secrets, including the Claude API key, which stays on this machine: the live app runs without AI.
+.env
+.env.*
+!.env.example
+# The embedded local database
+.data/
+# Not needed to build or run the app
+docs/
+scripts/e2e/
+coverage/
+*.log
