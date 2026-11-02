@@ -68,7 +68,8 @@ const Update = z.object({ intent: z.enum(["note", "start", "resolve"]), note: z.
 export async function update(id: number, form: FormData) {
   const user = await desk();
   const { intent, note } = Update.parse(Object.fromEntries(form));
-  if (await postUpdate(db, { id, actorId: user.id, intent, note })) refresh(id);
+  await postUpdate(db, { id, actorId: user.id, intent, note });
+  refresh(id); // even when nothing changed: a stale screen then shows what another desk already did
 }
 
 export async function unlink(childId: number) {

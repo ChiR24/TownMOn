@@ -24,19 +24,26 @@ export async function postUpdate(q: Q, { id, actorId, intent, note, now = new Da
   const text = note?.trim() || (intent === "start" ? "Work has started" : intent === "resolve" ? "Fixed. Please confirm it works." : "");
   if (!text) return false;
   const status = intent === "start" ? "IN_PROGRESS" : intent === "resolve" ? "RESOLVED" : undefined;
-  await q.transaction(async (tx) => {
+  const done = await q.transaction(async (tx) => {
     const ids = [id, ...(await linkedIds(tx, id))];
+    const changed: number[] = [];
     for (const cid of ids) {
-      // A plain note changes no status (and an empty update is an error), so only "start" and "fixed" touch it.
-      if (status)
-        await tx
+      // A plain note changes no status. "Start" and "fixed" only move an open complaint: one already fixed or
+      // closed (say, from a second help-desk screen) gets no second event and its residents no second message.
+      if (status) {
+        const [hit] = await tx
           .update(complaints)
           .set({ status, ...(status === "RESOLVED" ? { resolvedAt: now } : {}) })
-          .where(and(eq(complaints.id, cid), inArray(complaints.status, ["OPEN", "ASSIGNED", "IN_PROGRESS"])));
+          .where(and(eq(complaints.id, cid), inArray(complaints.status, ["OPEN", "ASSIGNED", "IN_PROGRESS"])))
+          .returning({ id: complaints.id });
+        if (!hit) continue;
+      }
       await tx.update(complaints).set({ firstResponseAt: now }).where(and(eq(complaints.id, cid), isNull(complaints.firstResponseAt)));
       await tx.insert(complaintEvents).values({ complaintId: cid, actorId, kind: "STATUS", note: cid === id ? text : `Update on #${id}: ${text}` });
+      changed.push(cid);
     }
-    await tellResidents(tx, ids, intent === "resolve" ? "fixed? Please confirm" : intent === "start" ? "work started" : "update", text);
+    if (changed.length) await tellResidents(tx, changed, intent === "resolve" ? "fixed? Please confirm" : intent === "start" ? "work started" : "update", text);
+    return changed;
   });
-  return true;
+  return done.length > 0;
 }

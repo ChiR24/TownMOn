@@ -91,9 +91,11 @@ export async function privacyChecks(browser: Browser, other: Page, owner: Page, 
     const res = await anon.request.get(`${base}/api/cron/daily`);
     if (res.status() !== 401) throw new Error(`HTTP ${res.status()}`);
   });
-  await check("security: nosniff, no framing and a strict referrer policy", null, async () => {
+  await check("security: nosniff, no framing, a strict referrer policy; camera and microphone for this site only", null, async () => {
     const h = (await anon.request.get(`${base}/login`)).headers();
     if (h["x-content-type-options"] !== "nosniff" || h["x-frame-options"] !== "DENY" || !h["referrer-policy"]) throw new Error(JSON.stringify(h).slice(0, 160));
+    // Speaking a complaint needs the microphone: a policy of microphone=() would silently break the Speak button.
+    if (!h["permissions-policy"]?.includes("microphone=(self)") || !h["permissions-policy"]?.includes("camera=(self)")) throw new Error(h["permissions-policy"]);
   });
   await check("security: signed out, every area sends you to sign in", null, async () => {
     const page = await anon.newPage();

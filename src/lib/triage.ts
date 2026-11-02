@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { and, count, desc, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Q } from "@/db";
 import { complaintEvents, complaints, notifications, users } from "@/db/schema";
@@ -181,30 +181,40 @@ export async function refineWithAi(q: Q, complaintId: number, ask: typeof aiTria
     return;
   }
   const d = decide(classifyByRules(c.description), ai, candidates.map((x) => x.id));
-  const touched = c.classifiedBy === "STAFF" || c.firstResponseAt != null || c.status === "IN_PROGRESS";
-  await event(q, c.id, "CLASSIFIED", `AI: ${d.category} · ${URGENCY_LABEL[d.urgency].toLowerCase()} · ${d.confidence}% sure${touched ? " (help desk already on it; not changed)" : ""}`);
-  if (touched) return;
+  // The call takes seconds. Decide on the complaint as it is now, locked, so anything the help desk did meanwhile
+  // (category, urgency, technician, a note, work started) stands: any event by someone other than the resident counts.
+  await q.transaction(async (tx) => {
+    const [now] = await tx.select().from(complaints).where(eq(complaints.id, c.id)).for("update");
+    const [human] = await tx
+      .select({ id: complaintEvents.id })
+      .from(complaintEvents)
+      .where(and(eq(complaintEvents.complaintId, c.id), isNotNull(complaintEvents.actorId), ne(complaintEvents.actorId, now.raisedBy)))
+      .limit(1);
+    const touched = !!human || now.classifiedBy === "STAFF" || now.firstResponseAt != null || now.status === "IN_PROGRESS";
+    await event(tx, c.id, "CLASSIFIED", `AI: ${d.category} · ${URGENCY_LABEL[d.urgency].toLowerCase()} · ${d.confidence}% sure${touched ? " (help desk already on it; not changed)" : ""}`);
+    if (touched) return;
 
-  const changedTeam = teamFor(d.category) !== teamFor(c.category as Category);
-  const tech = changedTeam && c.status !== "IN_PROGRESS" ? await pickTechnician(q, d.category) : undefined;
-  await q
-    .update(complaints)
-    .set({
-      category: d.category,
-      urgency: d.urgency,
-      classifiedBy: "AI",
-      aiConfidence: d.confidence,
-      needsTriage: d.needsTriage,
-      title: d.title,
-      safety: d.safety,
-      responseDueAt: responseDue(d.urgency, c.createdAt),
-      ...(tech !== undefined ? { assignedTo: tech?.id ?? null, status: tech ? "ASSIGNED" : "OPEN" } : {}),
-      ...(d.duplicateOf ? { parentId: d.duplicateOf } : {}),
-    })
-    .where(eq(complaints.id, c.id));
-  if (tech) await event(q, c.id, "ASSIGNED", `Reassigned to ${tech.name} (${d.category})`);
-  if (d.duplicateOf) await event(q, c.id, "LINKED", `Linked to #${d.duplicateOf}: same problem. It stays open; updates on #${d.duplicateOf} reach this complaint too.`);
-  if (d.safety && !c.safety) await alertDutyManagers(q, c.id, c.flatId, `AI rated it an emergency`);
+    const changedTeam = teamFor(d.category) !== teamFor(now.category as Category);
+    const tech = changedTeam ? await pickTechnician(tx, d.category) : undefined;
+    await tx
+      .update(complaints)
+      .set({
+        category: d.category,
+        urgency: d.urgency,
+        classifiedBy: "AI",
+        aiConfidence: d.confidence,
+        needsTriage: d.needsTriage,
+        title: d.title,
+        safety: d.safety,
+        responseDueAt: responseDue(d.urgency, now.createdAt),
+        ...(tech !== undefined ? { assignedTo: tech?.id ?? null, status: tech ? "ASSIGNED" : "OPEN" } : {}),
+        ...(d.duplicateOf ? { parentId: d.duplicateOf } : {}),
+      })
+      .where(eq(complaints.id, c.id));
+    if (tech) await event(tx, c.id, "ASSIGNED", `Reassigned to ${tech.name} (${d.category})`);
+    if (d.duplicateOf) await event(tx, c.id, "LINKED", `Linked to #${d.duplicateOf}: same problem. It stays open; updates on #${d.duplicateOf} reach this complaint too.`);
+    if (d.safety && !now.safety) await alertDutyManagers(tx, c.id, c.flatId, `AI rated it an emergency`);
+  });
 }
 
 /** Help-desk status changes on a complaint also reach every complaint linked to it. Duplicates are never closed. */

@@ -74,4 +74,16 @@ describe("a complaint's life", () => {
     const [c] = await db.select().from(complaints).where(eq(complaints.id, id));
     expect(c).toMatchObject({ category: "Lift", classifiedBy: "RULES" });
   });
+
+  it("never overwrites what the help desk did while the AI was still thinking", async () => {
+    const id = await createComplaint(db, { flatId: "T14-0305", raisedBy: resident, description: "Lift B doors are not closing properly", photoId: null });
+    await refineWithAi(db, id, async () => {
+      // The duty manager sets the urgency during the call.
+      await db.update(complaints).set({ urgency: "HIGH" }).where(eq(complaints.id, id));
+      await db.insert(complaintEvents).values({ complaintId: id, actorId: manager, kind: "URGENCY", note: "Urgency set to high" });
+      return ai({ category: "Electrical", urgency: "LOW", confidence: 95 });
+    });
+    const [c] = await db.select().from(complaints).where(eq(complaints.id, id));
+    expect(c).toMatchObject({ category: "Lift", urgency: "HIGH", classifiedBy: "RULES" });
+  });
 });

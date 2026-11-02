@@ -61,3 +61,9 @@ it("start, then fixed: the resident is asked to confirm, never closed for them",
   expect(c.resolvedAt).not.toBeNull();
   expect((await statusOf(child)).status).toBe("RESOLVED");
 });
+
+it("'fixed' pressed again (a second help-desk screen) says nothing twice", async () => {
+  const before = (await db.select().from(notifications)).length;
+  expect(await postUpdate(db, { id: parent, actorId: desk, intent: "resolve" })).toBe(false);
+  expect(await db.select().from(notifications)).toHaveLength(before);
+});

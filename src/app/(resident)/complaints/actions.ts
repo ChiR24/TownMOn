@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -47,8 +47,14 @@ export async function closeWithRating(id: number, _: State, form: FormData): Pro
   const found = await resolvedForMe(id);
   if (!found) return {};
   const comment = String(form.get("comment") ?? "").trim().slice(0, 500) || null;
-  await db.update(complaints).set({ status: "CLOSED", closedAt: new Date(), rating: rating.data, ratingComment: comment }).where(eq(complaints.id, id));
-  await db.insert(complaintEvents).values({ complaintId: id, actorId: found.user.id, kind: "RATED", note: `${"★".repeat(rating.data)} Rated ${rating.data}/5${comment ? `: ${comment}` : ""}` });
+  // Closes only a complaint still waiting for confirmation: a double tap, or "not fixed" pressed on another phone
+  // a moment earlier, leaves it as it is.
+  const [closed] = await db
+    .update(complaints)
+    .set({ status: "CLOSED", closedAt: new Date(), rating: rating.data, ratingComment: comment })
+    .where(and(eq(complaints.id, id), eq(complaints.status, "RESOLVED")))
+    .returning({ id: complaints.id });
+  if (closed) await db.insert(complaintEvents).values({ complaintId: id, actorId: found.user.id, kind: "RATED", note: `${"★".repeat(rating.data)} Rated ${rating.data}/5${comment ? `: ${comment}` : ""}` });
   revalidatePath(`/complaints/${id}`);
   return {};
 }
@@ -58,10 +64,11 @@ export async function reopen(id: number) {
   const found = await resolvedForMe(id);
   if (!found) return;
   const { c, user } = found;
-  await db
+  const [reopened] = await db
     .update(complaints)
-    .set({ status: c.assignedTo ? "ASSIGNED" : "OPEN", reopenCount: c.reopenCount + 1, resolvedAt: null, firstResponseAt: null, responseDueAt: responseDue(c.urgency as Urgency) })
-    .where(and(eq(complaints.id, id), eq(complaints.status, "RESOLVED")));
-  await db.insert(complaintEvents).values({ complaintId: id, actorId: user.id, kind: "REOPENED", note: "Resident says it is not fixed" });
+    .set({ status: c.assignedTo ? "ASSIGNED" : "OPEN", reopenCount: sql`${complaints.reopenCount} + 1`, resolvedAt: null, firstResponseAt: null, responseDueAt: responseDue(c.urgency as Urgency) })
+    .where(and(eq(complaints.id, id), eq(complaints.status, "RESOLVED")))
+    .returning({ id: complaints.id });
+  if (reopened) await db.insert(complaintEvents).values({ complaintId: id, actorId: user.id, kind: "REOPENED", note: "Resident says it is not fixed" });
   revalidatePath(`/complaints/${id}`);
 }
