@@ -180,8 +180,7 @@ Why they look the way they do:
   switch on every screen with no JavaScript. One type family (Poppins) covers Latin and Devanagari, so the three
   languages look like one app; Devanagari gets taller lines and never letter-spacing (it breaks how conjuncts join).
   Numbers stay in Latin digits so amounts and dates read the same everywhere. Residents see their complaints in their
-  own words; the AI's short English title is for the help desk. A complaint can be spoken instead of typed (the
-  phone's own speech recognition, in the app's language; the button hides where the phone can't do it).
+  own words; the AI's short English title is for the help desk.
 - **Always see where a complaint stands:** a five-step tracker, Received → Assigned → Being fixed →
   Fixed → Closed, on the complaint and as a mini track on every complaint card.
 - **The gate tablet** is dark with very large buttons for night shifts. Photos are brightened on the tablet
@@ -215,7 +214,7 @@ Why they look the way they do:
 - **Payments:** signed callbacks with constant-time comparison; the browser never sets an amount.
 - **Gate API:** same-origin check plus guard role. **Cron:** bearer secret.
 - **Headers and cookies:** `nosniff`, `DENY` framing, a strict referrer policy, and a permissions policy that lets only
-  this site use the camera (photos) and microphone (speaking a complaint); HttpOnly `SameSite=Lax` cookies.
+  this site use the camera (photos) and nothing use the microphone or location; HttpOnly `SameSite=Lax` cookies.
 - **Races closed in the database, not in hope:** a one-time code's tries are counted in one conditional update (guesses
   sent all at once still get five between them); a booking cancel refunds only if it changed the booking; a flat's
   bookings are taken one at a time, so the weekly limit holds.
@@ -262,10 +261,14 @@ the daily job. That pass found and fixed ten bugs, the worst being a crash when 
 Last, a line-by-line review of the whole codebase found 15 issues that neither the tests nor the hand pass had caught,
 all now fixed, most with a test. The worst: a visitor logged while the gate tablet was replaying its offline queue
 could be dropped; a help-desk change made while the AI was thinking could be overwritten; two identical cash deposits
-on one day merged into one; a shared surname counted as the second matching signal; and the site's own security
-header blocked the microphone, so the Speak button failed. The rest were smaller races (one-time code tries, booking
+on one day merged into one; a shared surname counted as the second matching signal; and a voice-input button could
+never work, because the site's own security header blocks the microphone (voice input isn't needed, so the
+button was removed rather than the microphone opened up). The rest were smaller races (one-time code tries, booking
 refunds and limits, closing or reopening a complaint twice), a replayed gate entry leaving a second copy of a photo
-that the 90-day purge would never find, and a receipt's balance counting a later payment made the same day.
+that the 90-day purge would never find, and a receipt's balance counting a later payment made the same day. A
+cleanup pass then removed dead code (unused exports, functions and translation keys), replaced hand-rolled grouping
+that copied a list on every row with the built-in `Map.groupBy`, and cut the help desk's per-complaint notification
+queries to one.
 
 ## 9. The numbers
 
