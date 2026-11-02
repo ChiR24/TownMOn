@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import { AiNote } from "@/components/ai";
 import { PageTitle } from "@/components/ui";
 import { requireResident } from "@/lib/auth";
-import { getLang } from "@/lib/lang";
-import { translator } from "@/lib/i18n";
+import { getT } from "@/lib/lang";
 import { ComplaintForm } from "./complaint-form";
 
 export const metadata: Metadata = { title: "New complaint" };
 
 export default async function NewComplaintPage() {
   const { flat } = await requireResident();
-  const lang = await getLang();
-  const t = translator(lang);
+  const t = await getT();
   return (
     <div>
       <PageTitle title={t("c.new")} subtitle={flat.flatId} back={{ href: "/complaints", label: t("common.back") }} />
@@ -19,7 +17,6 @@ export default async function NewComplaintPage() {
         {t("c.aiHelp.body")}
       </AiNote>
       <ComplaintForm
-        lang={lang}
         s={{
           what: t("c.what"),
           whatHint: t("c.whatHint"),
@@ -28,8 +25,6 @@ export default async function NewComplaintPage() {
           send: t("c.send"),
           errShort: t("c.err.short"),
           errPhoto: t("c.err.photo"),
-          speak: t("c.speak"),
-          listening: t("c.listening"),
           removePhoto: t("c.removePhoto"),
         }}
       />

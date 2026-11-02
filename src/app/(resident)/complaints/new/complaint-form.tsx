@@ -6,11 +6,10 @@ import { SubmitButton } from "@/components/submit-button";
 import { cx, Field, IconChip, inputCls } from "@/components/ui";
 import { shrinkPhoto } from "@/lib/shrink-photo";
 import { submitComplaint, type State } from "../actions";
-import { VoiceButton } from "./voice-button";
 
-type S = Record<"what" | "whatHint" | "photo" | "photoHint" | "send" | "errShort" | "errPhoto" | "speak" | "listening" | "removePhoto", string>;
+type S = Record<"what" | "whatHint" | "photo" | "photoHint" | "send" | "errShort" | "errPhoto" | "removePhoto", string>;
 
-export function ComplaintForm({ s, lang }: { s: S; lang: string }) {
+export function ComplaintForm({ s }: { s: S }) {
   const [state, action] = useActionState(submitComplaint, {} as State);
   // The preview remembers which answer it was picked after: React empties the file input when the form is sent,
   // so after an error an old preview would show a photo that is no longer attached.
@@ -36,11 +35,8 @@ export function ComplaintForm({ s, lang }: { s: S; lang: string }) {
   return (
     <form action={action} className="space-y-5">
       <Field label={s.what} hint={s.whatHint} error={state.error === "short" ? s.errShort : undefined} htmlFor="description">
-        <div className="relative">
-          {/* Keyed on the last answer, so after an error the description comes back as typed. */}
-          <textarea key={state.text ?? ""} id="description" name="description" required minLength={5} maxLength={1000} rows={5} defaultValue={state.text} className={cx(inputCls, "!rounded-[24px] pb-16")} autoFocus />
-          <VoiceButton lang={lang} target="description" labels={{ start: s.speak, stop: s.listening }} />
-        </div>
+        {/* Keyed on the last answer, so after an error the description comes back as typed. */}
+        <textarea key={state.text ?? ""} id="description" name="description" required minLength={5} maxLength={1000} rows={5} defaultValue={state.text} className={cx(inputCls, "!rounded-[24px]")} autoFocus />
       </Field>
       <div>
         <p className="mb-2 px-1 text-sm font-medium text-ink-2">{s.photo}</p>

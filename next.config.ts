@@ -22,8 +22,8 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "same-origin" },
-          // Camera for gate and complaint photos, microphone for speaking a complaint: this site only, nothing else.
-          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
+          // The camera, for gate and complaint photos, on this site only; nothing else.
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
         ],
       },
     ];
