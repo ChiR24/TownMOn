@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { DB } from "@/db";
 import { auditLog, bills, flatMembers, flats, ledger, notifications } from "@/db/schema";
-import { billFor, fromLedger } from "./billing";
+import { billFor, fromLedger, RATE_PAISE_PER_SQFT } from "./billing";
 import { fmtDate, fmtMonth, todayIST } from "./dates";
 import { rupees } from "./money";
 
@@ -25,7 +25,7 @@ export async function generateBills(q: DB, period: string, by: number | null, to
 
     const newBills = todo.map((f) => {
       const { charges, credits } = fromLedger(byFlat.get(f.id) ?? []);
-      return { flatId: f.id, period, areaSqft: f.area, ratePaise: 650, ...billFor(period, f.area, charges, credits) };
+      return { flatId: f.id, period, areaSqft: f.area, ratePaise: RATE_PAISE_PER_SQFT, ...billFor(period, f.area, charges, credits) };
     });
     for (let i = 0; i < newBills.length; i += 500) {
       const part = newBills.slice(i, i + 500);

@@ -124,12 +124,15 @@ export function matchCredit(amount: number, n: Narration, ctx: MatchContext): Ma
   }
   if (n.bankInterest) return { status: "IGNORED", confidence: 100, reasons: ["Interest paid by the bank, not a resident payment"], suggestions: [] };
 
-  const cands = new Map<string, { score: number; reasons: string[]; strong: boolean }>();
-  const add = (flatId: string, score: number, reason: string, strong = false) => {
-    const c = cands.get(flatId) ?? { score: 0, reasons: [], strong: false };
+  // `signals` counts only independent evidence. A typo'd flat number (the same note again) and a shared surname
+  // raise the score and show as reasons, but never count towards the two signals an automatic posting needs.
+  const cands = new Map<string, { score: number; reasons: string[]; strong: boolean; signals: number }>();
+  const add = (flatId: string, score: number, reason: string, strong = false, signal = reason !== "") => {
+    const c = cands.get(flatId) ?? { score: 0, reasons: [], strong: false, signals: 0 };
     c.score += score;
     if (reason) c.reasons.push(reason);
     c.strong ||= strong;
+    if (signal) c.signals++;
     cands.set(flatId, c);
   };
 
@@ -137,7 +140,7 @@ export function matchCredit(amount: number, n: Narration, ctx: MatchContext): Ma
     if (ctx.flatExists(code)) add(code, 50, `Payment note says ${code}`, true);
     else {
       const near = ctx.nearestFlat(code);
-      if (near) add(near, 20, `Note says ${code}, which doesn't exist; closest flat is ${near}`);
+      if (near) add(near, 20, `Note says ${code}, which doesn't exist; closest flat is ${near}`, false, false);
     }
   }
   if (n.vpa) for (const f of ctx.flatsForVpa(n.vpa)) add(f, 45, `UPI ID ${n.vpa} has paid for ${f} before`, true);
@@ -150,18 +153,18 @@ export function matchCredit(amount: number, n: Narration, ctx: MatchContext): Ma
     else if (d && d.current > 0 && amount === d.current) add(flatId, 20, `Amount equals this month's bill of ${rupees(d.current)}`);
     const name = n.payerName ? nameMatch(n.payerName, ctx.names(flatId)) : null;
     if (name === "full") add(flatId, 20, `Payer ${n.payerName} is a resident of ${flatId}`);
-    else if (name === "partial") add(flatId, 8, `Payer ${n.payerName} shares a name with a resident`);
+    else if (name === "partial") add(flatId, 8, `Payer ${n.payerName} shares a name with a resident`, false, false);
   }
 
   const ranked = [...cands]
-    .map(([flatId, c]) => ({ flatId, score: Math.min(100, c.score), reasons: c.reasons, strong: c.strong }))
+    .map(([flatId, c]) => ({ flatId, score: Math.min(100, c.score), reasons: c.reasons, strong: c.strong, signals: c.signals }))
     .filter((c) => c.score > 0)
     .sort((a, b) => b.score - a.score);
   const strong = ranked.filter((c) => c.strong);
   const top = ranked[0];
   const suggestions = ranked.slice(0, 5).map(({ flatId, score, reasons }) => ({ flatId, score, reasons }));
 
-  if (top && strong.length === 1 && strong[0] === top && top.reasons.length >= 2)
+  if (top && strong.length === 1 && strong[0] === top && top.signals >= 2)
     return { status: "AUTO_MATCHED", flatId: top.flatId, confidence: top.score, reasons: top.reasons, suggestions: [] };
 
   let why: string;

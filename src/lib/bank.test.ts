@@ -125,6 +125,13 @@ describe("matching a credit to a flat", () => {
     expect(r.suggestions[0].flatId).toBe("T21-1601");
   });
 
+  it("holds a flat number whose only other link is a shared surname", () => {
+    // Ravi isn't a resident of T07-1203; he shares a surname with Neeraj. A mistyped flat number must not post.
+    const r = match(300_000, "UPI-RAVI KULKARNI-rk@ybl-YESB0000001-612345678911-T07 1203");
+    expect(r.status).toBe("NEEDS_REVIEW");
+    expect(r.suggestions[0].flatId).toBe("T07-1203");
+  });
+
   it("never posts on the amount alone, but suggests the flats that owe it", () => {
     const r = match(747_500, "NEFT CR-SBIN0001234-R MEHTA-TOWNSHIP FEDERATION-SBIN52026110212345");
     expect(r.status).toBe("NEEDS_REVIEW");

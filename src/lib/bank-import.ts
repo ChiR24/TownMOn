@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import type { DB, Q, Tx } from "@/db";
 import { auditLog, bankImports, bankTxns, bills, flatMembers, flats, gatewayOrders, ledger, payerAccounts, payments, users } from "@/db/schema";
 import { matchCredit, oneSlip, readNarration, type MatchContext } from "./bank";
@@ -8,8 +8,12 @@ import { flatPositions } from "./data";
 import { todayIST } from "./dates";
 import { postPayment } from "./payments";
 
-/** The same bank line in a later statement has the same fingerprint, so it is never posted twice. */
-export const fingerprint = (date: string, narration: string, amount: number) => sha256(`${date}|${narration}|${amount}`);
+/**
+ * The same bank line in a later statement has the same fingerprint, so it is never posted twice. The reference and
+ * the running balance keep two genuine look-alikes apart (two cash deposits of the same amount on the same day).
+ */
+export const fingerprint = (date: string, narration: string, amount: number, ref = "", balance: number | null = null) =>
+  sha256(`${date}|${narration}|${amount}|${ref}|${balance ?? ""}`);
 
 /** Everything the matcher needs, loaded once per import: flats, dues, learned UPI IDs, names, gateway payouts. */
 export async function matchContext(q: Q, today = todayIST()) {
@@ -71,7 +75,7 @@ export async function importStatement(q: DB, { fileName, text, uploadedBy }: { f
 
   return q.transaction(async (tx) => {
     const [imp] = await tx.insert(bankImports).values({ fileName, uploadedBy, rows: rows.length, credits: credits.length }).returning({ id: bankImports.id });
-    const prints = credits.map((r) => fingerprint(r.date, r.narration, r.credit));
+    const prints = credits.map((r) => fingerprint(r.date, r.narration, r.credit, r.ref, r.balance));
     const seen = new Set((await tx.select({ f: bankTxns.fingerprint }).from(bankTxns).where(inArray(bankTxns.fingerprint, prints))).map((r) => r.f));
     let autoMatched = 0;
     let needsReview = 0;
@@ -158,6 +162,16 @@ export async function reversePayment(q: DB, paymentId: number, by: number, reaso
     if (p.source === "GATEWAY") return { error: "Online payments are refunded through the gateway, not reversed here." };
     await tx.update(payments).set({ reversedAt: new Date(), reversalReason: reason }).where(eq(payments.id, paymentId));
     await tx.insert(ledger).values({ flatId: p.flatId, kind: "REVERSAL", amount: p.amount, date: todayIST(), paymentId, memo: `Payment reversed: ${reason}`, createdBy: by });
+    // A wrong posting may have taught the matcher this UPI ID for this flat. Forget it, unless the same UPI ID has
+    // other payments for the flat that still stand.
+    if (p.payerVpa) {
+      const [other] = await tx
+        .select({ id: payments.id })
+        .from(payments)
+        .where(and(eq(payments.payerVpa, p.payerVpa), eq(payments.flatId, p.flatId), isNull(payments.reversedAt), ne(payments.id, p.id)))
+        .limit(1);
+      if (!other) await tx.delete(payerAccounts).where(and(eq(payerAccounts.vpa, p.payerVpa), eq(payerAccounts.flatId, p.flatId)));
+    }
     if (p.bankTxnId) {
       await tx.update(bankTxns).set({ status: "NEEDS_REVIEW", flatId: null, paymentId: null, resolvedBy: null, resolvedAt: null }).where(eq(bankTxns.id, p.bankTxnId));
       await audit(tx, by, "bank.reverse", p.bankTxnId, { paymentId, flatId: p.flatId, reason });

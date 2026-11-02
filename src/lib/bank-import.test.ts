@@ -84,5 +84,13 @@ describe("importing a bank statement", () => {
     const [t] = await db.select().from(bankTxns).where(eq(bankTxns.id, p.bankTxnId!));
     expect(t.status).toBe("NEEDS_REVIEW");
     expect(await reversePayment(db, p.id, accounts, "again")).toEqual({ error: "This payment was already reversed." });
+    // The UPI ID taught by that wrong posting is forgotten, so it can't pull next month's payment to the same flat.
+    expect(await db.select().from(payerAccounts).where(eq(payerAccounts.flatId, "T07-1203"))).toHaveLength(0);
+  });
+
+  it("keeps two identical cash deposits on the same day apart (their running balances differ)", async () => {
+    const text = csv(`"BY CASH DEPOSIT",,${ddmmyy},,7475.00,200000.00`, `"BY CASH DEPOSIT",,${ddmmyy},,7475.00,207475.00`);
+    expect(await importStatement(db, { fileName: "cash.csv", text, uploadedBy: accounts })).toMatchObject({ duplicates: 0 });
+    expect(await db.select().from(bankTxns).where(eq(bankTxns.narration, "BY CASH DEPOSIT"))).toHaveLength(2);
   });
 });

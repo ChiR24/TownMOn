@@ -1,4 +1,4 @@
-import { and, eq, lte, sum } from "drizzle-orm";
+import { and, eq, lt, lte, or, sum } from "drizzle-orm";
 import { CircleCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -26,9 +26,12 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
   if (!p || !(STAFF.includes(user.role) || (await isMember(user.id, p.flatId)))) notFound();
   const t = await getT();
 
+  // Balance right after this payment: everything dated earlier, plus that day's lines up to and including this one
+  // (not a second payment or a charge posted later the same day).
+  const [own] = await db.select({ id: ledger.id }).from(ledger).where(and(eq(ledger.paymentId, p.id), eq(ledger.kind, "PAYMENT")));
+  const upToThis = own ? or(lt(ledger.date, p.paidOn), and(eq(ledger.date, p.paidOn), lte(ledger.id, own.id))) : lte(ledger.date, p.paidOn);
   const [[after], [primary]] = await Promise.all([
-    // Balance as of the payment date: everything posted to the flat up to and including that day.
-    db.select({ total: sum(ledger.amount) }).from(ledger).where(and(eq(ledger.flatId, p.flatId), lte(ledger.date, p.paidOn))),
+    db.select({ total: sum(ledger.amount) }).from(ledger).where(and(eq(ledger.flatId, p.flatId), upToThis)),
     db.select({ name: users.name }).from(flatMembers).innerJoin(users, eq(users.id, flatMembers.userId)).where(and(eq(flatMembers.flatId, p.flatId), eq(flatMembers.isPrimary, true))),
   ]);
   const balanceAfter = Number(after?.total ?? 0);
