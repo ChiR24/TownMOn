@@ -18,7 +18,7 @@ export function GateRequest({ v, t, lang }: { v: Visitor; t: T; lang: string }) 
           <Avatar name={v.name} className="size-16 rounded-[20px] text-lg" />
         )}
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+          <p className="flex items-center gap-2 text-xs font-semibold text-warning">
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full rounded-full bg-amber-500 opacity-60 motion-safe:animate-ping" />
               <span className="relative inline-flex size-2 rounded-full bg-amber-500" />

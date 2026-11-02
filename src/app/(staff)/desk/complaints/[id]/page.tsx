@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
-import { Badge, Card, cx, inputCls, Notice, PageTitle } from "@/components/ui";
+import { Badge, Card, cx, inputCls, Notice, PageTitle, Select } from "@/components/ui";
 import { db } from "@/db";
 import { complaintEvents, complaints, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -167,15 +167,15 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <form action={setUrgency.bind(null, c.id)} className="flex items-end gap-2">
               <label className="min-w-0 flex-1 text-sm font-semibold">
                 Urgency
-                <select key={c.urgency} name="urgency" defaultValue={c.urgency} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
+                <Select compact key={c.urgency} name="urgency" defaultValue={c.urgency} wrap="mt-1.5" className="font-normal">
                   {URGENCIES.map((u) => (
                     <option key={u} value={u}>
                       {URGENCY_LABEL[u]}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
-              <SubmitButton size="sm" variant="secondary" className="h-10">
+              <SubmitButton size="sm" variant="secondary">
                 Save
               </SubmitButton>
             </form>
@@ -183,7 +183,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
               <form action={assign.bind(null, c.id)} className="flex items-end gap-2">
                 <label className="min-w-0 flex-1 text-sm font-semibold">
                   Technician
-                  <select key={c.assignedTo ?? "none"} name="techId" defaultValue={c.assignedTo ?? ""} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
+                  <Select compact key={c.assignedTo ?? "none"} name="techId" defaultValue={c.assignedTo ?? ""} wrap="mt-1.5" className="font-normal">
                     <option value="" disabled>
                       Choose…
                     </option>
@@ -193,9 +193,9 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                         {t.team === team ? " ✓" : ` (${t.team})`}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
-                <SubmitButton size="sm" variant="secondary" className="h-10">
+                <SubmitButton size="sm" variant="secondary">
                   Assign
                 </SubmitButton>
               </form>

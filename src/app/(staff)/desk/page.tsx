@@ -68,7 +68,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
             className={cx("press flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1", k === view ? "bg-cta text-cta-ink ring-cta" : "bg-surface text-ink-2 ring-line hover:bg-muted")}
           >
             {VIEWS[k]}
-            <span className={cx("tabular-nums", k === view ? "text-cta-ink/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-ink-3")}>{Number(counts[k])}</span>
+            <span className={cx("tabular-nums", k === view ? "text-cta-ink/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-danger" : "text-ink-3")}>{Number(counts[k])}</span>
           </Link>
         ))}
       </nav>
@@ -87,7 +87,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
                   <div className="grid min-w-0 flex-1 gap-2 p-3.5 sm:grid-cols-[1fr_auto] sm:items-center">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-[15px] font-medium text-ink">
-                        {c.safety && <Siren className="size-4 shrink-0 text-red-600" aria-label="Safety escalation" />}
+                        {c.safety && <Siren className="size-4 shrink-0 text-danger" aria-label="Safety escalation" />}
                         <span className="truncate">{c.title ?? c.description}</span>
                       </p>
                       <p className="mt-0.5 truncate text-sm text-ink-3">
@@ -112,7 +112,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
                     <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                       <Badge tone={STATUS[c.status][1]}>{STATUS[c.status][0]}</Badge>
                       <span className="text-xs text-ink-3">{tech ?? "No technician"}</span>
-                      {clock && <span className={cx("text-xs font-medium", late ? "text-red-700" : "text-ink-3")}>{late ? `Response overdue ${relTime(c.responseDueAt).replace(" ago", "")}` : `Respond ${relTime(c.responseDueAt)}`}</span>}
+                      {clock && <span className={cx("text-xs font-medium", late ? "text-danger" : "text-ink-3")}>{late ? `Response overdue ${relTime(c.responseDueAt).replace(" ago", "")}` : `Respond ${relTime(c.responseDueAt)}`}</span>}
                     </div>
                   </div>
                 </Link>

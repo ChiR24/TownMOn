@@ -74,7 +74,7 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
             </Badge>
           )}
         </div>
-        {late && <p className="text-sm text-red-700 dark:text-red-300">{t("c.late")}</p>}
+        {late && <p className="text-sm text-danger">{t("c.late")}</p>}
         {x.parentId && (
           <p className="flex items-start gap-2 text-sm text-ink-2">
             <Link2 className="mt-0.5 size-4 shrink-0" aria-hidden /> {t("c.linked")}

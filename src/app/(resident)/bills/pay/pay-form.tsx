@@ -35,7 +35,7 @@ export function PayForm({ balance, balanceLabel, s }: { balance: number; balance
         </div>
       )}
       {state.error && (
-        <p className="text-sm text-red-700 dark:text-red-300" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {s.error}
         </p>
       )}

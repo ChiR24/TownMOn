@@ -3,7 +3,7 @@ import { CircleCheck, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/submit-button";
-import { Badge, Card, EmptyState, Notice, PageTitle } from "@/components/ui";
+import { Badge, Card, EmptyState, Notice, PageTitle, Select } from "@/components/ui";
 import { db } from "@/db";
 import { bankTxns } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -89,13 +89,13 @@ export default async function ReviewPage() {
                       <label className="sr-only" htmlFor={`reason-${t.id}`}>
                         Reason
                       </label>
-                      <select id={`reason-${t.id}`} name="reason" className="h-10 min-w-0 flex-1 rounded-xl bg-surface px-2 text-sm ring-1 ring-line">
+                      <Select compact id={`reason-${t.id}`} name="reason" wrap="min-w-0 flex-1">
                         <option>Bank interest</option>
                         <option>Refund or reversal by the bank</option>
                         <option>Vendor or other income</option>
                         <option>Duplicate of an entry already posted</option>
-                      </select>
-                      <SubmitButton size="sm" variant="ghost" className="h-10 ring-1 ring-line">
+                      </Select>
+                      <SubmitButton size="sm" variant="secondary" className="whitespace-nowrap">
                         Not a resident payment
                       </SubmitButton>
                     </form>

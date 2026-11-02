@@ -16,6 +16,12 @@
         var(--canvas);
     }
   }
+  /* Paper gets none of it: a printed report or receipt is black on white, even with background graphics on. */
+  @media print {
+    .app-backdrop {
+      background: none;
+    }
+  }
 
   /*
    * Glass, for the floating navigation layer only (tab bar, top bar, sheets), never for content.

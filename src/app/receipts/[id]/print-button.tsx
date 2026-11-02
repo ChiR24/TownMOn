@@ -1,11 +1,11 @@
 "use client";
 
 import { Printer } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, type BtnProps } from "@/components/ui";
 
-export function PrintButton() {
+export function PrintButton({ size }: Pick<BtnProps, "size">) {
   return (
-    <Button onClick={() => window.print()}>
+    <Button size={size} onClick={() => window.print()}>
       <Printer className="size-4" aria-hidden /> Print or save PDF
     </Button>
   );

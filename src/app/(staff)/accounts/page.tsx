@@ -3,7 +3,7 @@ import { ArrowRight, Download, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/submit-button";
-import { Card, cx, inputCls, PageTitle, Section } from "@/components/ui";
+import { Card, cx, fieldCls, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { bankImports, bankTxns, bills, flats, payments, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -90,8 +90,8 @@ export default async function AccountsPage() {
           <Card>
             <h2 className="font-semibold">Find a flat</h2>
             <form action={findFlat} className="mt-3 flex gap-2">
-              <input name="q" required placeholder="T07-1203" aria-label="Flat number" className={`${inputCls} py-2`} />
-              <SubmitButton size="sm" className="h-11" aria-label="Find">
+              <input name="q" required placeholder="T07-1203" aria-label="Flat number" className={cx(fieldCls, "flex-1")} />
+              <SubmitButton size="sm" className="w-10 !px-0" aria-label="Find">
                 <Search className="size-4" aria-hidden />
               </SubmitButton>
             </form>
@@ -133,8 +133,8 @@ export default async function AccountsPage() {
                     {fmtDateTime(i.createdAt)} · {i.by}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{i.credits}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-emerald-700">{i.autoMatched}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-amber-700">{i.needsReview}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-success">{i.autoMatched}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-warning">{i.needsReview}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-ink-3">{i.duplicates}</td>
                   <td className="px-4 py-3 text-right">
                     <Link href={`/accounts/imports/${i.id}`} className="inline-flex items-center gap-1 font-medium text-accent-ink">

@@ -17,12 +17,12 @@ export function MemberForm({ s }: { s: Record<"name" | "phone" | "add" | "hint" 
         <input name="phone" type="tel" required inputMode="numeric" defaultValue={state.values?.phone} placeholder={s.phone} aria-label={s.phone} autoComplete="off" className={inputCls} />
       </div>
       {error && (
-        <p className="px-1 text-sm text-red-700 dark:text-red-300" role="alert">
+        <p className="px-1 text-sm text-danger" role="alert">
           {error}
         </p>
       )}
       {state.ok && (
-        <p className="px-1 text-sm text-emerald-700 dark:text-emerald-300" role="status">
+        <p className="px-1 text-sm text-success" role="status">
           {s.added}
         </p>
       )}

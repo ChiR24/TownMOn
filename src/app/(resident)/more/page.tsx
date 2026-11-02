@@ -141,7 +141,7 @@ export default async function MorePage() {
           <ChevronRight className="size-5 text-ink-3" aria-hidden />
         </Link>
         <form action={signOut}>
-          <button className={cx(row, "w-full text-left text-red-700 dark:text-red-300")}>
+          <button className={cx(row, "w-full text-left text-danger")}>
             <LogOut className="size-5" aria-hidden /> {t("m.signOut")}
           </button>
         </form>

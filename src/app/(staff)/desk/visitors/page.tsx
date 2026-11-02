@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, type SQL } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, cx, PageTitle, type Tone } from "@/components/ui";
+import { Avatar, Badge, Button, fieldCls, PageTitle, Select, type Tone } from "@/components/ui";
 import { db } from "@/db";
 import { users, visitors } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -9,7 +9,10 @@ import { daysAgo, fmtDateTime, startOfTodayIST } from "@/lib/dates";
 import { findFlatCodes } from "@/lib/bank";
 
 export const metadata: Metadata = { title: "Visitor log" };
-const TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "brand", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
+// The same words the residents and the gate use.
+const STATUS: Record<string, [string, Tone]> = { PENDING: ["Waiting", "amber"], APPROVED: ["Approved", "brand"], DENIED: ["Denied", "red"], INSIDE: ["Inside", "emerald"], LEFT: ["Left", "zinc"] };
+const PURPOSE: Record<string, string> = { GUEST: "Guest", DELIVERY: "Delivery", CAB: "Cab", SERVICE: "Service", OTHER: "Other" };
+const HOW: Record<string, string> = { CODE: "Guest code", INTERCOM: "Intercom", APP: "Resident in app" };
 
 export default async function VisitorLogPage({ searchParams }: { searchParams: Promise<{ gate?: string; flat?: string; days?: string }> }) {
   await requireUser(AREAS.desk);
@@ -26,21 +29,23 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
   return (
     <div>
       <PageTitle title="Visitor log" subtitle="Every entry at the four gates. Photos are deleted automatically after 90 days." action={<Link href="/gate/notice" className="text-sm font-medium text-accent-ink">Gate notice →</Link>} />
-      <form className="mb-4 flex flex-wrap items-end gap-2">
-        <select name="gate" defaultValue={String(gate)} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" aria-label="Gate">
+      <form className="mb-4 flex flex-wrap items-center gap-2">
+        <Select compact name="gate" defaultValue={String(gate)} aria-label="Gate">
           <option value="0">All gates</option>
           {[1, 2, 3, 4].map((g) => (
             <option key={g} value={g}>
               Gate {g}
             </option>
           ))}
-        </select>
-        <input name="flat" defaultValue={flat ?? ""} placeholder="Flat, e.g. T07-1203" aria-label="Flat" className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" />
-        <select name="days" defaultValue={String(days)} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" aria-label="Period">
+        </Select>
+        <input name="flat" defaultValue={flat ?? ""} placeholder="Flat, e.g. T07-1203" aria-label="Flat" className={fieldCls} />
+        <Select compact name="days" defaultValue={String(days)} aria-label="Period">
           <option value="1">Today</option>
           <option value="7">Last 7 days</option>
-        </select>
-        <button className="press h-10 rounded-xl bg-cta px-4 text-sm font-semibold text-cta-ink">Show</button>
+        </Select>
+        <Button type="submit" size="sm">
+          Show
+        </Button>
       </form>
       <div className="overflow-x-auto card">
         <table className="w-full min-w-[720px] text-sm">
@@ -58,16 +63,16 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
             {rows.map(({ v, guard }) => (
               <tr key={v.id}>
                 <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     {v.photoId ? (
                       // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-                      <img src={`/api/photos/${v.photoId}`} alt="" className="size-8 rounded-lg object-cover" />
+                      <img src={`/api/photos/${v.photoId}`} alt="" className="size-8 rounded-full object-cover" />
                     ) : (
-                      <span className={cx("size-8 rounded-lg bg-muted")} />
+                      <Avatar name={v.name} className="size-8 text-xs" />
                     )}
                     <span>
                       <span className="block font-medium">{v.name}</span>
-                      <span className="text-xs text-ink-3">{v.purpose.toLowerCase()}</span>
+                      <span className="text-xs text-ink-3">{PURPOSE[v.purpose]}</span>
                     </span>
                   </div>
                 </td>
@@ -75,10 +80,10 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
                 <td className="px-4 py-2.5">{v.gate}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-ink-2">{fmtDateTime(v.arrivedAt)}</td>
                 <td className="px-4 py-2.5">
-                  <Badge tone={TONE[v.status]}>{v.status.toLowerCase()}</Badge>
+                  <Badge tone={STATUS[v.status][1]}>{STATUS[v.status][0]}</Badge>
                 </td>
                 <td className="px-4 py-2.5 text-xs text-ink-2">
-                  {v.approvalMode === "CODE" ? "Guest code" : v.approvalMode === "INTERCOM" ? "Intercom" : v.approvalMode === "APP" ? "Resident in app" : "—"} · {guard}
+                  {v.approvalMode ? `${HOW[v.approvalMode]} · ${guard}` : guard}
                 </td>
               </tr>
             ))}

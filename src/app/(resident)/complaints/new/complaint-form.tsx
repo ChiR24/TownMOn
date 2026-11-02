@@ -66,7 +66,7 @@ export function ComplaintForm({ s }: { s: S }) {
           </label>
         )}
         {state.error === "photo" && (
-          <p className="mt-1.5 px-1 text-sm text-red-700 dark:text-red-300" role="alert">
+          <p className="mt-1.5 px-1 text-sm text-danger" role="alert">
             {s.errPhoto}
           </p>
         )}

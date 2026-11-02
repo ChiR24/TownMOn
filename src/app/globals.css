@@ -31,6 +31,9 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 }
 
 @theme {
@@ -63,6 +66,10 @@
   --accent: #c8f26d; /* lime: fills behind dark text, progress on dark cards */
   --accent-ink: #3b7a0e; /* lime's readable partner on light surfaces: 5.3:1 on white */
   --accent-soft: #eef8d6;
+  /* Status text (always beside an icon or words, never colour alone): readable on surface and canvas. */
+  --danger: #b91c1c;
+  --success: #047857;
+  --warning: #b45309;
 }
 
 @media screen and (prefers-color-scheme: dark) {
@@ -80,6 +87,9 @@
     --accent: #c8f26d;
     --accent-ink: #c8f26d;
     --accent-soft: rgb(200 242 109 / 0.13);
+    --danger: #fca5a5;
+    --success: #6ee7b7;
+    --warning: #fcd34d;
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/submit-button";
-import { Field, inputCls } from "@/components/ui";
+import { Field, inputCls, Select } from "@/components/ui";
 import { postNotice, type NoticeState } from "../actions";
 
 export function NoticeForm() {
@@ -19,23 +19,23 @@ export function NoticeForm() {
           <textarea id="body" name="body" required minLength={5} maxLength={1500} rows={4} defaultValue={v?.body} className={inputCls} />
         </Field>
         <Field label="Who sees it" htmlFor="tower">
-          <select id="tower" name="tower" className={`${inputCls} py-2.5`} defaultValue={v?.tower ?? "all"}>
+          <Select id="tower" name="tower" defaultValue={v?.tower ?? "all"}>
             <option value="all">Everyone</option>
             {Array.from({ length: 28 }, (_, i) => (
               <option key={i + 1} value={i + 1}>
                 Tower {String(i + 1).padStart(2, "0")} only
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
       </div>
       {state.error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {state.error}
         </p>
       )}
       {state.ok && (
-        <p className="text-sm text-emerald-700" role="status">
+        <p className="text-sm text-success" role="status">
           Posted. Residents see it on their home screen.
         </p>
       )}

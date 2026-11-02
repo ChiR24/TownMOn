@@ -49,7 +49,7 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
             {AGEING_BUCKETS.map((b, i) => (
               <div key={b} className="flex justify-between">
                 <dt className="text-ink-2">{b}</dt>
-                <dd className={`tabular-nums ${i >= 3 && pos.ageing[i] ? "font-semibold text-red-700" : ""}`}>{rupees(pos.ageing[i])}</dd>
+                <dd className={`tabular-nums ${i >= 3 && pos.ageing[i] ? "font-semibold text-danger" : ""}`}>{rupees(pos.ageing[i])}</dd>
               </div>
             ))}
           </dl>
@@ -99,7 +99,7 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{r.amount > 0 ? rupees(r.amount) : ""}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-emerald-700">{r.amount < 0 ? rupees(-r.amount) : ""}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-success">{r.amount < 0 ? rupees(-r.amount) : ""}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink-3">{rupees(r.balance)}</td>
                     <td className="px-4 py-2.5 text-right">{p && !p.reversedAt && p.source !== "GATEWAY" && <ReverseForm paymentId={p.id} />}</td>
                   </tr>

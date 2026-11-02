@@ -1,8 +1,9 @@
-import { CircleCheck, TriangleAlert } from "lucide-react";
+import { ArrowLeft, CircleCheck, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PrintButton } from "@/app/receipts/[id]/print-button";
 import { Logo } from "@/components/brand";
+import { Button, Select } from "@/components/ui";
 import { db } from "@/db";
 import { AREAS, requireUser } from "@/lib/auth";
 import { TOWNSHIP } from "@/lib/config";
@@ -52,25 +53,27 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   const ok = m.difference === 0;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/committee" className="text-sm text-ink-3 hover:text-ink">
-          ← Dashboard
+        <Link href="/committee" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink">
+          <ArrowLeft className="size-4" aria-hidden /> Dashboard
         </Link>
-        <form className="flex items-center gap-2">
-          <label htmlFor="month" className="text-sm text-ink-2">
+        <form className="flex flex-wrap items-center gap-2">
+          <label htmlFor="month" className="text-sm font-medium text-ink-2">
             Month
           </label>
-          <select id="month" name="month" defaultValue={period} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line">
+          <Select compact id="month" name="month" defaultValue={period}>
             {options.map((p) => (
               <option key={p} value={p}>
                 {fmtMonth(p)}
                 {p === options[0] ? " (so far)" : ""}
               </option>
             ))}
-          </select>
-          <button className="h-10 rounded-xl bg-surface px-3 text-sm font-medium ring-1 ring-line hover:bg-muted">Show</button>
-          <PrintButton />
+          </Select>
+          <Button type="submit" variant="secondary" size="sm">
+            Show
+          </Button>
+          <PrintButton size="sm" />
         </form>
       </div>
 
@@ -104,8 +107,8 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             [`Outstanding at the end of the month`, rupees(m.closing)],
           ]}
         />
-        <p className={`mt-3 flex items-center gap-2 text-sm ${ok ? "text-ink-2" : "font-medium text-red-700"}`}>
-          {ok ? <CircleCheck className="size-4 text-[#0ca30c]" aria-hidden /> : <TriangleAlert className="size-4 text-[#d03b3b]" aria-hidden />}
+        <p className={`mt-3 flex items-center gap-2 text-sm ${ok ? "text-ink-2" : "font-medium text-danger"}`}>
+          {ok ? <CircleCheck className="size-4 text-success" aria-hidden /> : <TriangleAlert className="size-4 text-danger" aria-hidden />}
           {ok ? "Reconciles to the paisa. Every figure comes from the same ledger, which is never edited: corrections are separate, dated lines." : `Does not reconcile: difference ${rupees(m.difference)}. Escalate to accounts.`}
         </p>
 

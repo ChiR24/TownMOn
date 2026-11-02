@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { rupees } from "@/lib/money";
@@ -16,7 +16,8 @@ const VARIANT = {
   ghost: "text-ink-2 hover:bg-muted",
   danger: "bg-red-600 text-white hover:bg-red-700",
 } as const;
-const SIZE = { sm: "h-9 px-4 text-sm", md: "h-12 px-5 text-[15px]", lg: "h-14 px-7 text-base" } as const;
+// sm is the height of `fieldCls` and the compact `Select`, so a row of filters and buttons lines up exactly.
+const SIZE = { sm: "h-10 px-4 text-sm", md: "h-12 px-5 text-[15px]", lg: "h-14 px-7 text-base" } as const;
 export type BtnProps = { variant?: keyof typeof VARIANT; size?: keyof typeof SIZE };
 
 export const btn = ({ variant = "primary", size = "md" }: BtnProps = {}) =>
@@ -70,6 +71,20 @@ export function Badge({ tone = "zinc", className, ...p }: ComponentProps<"span">
 export const inputCls =
   "block w-full rounded-[20px] border-0 bg-surface px-4 py-3.5 text-base text-ink ring-1 ring-inset ring-line placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-ink disabled:bg-muted";
 
+/** An input that sits in a row with small buttons (filters, inline forms): a pill exactly as tall as `size: "sm"`. */
+export const fieldCls =
+  "h-10 min-w-0 rounded-full border-0 bg-surface px-4 text-sm text-ink ring-1 ring-inset ring-line placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-ink disabled:bg-muted";
+
+/** A select with the app's own chevron, not the browser's arrow. `compact` matches `fieldCls`; the wrapper takes `wrap`. */
+export function Select({ compact, wrap, className, ...p }: ComponentProps<"select"> & { compact?: boolean; wrap?: string }) {
+  return (
+    <div className={cx("relative", wrap)}>
+      <select className={cx(compact ? fieldCls : inputCls, "w-full cursor-pointer appearance-none pr-10", className)} {...p} />
+      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-3" aria-hidden />
+    </div>
+  );
+}
+
 export function Field({ label, hint, error, htmlFor, children }: { label: string; hint?: string; error?: string; htmlFor?: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
@@ -78,7 +93,7 @@ export function Field({ label, hint, error, htmlFor, children }: { label: string
       </label>
       {children}
       {error?.trim() ? (
-        <p className="px-1 text-sm text-red-700 dark:text-red-300" role="alert">
+        <p className="px-1 text-sm text-danger" role="alert">
           {error}
         </p>
       ) : hint ? (
