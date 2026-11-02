@@ -222,7 +222,7 @@ Why they look the way they do:
 
 ## 8. Testing
 
-87 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
+89 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
 the AI against the Claude API (`npm run ai:check`, section 5):
 
 | Area | What the tests pin down |
@@ -264,8 +264,9 @@ server actions, and a refused replay keeps the entry until the guard signs in ag
 
 The Marathi and Hindi copy was read line by line against the English. 26 strings were corrected, most of them for
 one word spelled two ways; the real ones were a mistranslated "how urgent", a hint that promised where it should have
-helped, and an ungrammatical list. The keyword rules also learned the Hindi spellings of "window" and "door". A
-native speaker's read is still planned (A14).
+helped, and an ungrammatical list. The keyword rules also learned the Hindi spellings of "window" and "door". A test
+now holds every Marathi and Hindi string to its English original: the same placeholders, and written in Devanagari.
+A native speaker's read is still planned (A14).
 
 Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
 mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test
