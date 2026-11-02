@@ -15,30 +15,33 @@ export const metadata: Metadata = { title: "Monthly report" };
 
 const H = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 text-base font-semibold text-ink print:mt-6">{children}</h2>;
 
+// On a phone a wide table scrolls sideways inside the report instead of pushing the whole page wider.
 function Table({ head, rows, align }: { head: string[]; rows: (string | number)[][]; align?: ("l" | "r")[] }) {
   return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-3">
-          {head.map((h, i) => (
-            <th key={h} className={`py-2 pr-3 font-medium ${align?.[i] === "r" ? "text-right" : ""}`}>
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-line tabular-nums">
-        {rows.map((r, i) => (
-          <tr key={i}>
-            {r.map((c, j) => (
-              <td key={j} className={`py-2 pr-3 ${align?.[j] === "r" ? "text-right" : ""}`}>
-                {c}
-              </td>
+    <div className="overflow-x-auto print:overflow-visible">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-3">
+            {head.map((h, i) => (
+              <th key={h} className={`py-2 pr-3 font-medium ${align?.[i] === "r" ? "text-right" : ""}`}>
+                {h}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody className="divide-y divide-line tabular-nums">
+          {rows.map((r, i) => (
+            <tr key={i}>
+              {r.map((c, j) => (
+                <td key={j} className={`py-2 pr-3 ${align?.[j] === "r" ? "text-right" : ""}`}>
+                  {c}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

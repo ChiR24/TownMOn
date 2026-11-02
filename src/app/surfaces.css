@@ -8,7 +8,6 @@
       var(--canvas);
   }
   @media screen and (prefers-color-scheme: dark) {
-    .theme-auto.app-backdrop,
     .theme-auto .app-backdrop {
       background:
         radial-gradient(520px 360px at 0% -60px, rgb(200 242 109 / 0.1), transparent 70%),

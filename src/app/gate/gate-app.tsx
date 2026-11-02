@@ -6,9 +6,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/actions";
 import { CodeEntry } from "./code-entry";
 import { NewVisitor } from "./new-visitor";
-import { Face, GateHeader, InsideList, IntercomButtons } from "./parts";
+import { DecidedCard, Face, GateFooter, GateHeader, InsideList, IntercomButtons, QueuedRow } from "./parts";
 import { kvGet, kvSet, sha256, type Code, type Entry, type Outcome, type Queued } from "./store";
 import { GATE_TEXT, type GateKey, type GateLang } from "./strings";
+
+// The server's reason, or "Error" when the body isn't ours (a proxy's 413 page, say). Never throws: a reply that
+// can't be read must not leave an entry stuck at the head of the offline queue.
+const errorOf = async (r: Response) => ((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Error";
 
 export function GateApp({ guardName, initialLang }: { guardName: string; initialLang: GateLang }) {
   const [lang, setLang] = useState<GateLang>(initialLang);
@@ -24,6 +28,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const [now, setNow] = useState(0); // ticks with each poll, so "waiting 3 min" stays honest without impure renders
   const queueRef = useRef<Queued[]>([]);
   const syncing = useRef(false);
+  const leaving = useRef(false);
   const router = useRouter();
 
   const say = useCallback((text: string, ok = true) => {
@@ -50,7 +55,12 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       }
       setFlats((await kvGet<string[]>("flats")) ?? []);
     })();
-    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) navigator.serviceWorker.register("/gate-sw.js", { scope: "/gate" }).catch(() => {});
+    // Registering is a no-op once installed; then the worker is asked to cache this screen if it isn't (see gate-sw.js).
+    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator)
+      navigator.serviceWorker
+        .register("/gate-sw.js", { scope: "/gate" })
+        .then((r) => r.active?.postMessage("precache"))
+        .catch(() => {});
     const on = () => setOnline(true);
     const off = () => setOnline(false);
     addEventListener("online", on);
@@ -74,6 +84,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const refresh = useCallback(async () => {
     try {
       const r = await fetch(`/api/gate/feed?gate=${gate}${flats.length ? "" : "&flats=1"}`, { cache: "no-store" });
+      if (leaving.current) return; // signing out: nothing more is written to this device
       if (r.status === 403) return router.push("/login");
       const data = await r.json();
       setEntries(data.entries);
@@ -96,7 +107,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
           if (!sent) continue;
           const r = await send(sent);
           if (r.status === 403) return; // signed out meanwhile: keep the queue; the next feed check asks for a sign-in
-          if (!r.ok) say(`${sent.name}: ${(await r.json()).error ?? "Error"}`, false); // e.g. no such flat: never savable
+          if (!r.ok) say(`${sent.name}: ${await errorOf(r)}`, false); // e.g. no such flat: never savable
           const latest = queueRef.current.find((x) => x.clientId === clientId);
           // Settled on the intercom while it was on its way: apply that to the visitor the server just recorded.
           if (r.ok && latest && latest.outcome !== sent.outcome && latest.outcome.startsWith("INTERCOM")) {
@@ -137,7 +148,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const record = async (q: Queued) => {
     try {
       const r = await send(q);
-      if (!r.ok) return say((await r.json()).error ?? "Error", false);
+      if (!r.ok) return say(await errorOf(r), false);
       say(q.outcome === "PENDING" ? t("sent", { flat: q.flatId }) : t("letIn"));
       refresh();
     } catch {
@@ -168,6 +179,13 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   };
 
   const settleQueued = async (clientId: string, outcome: Outcome) => saveQueue(queueRef.current.map((x) => (x.clientId === clientId ? { ...x, outcome } : x)));
+  // End of shift. Nothing of this gate stays on the device: today's feed, the guest-code hashes, the flat list and the
+  // cached screen go, so a signed-out tablet can't show them or check codes offline. (The queue is empty by now.)
+  const endShift = async () => {
+    leaving.current = true;
+    await Promise.all([kvSet("feed", null), kvSet("flats", null), self.caches?.delete("gate-v1")]);
+    await signOut();
+  };
   const waiting = entries.filter((e) => e.status === "PENDING");
   const decided = entries.filter((e) => (e.status === "APPROVED" || e.status === "DENIED") && now - new Date(e.arrivedAt).getTime() < 30 * 60_000);
   const mins = (iso: string) => Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000));
@@ -186,41 +204,14 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       </div>
 
       {decided.map((e) => (
-        <div key={e.id} className={`mt-3 flex items-center gap-4 rounded-[28px] p-4 ${e.status === "APPROVED" ? "bg-emerald-900" : "bg-red-950"}`}>
-          <Face entry={e} />
-          <div className="min-w-0 flex-1">
-            <p className="text-xl font-semibold">{e.name}</p>
-            <p className="text-zinc-300">
-              {e.flatId} · {e.status === "APPROVED" ? t("approved") : t("denied")}
-            </p>
-          </div>
-          {e.status === "APPROVED" ? (
-            <button onClick={() => act(e.id, "enter")} className="h-16 rounded-full bg-emerald-400 px-7 text-xl font-bold text-zinc-950">
-              {t("letIn")}
-            </button>
-          ) : (
-            <span className="rounded-full bg-red-500 px-5 py-3 text-lg font-bold text-white">{t("doNotLetIn")}</span>
-          )}
-        </div>
+        <DecidedCard key={e.id} t={t} e={e} onEnter={() => act(e.id, "enter")} />
       ))}
 
       <h2 className="mb-2 mt-7 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("waiting")}</h2>
       {waiting.length + queue.length === 0 && <p className="text-zinc-500">{t("nobody")}</p>}
       <ul className="space-y-3">
         {queue.map((q) => (
-          <li key={q.clientId} className="rounded-[28px] bg-zinc-800 p-4">
-            <div className="flex items-center gap-4">
-              <Face entry={{ name: q.name, photoId: null }} blob={q.photo} />
-              <div className="min-w-0 flex-1">
-                <p className="text-xl font-semibold">{q.name}</p>
-                <p className="text-zinc-400">
-                  {q.flatId} · {t(q.purpose)} · <span className="text-amber-300">{t("savedHere")}</span>
-                </p>
-              </div>
-              {q.outcome !== "PENDING" && <span className="text-lg font-semibold">{q.outcome === "INTERCOM_DENIED" ? t("doNotLetIn") : t("letIn")}</span>}
-            </div>
-            {q.outcome === "PENDING" && <IntercomButtons t={t} onApprove={() => settleQueued(q.clientId, "INTERCOM_APPROVED")} onDeny={() => settleQueued(q.clientId, "INTERCOM_DENIED")} />}
-          </li>
+          <QueuedRow key={q.clientId} t={t} q={q} onSettle={(outcome) => settleQueued(q.clientId, outcome)} />
         ))}
         {waiting.map((e) => (
           <li key={e.id} className="rounded-[28px] bg-zinc-800 p-4">
@@ -240,18 +231,8 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
 
       <InsideList t={t} inside={entries.filter((e) => e.status === "INSIDE")} gate={gate} onLeft={(id) => act(id, "left")} />
 
-      <footer className="mt-8 flex items-center gap-4 text-xs text-zinc-500">
-        <span>{guardName}</span>
-        <a href="/gate/notice" className="ml-auto underline">
-          {t("noticeLink")}
-        </a>
-        {/* End of shift. Offered once everything is synced, so queued entries reach the server under this guard. */}
-        {online && !queue.length && (
-          <form action={signOut}>
-            <button className="rounded-full bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-200">{t("signOut")}</button>
-          </form>
-        )}
-      </footer>
+      {/* Sign out is offered once everything is synced, so queued entries reach the server under this guard. */}
+      <GateFooter t={t} guardName={guardName} onSignOut={online && !queue.length ? endShift : undefined} />
 
       {view === "new" && <NewVisitor t={t} gate={gate} flats={flats} onClose={() => setView("home")} onSubmit={(q) => (setView("home"), record(q))} />}
       {view === "code" && <CodeEntry t={t} online={online} onClose={() => setView("home")} onOffline={checkOffline} onOnline={checkOnline} />}

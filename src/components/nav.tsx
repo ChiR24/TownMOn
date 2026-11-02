@@ -43,14 +43,16 @@ export function SideNav({ links, label }: { links: NavLink[]; label: string }) {
 
 /**
  * Phones and tablets: a floating glass tab bar. The current tab becomes a pill with its name; the others are icons,
- * named for screen readers and on hover. One destination needs no bar.
+ * named for screen readers and on hover. One destination needs no bar. Past five tabs (the duty manager has six) a
+ * name no longer fits beside the icons on a phone, so the current tab is a filled icon like the rest.
  */
 export function BottomNav({ links, label }: { links: NavLink[]; label: string }) {
   const active = useActive(links);
   if (links.length < 2) return null;
+  const named = links.length <= 5;
   return (
     <nav className="edge-bottom no-print fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.875rem)] lg:hidden" aria-label={label}>
-      <ul className="glass mx-auto flex max-w-md items-center justify-between gap-1 rounded-full p-1.5">
+      <ul className="glass mx-auto flex max-w-md items-center justify-between gap-0.5 rounded-full p-1.5">
         {links.map((l) => {
           const Icon = ICONS[l.icon];
           const on = l.href === active;
@@ -61,10 +63,10 @@ export function BottomNav({ links, label }: { links: NavLink[]; label: string })
                 aria-label={l.label}
                 title={l.label}
                 aria-current={on ? "page" : undefined}
-                className={`press flex h-12 items-center justify-center gap-2 rounded-full text-[13px] font-semibold transition-colors ${on ? "bg-cta px-3.5 text-cta-ink" : "w-11 text-ink-3 hover:text-ink"}`}
+                className={`press flex h-12 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-colors ${on ? `bg-cta text-cta-ink ${named ? "px-3" : "w-11"}` : "w-11 text-ink-3 hover:text-ink"}`}
               >
                 <Icon className="size-[22px] shrink-0" strokeWidth={on ? 2.2 : 1.9} aria-hidden />
-                {on && <span className="truncate">{l.label}</span>}
+                {on && named && <span className="truncate">{l.label}</span>}
               </Link>
             </li>
           );

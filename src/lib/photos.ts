@@ -1,7 +1,6 @@
 import type { Q } from "@/db";
 import { photos } from "@/db/schema";
-
-const MAX_BYTES = 2 * 1024 * 1024; // photos arrive already shrunk on the phone (≈150 KB); this is a hard ceiling
+import { MAX_PHOTO_BYTES } from "./shrink-photo"; // photos arrive already shrunk (≈150 KB); this is a hard ceiling
 
 /** What the bytes actually are, whatever the browser claimed: JPEG, PNG or WebP only. */
 function sniffImage(b: Uint8Array): string | null {
@@ -13,7 +12,7 @@ function sniffImage(b: Uint8Array): string | null {
 
 /** Stores an uploaded photo and returns its id, or null if it isn't a reasonable image. */
 export async function savePhoto(q: Q, file: File): Promise<number | null> {
-  if (file.size === 0 || file.size > MAX_BYTES) return null;
+  if (file.size === 0 || file.size > MAX_PHOTO_BYTES) return null;
   const bytes = Buffer.from(await file.arrayBuffer());
   const mime = sniffImage(bytes);
   if (!mime) return null;

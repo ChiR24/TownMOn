@@ -100,7 +100,7 @@ export const en = {
   "c.photoHint": "Optional. Helps the technician bring the right tools.",
   "c.send": "Send to help desk",
   "c.err.short": "Please describe the problem in a few words.",
-  "c.err.photo": "The photo must be an image under 5 MB.",
+  "c.err.photo": "The photo must be an image under 2 MB.",
   "c.status.OPEN": "Received",
   "c.status.ASSIGNED": "Assigned",
   "c.status.IN_PROGRESS": "Being fixed",

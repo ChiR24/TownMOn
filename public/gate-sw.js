@@ -3,23 +3,28 @@
 // Gate API calls are never cached here: the app queues entries in IndexedDB and replays them itself.
 const CACHE = "gate-v1";
 
-// The visit that registers this worker was loaded before it existed (usually at /login, then a client-side hop to
-// /gate), so its fetch handler never saw that page. Cache the gate screen and the static files it names right away,
-// or a reload with no network straight after signing in would show the browser's offline page.
+// Caches the gate screen and the static files it names. A guard reaches /gate by a client-side hop from /login, which
+// this worker never sees, so without this a reload with no network straight after signing in would show the browser's
+// offline page. Runs when the worker installs, and when the gate screen opens with nothing cached (signing out
+// deletes the cache, so the next guard's sign-in fills it again).
+const precache = () =>
+  fetch("/gate")
+    .then(async (res) => {
+      if (!res.ok || res.redirected) return;
+      const cache = await caches.open(CACHE);
+      const files = new Set((await res.clone().text()).match(/\/_next\/static\/[^"'\\\s<>]+/g));
+      await Promise.all([cache.put("/gate", res), ...[...files].map((f) => cache.match(f).then((hit) => hit || cache.add(f)).catch(() => {}))]);
+    })
+    .catch(() => {});
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    fetch("/gate")
-      .then(async (res) => {
-        if (!res.ok || res.redirected) return;
-        const cache = await caches.open(CACHE);
-        const files = new Set((await res.clone().text()).match(/\/_next\/static\/[^"'\\\s<>]+/g));
-        await Promise.all([cache.put("/gate", res), ...[...files].map((f) => cache.add(f).catch(() => {}))]);
-      })
-      .catch(() => {}),
-  );
+  event.waitUntil(precache());
 });
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("message", (e) => {
+  if (e.data === "precache") e.waitUntil(caches.match("/gate").then((hit) => hit || precache()));
+});
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -41,7 +46,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (request.mode === "navigate" && url.pathname.startsWith("/gate")) {
+  // The gate screen only. Other pages in scope (the visitors' notice at /gate/notice) must not take its place.
+  if (request.mode === "navigate" && url.pathname === "/gate") {
     event.respondWith(
       fetch(request)
         .then((res) => {

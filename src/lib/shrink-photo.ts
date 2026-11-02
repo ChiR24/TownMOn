@@ -1,15 +1,20 @@
 // Runs in the browser. Phone photos are 3-5 MB; residents and gate tablets are on weak data, so we send
 // ~150 KB instead. For gate photos, levels are stretched so faces taken at night are readable.
 
+/** The largest photo the server keeps (photos.ts). A photo that can't be shrunk is only sent if it fits. */
+export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
 export async function shrinkPhoto(file: File, { max = 1280, quality = 0.78, brighten = false } = {}): Promise<File> {
-  // Phones store portrait shots sideways plus an EXIF "rotate" tag; say so explicitly, as older browsers default to "none".
-  const img = await createImageBitmap(file, { imageOrientation: "from-image" });
+  // Phones store portrait shots sideways plus an EXIF "rotate" tag. "from-image" applies it; browsers from before
+  // that value existed reject it, so they get their own default instead of failing.
+  const img = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => createImageBitmap(file));
   const scale = Math.min(1, max / Math.max(img.width, img.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(img.width * scale);
   canvas.height = Math.round(img.height * scale);
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  img.close(); // a 12 MP bitmap holds ~48 MB: free it now, not at the next garbage collection
   if (brighten) autoLevels(ctx, canvas.width, canvas.height);
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode failed"))), "image/jpeg", quality));
   return new File([blob], "photo.jpg", { type: "image/jpeg" });

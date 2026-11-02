@@ -28,8 +28,8 @@ export default async function GatewayPage({ params }: { params: Promise<{ orderI
   if (o.status === "FAILED") redirect("/bills/pay?failed=1");
 
   return (
-    // A third-party gateway's page: its own fixed light look, whatever the device's mode (radios included).
-    <main className="min-h-dvh bg-slate-100 [color-scheme:light]">
+    // A third-party gateway's page: its own fixed light look, whatever the device's mode (see .theme-light).
+    <main className="theme-light min-h-dvh bg-slate-100">
       <div className="bg-amber-100 px-4 py-2 text-center text-xs font-medium text-amber-900">TestPay sandbox · test mode, no real money moves</div>
       <div className="mx-auto max-w-md px-4 py-6">
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -55,7 +55,7 @@ export default async function GatewayPage({ params }: { params: Promise<{ orderI
                 </label>
               ))}
             </fieldset>
-            <button type="submit" name="outcome" value="ok" className={cx(btn({ size: "lg" }), "w-full bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950")}>
+            <button type="submit" name="outcome" value="ok" className={cx(btn({ size: "lg" }), "w-full bg-slate-900 hover:bg-slate-800 active:bg-slate-950")}>
               Pay {rupees(o.amount)}
             </button>
             <button type="submit" name="outcome" value="fail" className={cx(btn({ variant: "ghost", size: "sm" }), "w-full text-slate-500")}>

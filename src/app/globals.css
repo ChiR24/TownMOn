@@ -3,15 +3,16 @@
 
 /*
  * Design tokens. Every surface and text colour is a role, not a hex, so every screen, for every role, follows the
- * device's light or dark mode (`.theme-auto`, set on <body>). Paper is always light: dark mode is screen-only, so
- * receipts and the monthly report print in black on white.
+ * device's light or dark mode (`.theme-auto`, set on <html> so the page's own scrollbar follows too). Paper is always
+ * light: dark mode is screen-only, so receipts and the monthly report print in black on white. A page that keeps a
+ * fixed light look whatever the device (the test gateway, the printed gate notice) wraps itself in `.theme-light`.
  *
  * The look: airy warm-grey canvas, white cards with large radii and soft shadows, near-black for the one primary
  * action on a screen, and a single lime accent for highlights and progress.
  */
 @custom-variant dark {
   @media screen and (prefers-color-scheme: dark) {
-    &:where(.theme-auto, .theme-auto *) {
+    &:where(.theme-auto, .theme-auto *):not(:where(.theme-light, .theme-light *)) {
       @slot;
     }
   }
@@ -53,7 +54,9 @@
   }
 }
 
-:root {
+:root,
+.theme-light {
+  color-scheme: light;
   --canvas: #f3f2ef; /* warm light grey: white cards lift off it */
   --surface: #ffffff;
   --muted: #f1f0ec;

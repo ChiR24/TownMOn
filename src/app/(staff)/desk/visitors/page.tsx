@@ -7,11 +7,12 @@ import { users, visitors } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
 import { daysAgo, fmtDateTime, startOfTodayIST } from "@/lib/dates";
 import { findFlatCodes } from "@/lib/bank";
+import { translator, type Key } from "@/lib/i18n";
 
 export const metadata: Metadata = { title: "Visitor log" };
-// The same words the residents and the gate use.
-const STATUS: Record<string, [string, Tone]> = { PENDING: ["Waiting", "amber"], APPROVED: ["Approved", "brand"], DENIED: ["Denied", "red"], INSIDE: ["Inside", "emerald"], LEFT: ["Left", "zinc"] };
-const PURPOSE: Record<string, string> = { GUEST: "Guest", DELIVERY: "Delivery", CAB: "Cab", SERVICE: "Service", OTHER: "Other" };
+// Status and purpose in the residents' own words (en.ts), so the desk and the residents never disagree.
+const t = translator("en");
+const TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "brand", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
 const HOW: Record<string, string> = { CODE: "Guest code", INTERCOM: "Intercom", APP: "Resident in app" };
 
 export default async function VisitorLogPage({ searchParams }: { searchParams: Promise<{ gate?: string; flat?: string; days?: string }> }) {
@@ -72,15 +73,15 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
                     )}
                     <span>
                       <span className="block font-medium">{v.name}</span>
-                      <span className="text-xs text-ink-3">{PURPOSE[v.purpose]}</span>
+                      <span className="text-xs text-ink-3">{t(`v.purpose.${v.purpose}` as Key)}</span>
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-2.5">{v.flatId}</td>
+                <td className="whitespace-nowrap px-4 py-2.5">{v.flatId}</td>
                 <td className="px-4 py-2.5">{v.gate}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-ink-2">{fmtDateTime(v.arrivedAt)}</td>
                 <td className="px-4 py-2.5">
-                  <Badge tone={STATUS[v.status][1]}>{STATUS[v.status][0]}</Badge>
+                  <Badge tone={TONE[v.status]}>{t(`v.status.${v.status}`)}</Badge>
                 </td>
                 <td className="px-4 py-2.5 text-xs text-ink-2">
                   {v.approvalMode ? `${HOW[v.approvalMode]} · ${guard}` : guard}

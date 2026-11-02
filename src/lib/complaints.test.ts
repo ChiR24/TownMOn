@@ -35,6 +35,13 @@ describe("keyword triage", () => {
     expect(classifyByRules("सीढ़ियों पर बहुत कचरा पड़ा है").category).toBe("Cleaning");
     expect(classifyByRules("खिड़की का कांच टूट गया है").category).toBe("Civil"); // Hindi spells it with ड़, Marathi "खिडकी"
     expect(classifyByRules("मेन दरवाज़ा ठीक से बंद नहीं होता").category).toBe("Civil");
+    // Found in review: other forms of the same words, and nukta letters typed as one character (U+095B, U+095C).
+    expect(classifyByRules("दरवाजे का ताला टूट गया है").category).toBe("Civil");
+    expect(classifyByRules("बेडरूम की खिड़कियाँ टूट गई हैं").category).toBe("Civil");
+    expect(classifyByRules("बेडरूमच्या खिडक्या तुटल्या आहेत").category).toBe("Civil");
+    expect(classifyByRules("मेन दरवा\u095Bा ठीक से बंद नहीं होता").category).toBe("Civil");
+    expect(classifyByRules("खि\u095Cकी का कांच टूट गया है").category).toBe("Civil");
+    expect(classifyByRules("पार्किंग में किसी ने मेरी गा\u095Cी पर टक्कर मारी").category).toBe("Parking");
   });
 
   it("makes lift, water and security complaints high, and safety an emergency", () => {

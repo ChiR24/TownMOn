@@ -9,7 +9,9 @@ export type Urgency = (typeof URGENCIES)[number];
 const RESPONSE_MINUTES: Record<Urgency, number> = { EMERGENCY: 15, HIGH: 60, MEDIUM: 240, LOW: 1440 };
 export const responseDue = (u: Urgency, from = new Date()) => new Date(from.getTime() + RESPONSE_MINUTES[u] * 60_000);
 
-// Latin words use word boundaries. Devanagari (Marathi/Hindi) is matched as substrings: JS \b doesn't know Devanagari.
+// Latin words use word boundaries. Devanagari (Marathi/Hindi) is matched as substrings, since JS \b doesn't know
+// Devanagari: a stem where the word changes form (दरवाज: दरवाजा, दरवाजे, दरवाज़ा), on NFC text, so a nukta letter
+// typed as one character (U+095B ज़) or two (ज + ़) is the same.
 type Rule = { re: RegExp; deva: string[] };
 const hits = (text: string, rule: Rule) => (text.match(new RegExp(rule.re, "gi"))?.length ?? 0) + rule.deva.filter((w) => text.includes(w)).length;
 
@@ -21,6 +23,7 @@ const LIFT: Rule = { re: /\b(lift|elevator)s?\b/i, deva: ["लिफ्ट"] };
 
 /** Safety words escalate to the duty manager by rule, whatever the AI says. Returns why, or null. */
 export function safetyReason(text: string): string | null {
+  text = text.normalize("NFC");
   for (const rule of [FIRE, SHOCK]) {
     const word = text.match(rule.re)?.[0] ?? rule.deva.find((w) => text.includes(w));
     if (word) return `mentions "${word}"`;
@@ -40,7 +43,7 @@ const RULES: [Category, Rule][] = [
   ["Parking", { re: /\b(parking|parked|car|bike|scooter|vehicle)\b/i, deva: ["पार्किंग", "गाडी", "गाड़ी"] }],
   ["Noise", { re: /\b(noise|noisy|loud|music|speaker|party|barking)\b/i, deva: ["आवाज", "गोंगाट", "शोर"] }],
   ["Pest control", { re: /\b(pest|cockroach\w*|rats?|mice|mouse|mosquito\w*|termite\w*|bed ?bugs?|lizard)\b/i, deva: ["उंदीर", "चूहे", "चूहा", "डास", "मच्छर", "झुरळ", "कॉकरोच", "दीमक", "वाळवी"] }],
-  ["Civil", { re: /\b(crack\w*|wall|plaster|ceiling|damp\w*|tiles?|door|window|grill|paint\w*|roof|terrace)\b/i, deva: ["भिंत", "तडा", "भेग", "सीलन", "दीवार", "छत", "खिडकी", "खिड़की", "दरवाजा", "दरवाज़"] }],
+  ["Civil", { re: /\b(crack\w*|wall|plaster|ceiling|damp\w*|tiles?|door|window|grill|paint\w*|roof|terrace)\b/i, deva: ["भिंत", "तडा", "भेग", "सीलन", "दीवार", "छत", "खिडक", "खिड़क", "दरवाज"] }],
   ["Garden", { re: /\b(garden|trees?|plants?|grass|lawn|hedge|branch)\b/i, deva: ["बाग", "झाड", "पेड़", "गवत"] }],
 ];
 
@@ -51,6 +54,7 @@ export type RuleResult = { category: Category; urgency: Urgency; safety: string 
 
 /** Keyword triage: instant, works offline, and the fallback whenever the AI is down or unsure. */
 export function classifyByRules(text: string): RuleResult {
+  text = text.normalize("NFC");
   const scored = RULES.map(([category, rule]) => ({ category, n: hits(text, rule) })).filter((s) => s.n > 0);
   const best = scored.reduce<(typeof scored)[number] | undefined>((a, s) => (!a || s.n > a.n ? s : a), undefined);
   const safety = safetyReason(text);

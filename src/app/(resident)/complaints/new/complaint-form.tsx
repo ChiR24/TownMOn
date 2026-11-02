@@ -4,7 +4,7 @@ import { Camera, X } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { cx, Field, IconChip, inputCls } from "@/components/ui";
-import { shrinkPhoto } from "@/lib/shrink-photo";
+import { MAX_PHOTO_BYTES, shrinkPhoto } from "@/lib/shrink-photo";
 import { submitComplaint, type State } from "../actions";
 
 type S = Record<"what" | "whatHint" | "photo" | "photoHint" | "send" | "errShort" | "errPhoto" | "removePhoto", string>;
@@ -15,11 +15,14 @@ export function ComplaintForm({ s }: { s: S }) {
   // so after an error an old preview would show a photo that is no longer attached.
   const [preview, setPreview] = useState<{ url: string; after: State } | null>(null);
   const shown = preview?.after === state ? preview.url : null;
+  // A photo that couldn't be shrunk and is too big to send, refused here rather than after sending (same keying).
+  const [tooBig, setTooBig] = useState<State | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const el = e.target;
     const file = el.files?.[0];
+    setTooBig(null);
     if (!file) return setPreview(null);
     try {
       const small = await shrinkPhoto(file);
@@ -28,6 +31,11 @@ export function ComplaintForm({ s }: { s: S }) {
       el.files = dt.files; // upload the ~150 KB version, not the camera original
       setPreview({ url: URL.createObjectURL(small), after: state });
     } catch {
+      if (file.size > MAX_PHOTO_BYTES) {
+        el.value = "";
+        setPreview(null);
+        return setTooBig(state);
+      }
       setPreview({ url: URL.createObjectURL(file), after: state }); // the server re-checks the bytes either way
     }
   }
@@ -65,7 +73,7 @@ export function ComplaintForm({ s }: { s: S }) {
             {s.photoHint}
           </label>
         )}
-        {state.error === "photo" && (
+        {(state.error === "photo" || tooBig === state) && (
           <p className="mt-1.5 px-1 text-sm text-danger" role="alert">
             {s.errPhoto}
           </p>

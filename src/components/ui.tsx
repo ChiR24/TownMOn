@@ -103,7 +103,10 @@ export function Field({ label, hint, error, htmlFor, children }: { label: string
   );
 }
 
-/** Screen title: big and tight, with a round back button above it when the screen is a step down. */
+/**
+ * Screen title: big and tight, with a round back button above it when the screen is a step down. The action sits
+ * beside the title, or under it when both don't fit (a 360 px phone: "Complaints" and "New complaint").
+ */
 export function PageTitle({ title, subtitle, action, back }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; back?: { href: string; label: string } }) {
   return (
     <header className="mb-6">
@@ -112,7 +115,7 @@ export function PageTitle({ title, subtitle, action, back }: { title: ReactNode;
           <ArrowLeft className="size-5" aria-hidden />
         </RoundLink>
       )}
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[30px] font-semibold leading-[1.15] tracking-[-0.02em] text-ink">{title}</h1>
           {subtitle && <p className="mt-1.5 text-[15px] text-ink-3">{subtitle}</p>}

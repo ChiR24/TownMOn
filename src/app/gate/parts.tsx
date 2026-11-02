@@ -2,7 +2,7 @@
 
 import { CloudOff, Phone, Wifi } from "lucide-react";
 import { useMemo } from "react";
-import type { Entry, GateT } from "./store";
+import type { Entry, GateT, Outcome, Queued } from "./store";
 import type { GateLang } from "./strings";
 
 const LIME = "bg-[#c8f26d] text-zinc-950";
@@ -11,9 +11,10 @@ const LIME = "bg-[#c8f26d] text-zinc-950";
 export function GateHeader({ t, gate, onGate, online, toSync, lang, onLang }: { t: GateT; gate: number; onGate: (g: number) => void; online: boolean; toSync: number; lang: GateLang; onLang: (l: GateLang) => void }) {
   return (
     <header className="flex flex-wrap items-center gap-3">
-      <div className="flex rounded-full bg-zinc-800 p-1">
+      {/* Full width on a phone (the duty manager's), the four gates sharing it; its own size on the tablet. */}
+      <div className="flex w-full rounded-full bg-zinc-800 p-1 sm:w-auto">
         {[1, 2, 3, 4].map((g) => (
-          <button key={g} onClick={() => onGate(g)} className={`h-12 min-w-14 whitespace-nowrap rounded-full px-3 text-lg font-semibold sm:px-4 ${g === gate ? LIME : "text-zinc-300"}`} aria-pressed={g === gate}>
+          <button key={g} onClick={() => onGate(g)} className={`h-12 min-w-14 flex-1 whitespace-nowrap rounded-full px-2 text-base font-semibold sm:flex-none sm:px-4 sm:text-lg ${g === gate ? LIME : "text-zinc-300"}`} aria-pressed={g === gate}>
             {t("gate")} {g}
           </button>
         ))}
@@ -59,6 +60,66 @@ export function Face({ entry, blob, small }: { entry: { name: string; photoId: n
   const size = small ? "size-12 text-base" : "size-20 text-2xl";
   // eslint-disable-next-line @next/next/no-img-element -- private photo route / local blob
   return url ? <img src={url} alt="" className={`${size} shrink-0 rounded-2xl object-cover`} /> : <span className={`${size} flex shrink-0 items-center justify-center rounded-2xl bg-zinc-700 font-semibold`}>{entry.name.slice(0, 1).toUpperCase()}</span>;
+}
+
+/** A resident's answer from the app, for the guard to act on: let them in, or turn them away. */
+export function DecidedCard({ t, e, onEnter }: { t: GateT; e: Entry; onEnter: () => void }) {
+  const ok = e.status === "APPROVED";
+  // On a phone (the duty manager's) the answer goes full width under the visitor; on the tablet, beside them.
+  return (
+    <div className={`mt-3 flex flex-wrap items-center gap-4 rounded-[28px] p-4 sm:flex-nowrap ${ok ? "bg-emerald-900" : "bg-red-950"}`}>
+      <Face entry={e} />
+      <div className="min-w-0 flex-1">
+        <p className="text-xl font-semibold">{e.name}</p>
+        <p className="text-zinc-300">
+          {e.flatId} · {ok ? t("approved") : t("denied")}
+        </p>
+      </div>
+      {ok ? (
+        <button onClick={onEnter} className="h-16 w-full rounded-full bg-emerald-400 px-7 text-xl font-bold text-zinc-950 sm:w-auto">
+          {t("letIn")}
+        </button>
+      ) : (
+        <span className="w-full rounded-full bg-red-500 px-5 py-3 text-center text-lg font-bold text-white sm:w-auto">{t("doNotLetIn")}</span>
+      )}
+    </div>
+  );
+}
+
+/** A visitor saved on this tablet while offline, waiting to be sent; it can be settled on the intercom meanwhile. */
+export function QueuedRow({ t, q, onSettle }: { t: GateT; q: Queued; onSettle: (outcome: Outcome) => void }) {
+  return (
+    <li className="rounded-[28px] bg-zinc-800 p-4">
+      <div className="flex items-center gap-4">
+        <Face entry={{ name: q.name, photoId: null }} blob={q.photo} />
+        <div className="min-w-0 flex-1">
+          <p className="text-xl font-semibold">{q.name}</p>
+          <p className="text-zinc-400">
+            {q.flatId} · {t(q.purpose)} · <span className="text-amber-300">{t("savedHere")}</span>
+          </p>
+        </div>
+        {q.outcome !== "PENDING" && <span className="text-lg font-semibold">{q.outcome === "INTERCOM_DENIED" ? t("doNotLetIn") : t("letIn")}</span>}
+      </div>
+      {q.outcome === "PENDING" && <IntercomButtons t={t} onApprove={() => onSettle("INTERCOM_APPROVED")} onDeny={() => onSettle("INTERCOM_DENIED")} />}
+    </li>
+  );
+}
+
+/** Who is on duty, the notice for visitors, and signing out at the end of the shift (only when offered). */
+export function GateFooter({ t, guardName, onSignOut }: { t: GateT; guardName: string; onSignOut?: () => Promise<void> }) {
+  return (
+    <footer className="mt-8 flex items-center gap-4 text-xs text-zinc-500">
+      <span>{guardName}</span>
+      <a href="/gate/notice" className="ml-auto underline">
+        {t("noticeLink")}
+      </a>
+      {onSignOut && (
+        <form action={onSignOut}>
+          <button className="rounded-full bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-200">{t("signOut")}</button>
+        </form>
+      )}
+    </footer>
+  );
 }
 
 /** Everyone inside right now (whichever gate they came in by), each with the one button the guard needs when they leave. */

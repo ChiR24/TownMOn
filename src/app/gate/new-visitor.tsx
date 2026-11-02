@@ -3,7 +3,7 @@
 import { Camera, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { findFlatCodes } from "@/lib/bank";
-import { shrinkPhoto } from "@/lib/shrink-photo";
+import { MAX_PHOTO_BYTES, shrinkPhoto } from "@/lib/shrink-photo";
 import type { GateT, Purpose, Queued } from "./store";
 
 const field = "h-16 w-full rounded-2xl bg-zinc-800 px-4 text-2xl text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#c8f26d]";
@@ -49,7 +49,8 @@ export function NewVisitor({ t, gate, flats, onClose, onSubmit }: { t: GateT; ga
             className="sr-only"
             onChange={async (e) => {
               const f = e.target.files?.[0];
-              if (f) setPhoto(await shrinkPhoto(f, { max: 960, brighten: true }).catch(() => f));
+              // Can't be shrunk (rare): the original only if the server will keep it; else no photo, and the guard sees that.
+              if (f) setPhoto(await shrinkPhoto(f, { max: 960, brighten: true }).catch(() => (f.size <= MAX_PHOTO_BYTES ? f : undefined)));
             }}
           />
         </label>

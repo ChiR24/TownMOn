@@ -27,8 +27,8 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = await getLang();
   return (
-    <html lang={`${lang}-IN`} className={poppins.variable}>
-      <body className="theme-auto min-h-dvh font-sans text-[15px] antialiased">{children}</body>
+    <html lang={`${lang}-IN`} className={`theme-auto ${poppins.variable}`}>
+      <body className="min-h-dvh font-sans text-[15px] antialiased">{children}</body>
     </html>
   );
 }

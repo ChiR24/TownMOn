@@ -1,5 +1,5 @@
 // End to end, part 2: the gate tablet, residents answering it, and the help desk working complaints.
-import type { Browser, Page } from "playwright-core";
+import type { Browser, Page, Route } from "playwright-core";
 import { base, cameraPhoto, check, desktop, go, phone, see, signIn, storedPhoto, submit, tablet } from "./kit";
 
 export async function gateFlows(browser: Browser, swati: Page, guestCode: string) {
@@ -102,6 +102,34 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     if (entry?.status !== "INSIDE") throw new Error(`the server has them as ${entry?.status}`);
   });
 
+  // Found in review: reading a reply that isn't JSON (a proxy's 413 page) threw, so a live entry was queued as if
+  // offline, and the replay then stopped on it every time, holding back everything queued behind it.
+  await check("gate: a reply the gate can't read (a proxy's 413 page) is reported, never left stuck in the queue", gate, async () => {
+    const proxy413 = (route: Route) => route.fulfill({ status: 413, contentType: "text/plain", body: "Request Entity Too Large" });
+    try {
+      // Live: the guard is told at once, and nothing is queued as if the tablet were offline.
+      await gate.route("**/api/gate/visitors", proxy413);
+      await newVisitor("T07-1203", "Proxy Guest");
+      await see(gate, "Error");
+      if (await gate.getByText("to sync").count()) throw new Error("queued as if offline");
+      // Queued offline (no route: a route would answer even offline), then the replay gets the same page.
+      await gate.unroute("**/api/gate/visitors");
+      await gate.context().setOffline(true);
+      await gate.getByRole("button", { name: "New visitor" }).click();
+      await gate.locator("#flat").fill("T07-1203");
+      await gate.locator("#vname").fill("Queued Guest");
+      await gate.getByRole("button", { name: "Ask resident" }).click();
+      await see(gate, "to sync");
+      await gate.route("**/api/gate/visitors", proxy413);
+      await gate.context().setOffline(false);
+      await see(gate, "Queued Guest: Error");
+      await gate.getByText("to sync").first().waitFor({ state: "detached", timeout: 30_000 });
+    } finally {
+      await gate.context().setOffline(false);
+      await gate.unroute("**/api/gate/visitors");
+    }
+  });
+
   const neeraj = await signIn(browser, phone, "Neeraj Kulkarni");
   await check("resident: denies a visitor; the tablet records it", neeraj, async () => {
     await newVisitor("T07-1203", "Unknown Caller");
@@ -113,11 +141,24 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     const entry = feed.entries.find((e: { name: string }) => e.name === "Unknown Caller");
     if (entry?.status !== "DENIED") throw new Error(`the gate feed says ${entry?.status}`);
   });
-  await check("gate: the guard signs out at the end of a shift, and the gate then asks to sign in", gate, async () => {
+  await check("gate: the guard signs out at the end of a shift; the gate then asks to sign in, and its data is gone from the tablet", gate, async () => {
     await go(gate, "/gate");
     await submit(gate, gate.getByRole("button", { name: "Sign out" }));
     await go(gate, "/gate");
     if (!new URL(gate.url()).pathname.startsWith("/login")) throw new Error("still signed in");
+    // Today's feed (visitors, guest-code hashes) and the flat list in the tablet's storage, and the cached gate screen.
+    const left = await gate.evaluate(
+      () =>
+        new Promise<unknown[]>((res) => {
+          const r = indexedDB.open("gate");
+          r.onsuccess = () => {
+            const tx = r.result.transaction("kv");
+            const got = ["feed", "flats"].map((k) => tx.objectStore("kv").get(k));
+            tx.oncomplete = async () => res([...got.map((g) => g.result), (await self.caches?.match("/gate")) ? "cached /gate" : null]);
+          };
+        }),
+    );
+    if (left.some((x) => x != null)) throw new Error(`still on the tablet: ${JSON.stringify(left).slice(0, 160)}`);
   });
   return neeraj;
 }

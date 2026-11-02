@@ -30,7 +30,11 @@ export const fmtDay = (d: string, lang = "en") => dayFmt(lang).format(new Date(`
 /** The pieces of fmtDay ("Mon", "2", "Nov"), for date chips. */
 export const dayParts = (d: string, lang = "en") =>
   Object.fromEntries(dayFmt(lang).formatToParts(new Date(`${d}T00:00:00Z`)).map((p) => [p.type, p.value])) as Record<"weekday" | "day" | "month", string>;
-export const fmtLongDate = (d: string, lang = "en") => dtf(lang, "long", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
+/** "Monday, 2 November". When it wraps on a phone, the day stays with its month: "Monday," then "2 November". */
+export const fmtLongDate = (d: string, lang = "en") =>
+  dtf(lang, "long", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" })
+    .format(new Date(`${d}T00:00:00Z`))
+    .replace(/(\d) /, `$1${String.fromCharCode(160)}`);
 export const fmtMonth = (period: string, lang = "en") => dtf(lang, "month", { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(`${period}-01T00:00:00Z`));
 export const fmtTime = (d: Date, lang = "en") => dtf(lang, "time", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(d);
 export const fmtDateTime = (d: Date, lang = "en") => dtf(lang, "dt", { timeZone: TZ, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d);

@@ -38,7 +38,7 @@ const TEXT = [
 /** The DPDP Act 2023 notice for the gates. Print it A4 and put it up at all four. */
 export default function GateNoticePage() {
   return (
-    <main className="mx-auto max-w-2xl bg-white px-8 py-10 text-zinc-900 print:max-w-none print:p-0">
+    <main className="theme-light mx-auto max-w-2xl bg-white px-8 py-10 text-zinc-900 print:max-w-none print:p-0">
       <div className="flex items-center gap-3">
         <Logo className="size-12" />
         <p className="text-xl font-semibold">{TOWNSHIP}</p>

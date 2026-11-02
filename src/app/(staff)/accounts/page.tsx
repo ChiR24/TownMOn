@@ -54,11 +54,12 @@ export default async function AccountsPage() {
           const body = (
             <>
               <p className="text-sm font-medium text-ink-2">{s.label}</p>
-              <p className="mt-2 text-[26px] font-semibold leading-none tracking-tight tabular-nums">{s.value}</p>
+              {/* Sized to the tile: a crore-scale amount (₹1,80,36,793) fits a two-up phone tile and a four-up laptop row. */}
+              <p className="mt-2 text-[length:clamp(16px,17cqi,26px)] font-semibold leading-none tracking-tight tabular-nums">{s.value}</p>
               <p className="mt-2 text-xs text-ink-3">{s.note}</p>
             </>
           );
-          const cls = cx(s.tone, "block rounded-[24px] p-5");
+          const cls = cx(s.tone, "@container block rounded-[24px] p-5");
           return s.href ? (
             <Link key={s.label} href={s.href} className={cx(cls, "press hover:brightness-[0.98]")}>
               {body}
@@ -128,8 +129,8 @@ export default async function AccountsPage() {
             <tbody className="divide-y divide-line">
               {imports.map((i) => (
                 <tr key={i.id} className="hover:bg-muted">
-                  <td className="px-4 py-3 font-medium text-ink">{i.fileName}</td>
-                  <td className="px-4 py-3 text-ink-2">
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">{i.fileName}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-ink-2">
                     {fmtDateTime(i.createdAt)} · {i.by}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{i.credits}</td>

@@ -200,9 +200,10 @@ Why they look the way they do:
   for the one primary action on a screen, and a single lime accent for highlights and progress. Colours are named by
   role (canvas, surface, ink, cta, accent), so every screen, for every role, follows the device's light or dark mode
   (in the dark the primary action turns lime), and anything printed (receipts, the monthly report) is always black
-  on white. Red, amber and green only carry status, and
-  always with an icon and words, never colour alone. Chart colours were checked with a palette validator (ordinal green
-  ramp for dues by age); the committee's four targets are gauges with the target marked.
+  on white. The two pages that stand for paper or for someone else's site (the gate notice, the test gateway) stay
+  light. Red, amber and green only carry status, and always with an icon and words, never colour alone. Chart colours
+  were checked with a palette validator (ordinal green ramp for dues by age); the committee's four targets are gauges
+  with the target marked.
 - **The AI has a visible signature.** Anything Claude decided (a category, an urgency, a duplicate link) carries a
   violet sparkle and its confidence; rules and staff decisions never do. Residents see "AI sorted this as Plumbing (94%
   sure)" and that the help desk checks it, or, when the AI is unsure, that a person will sort it; the help desk sees
@@ -251,17 +252,19 @@ the AI against the Claude API (`npm run ai:check`, section 5):
 | Reports | The reconciliation identity to the paisa; on-time rate; the AI correction rate counting only the AI's calls; amenity rules |
 
 **End to end.** `npm run e2e` drives a real browser through every main flow as each role, against the running app on
-fresh demo data: 50 checks, all passing both locally and on the live site. They cover sign-in (a wrong code, an
-unknown number) and signing out as each role; a failed and a successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
-help desk (note, work started, fixed) and rated by the resident, and another reopened; the one-tap category fix on an
-unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower; guest codes (valid, used,
-wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline then synced, including
-one settled on the intercom while its upload was still in flight; booking and cancelling an amenity; household
-members; Marathi; the bank import, a re-import that posts nothing, the three review-queue actions and a reversal; the
-committee report; and privacy between flats (receipts, complaints, photos). The photos are what a phone takes: a 12 MP
-JPEG with the EXIF tag for a portrait shot, which must come back upright and at most 1280 px (complaints) or 960 px
-(gate). A crawl of every page reachable from each role's home found no error page, failed request or console error,
-and each role is kept out of the others' areas.
+fresh demo data: 51 checks, all passing both locally and on the live site. They cover sign-in (a wrong code, an
+unknown number) and signing out as each role (at the gate, also that nothing of the gate stays on the tablet); a
+failed and a successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by
+Claude, worked by the help desk (note, work started, fixed) and rated by the resident, and another reopened; the
+one-tap category fix on an unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower;
+guest codes (valid, used, wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline
+then synced, including one settled on the intercom while its upload was still in flight and one answered with a page
+the tablet can't read (a proxy's "too large"); booking and cancelling an amenity; household members; Marathi; the bank
+import, a re-import that posts nothing, the three review-queue actions and a reversal; the committee report; and
+privacy between flats (receipts, complaints, photos). The photos are what a phone takes: a 12 MP JPEG with the EXIF
+tag for a portrait shot, which must come back upright and at most 1280 px (complaints) or 960 px (gate). A crawl of
+every page reachable from each role's home found no error page, failed request or console error, and each role is
+kept out of the others' areas.
 
 **Production build.** The gate's service worker and the install prompt exist only in the production build, so they
 were checked against `next start`. With the network really cut (the browser reaches the server through a plug the
@@ -274,7 +277,10 @@ page) never passed through it, so the first offline reload showed the browser's 
 screen and its files when it installs. And the gate API's same-origin check compared the page with the server's own
 name, not the address the tablet used, so a tablet opening the app by its network address had every entry refused,
 and the offline replay then threw those entries away. The check now follows the Host header, as Next does for its own
-server actions, and a refused replay keeps the entry until the guard signs in again.
+server actions, and a refused replay keeps the entry until the guard signs in again. Three more checks came with the
+second review (below), all with the plug pulled: opening the visitors' notice from the gate no longer takes the gate
+screen's place in the cache; once the guard signs out, the gate screen no longer opens offline; and the next guard's
+sign-in caches it again, so an offline reload straight after works.
 
 The Marathi and Hindi copy was read line by line against the English. 26 strings were corrected, most of them for
 one word spelled two ways; the real ones were a mistranslated "how urgent", a hint that promised where it should have
@@ -308,6 +314,22 @@ that the 90-day purge would never find, and a receipt's balance counting a later
 cleanup pass then removed dead code (unused exports, functions and translation keys), replaced hand-rolled grouping
 that copied a list on every row with the built-in `Map.groupBy`, and cut the help desk's per-complaint notification
 queries to one.
+
+A second review, of everything changed after that, found eleven more, all fixed. The worst three: opening the
+visitors' notice on the gate tablet replaced its cached gate screen, so with the network down the tablet showed the
+notice instead of the gate; the fix for upright phone photos made older browsers refuse to shrink photos at all, so
+those photos were too large to keep; and a Hindi or Marathi complaint using another form of "door" or "window" (a
+plural, or the form before "of") went unsorted. The rules now match word stems, and a nukta letter typed either way.
+Signing out at the gate now also clears what the tablet keeps for offline use (today's visitors, the guest-code
+hashes, the cached screen). The rest: a reply the gate couldn't read leaving an entry stuck at the head of its queue;
+the photo error giving the wrong size limit; the two light-only pages (test payment, gate notice) picking up
+dark-mode colours, among them an invisible focus ring; a phone's tab bar too narrow for the duty manager's six tabs
+(and, found while checking it, for "Complaints" on a 360 px phone); the page's own scrollbar staying light in dark
+mode; the visitor log keeping its own copy of the residents' words; and each photo's full-size image held in memory
+until garbage collection. A sweep of every page at 360 and 320 px wide, the narrowest phones in common use, then
+found five layout faults the 390 px screenshots had missed, all fixed: a page title running under its button, the
+monthly report's wide tables widening the whole page, the accounts tiles' crore-scale amounts spilling out, the gate
+squeezing a visitor's name beside the guard's answer on a phone, and a date splitting "2" from "November".
 
 ## 9. The numbers
 
