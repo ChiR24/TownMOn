@@ -8,7 +8,7 @@ import { Button } from "./ui";
 const TEXT = {
   en: { title: "Something went wrong", body: "This page didn't load. Please try again. If it keeps happening, call the help desk.", offTitle: "You're offline", offBody: "Check your internet connection and try again.", retry: "Try again", ref: "Reference" },
   mr: { title: "काहीतरी चुकले", body: "हे पान उघडले नाही. पुन्हा प्रयत्न करा. असे होत राहिल्यास हेल्प डेस्कला फोन करा.", offTitle: "इंटरनेट बंद आहे", offBody: "इंटरनेट तपासून पुन्हा प्रयत्न करा.", retry: "पुन्हा प्रयत्न करा", ref: "संदर्भ" },
-  hi: { title: "कुछ गड़बड़ हो गई", body: "यह पेज नहीं खुला। फिर से कोशिश करें। बार-बार हो तो हेल्प डेस्क को फ़ोन करें।", offTitle: "इंटरनेट बंद है", offBody: "इंटरनेट जाँचकर फिर से कोशिश करें।", retry: "फिर से कोशिश करें", ref: "संदर्भ" },
+  hi: { title: "कुछ गड़बड़ हो गई", body: "यह पेज नहीं खुला। फिर से कोशिश करें। बार-बार ऐसा हो तो हेल्प डेस्क को फ़ोन करें।", offTitle: "इंटरनेट बंद है", offBody: "इंटरनेट जाँचकर फिर से कोशिश करें।", retry: "फिर से कोशिश करें", ref: "संदर्भ" },
 };
 
 /** Shown when a page fails to load: says so plainly, offers a retry, never shows a stack trace. */

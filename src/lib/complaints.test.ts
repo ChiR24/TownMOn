@@ -33,6 +33,8 @@ describe("keyword triage", () => {
   it("reads Marathi and Hindi", () => {
     expect(classifyByRules("आमच्या मजल्यावर पाणी नाही").category).toBe("Water supply");
     expect(classifyByRules("सीढ़ियों पर बहुत कचरा पड़ा है").category).toBe("Cleaning");
+    expect(classifyByRules("खिड़की का कांच टूट गया है").category).toBe("Civil"); // Hindi spells it with ड़, Marathi "खिडकी"
+    expect(classifyByRules("मेन दरवाज़ा ठीक से बंद नहीं होता").category).toBe("Civil");
   });
 
   it("makes lift, water and security complaints high, and safety an emergency", () => {

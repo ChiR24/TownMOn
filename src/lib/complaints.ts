@@ -40,7 +40,7 @@ const RULES: [Category, Rule][] = [
   ["Parking", { re: /\b(parking|parked|car|bike|scooter|vehicle)\b/i, deva: ["पार्किंग", "गाडी", "गाड़ी"] }],
   ["Noise", { re: /\b(noise|noisy|loud|music|speaker|party|barking)\b/i, deva: ["आवाज", "गोंगाट", "शोर"] }],
   ["Pest control", { re: /\b(pest|cockroach\w*|rats?|mice|mouse|mosquito\w*|termite\w*|bed ?bugs?|lizard)\b/i, deva: ["उंदीर", "चूहे", "चूहा", "डास", "मच्छर", "झुरळ", "कॉकरोच", "दीमक", "वाळवी"] }],
-  ["Civil", { re: /\b(crack\w*|wall|plaster|ceiling|damp\w*|tiles?|door|window|grill|paint\w*|roof|terrace)\b/i, deva: ["भिंत", "तडा", "भेग", "सीलन", "दीवार", "छत", "खिडकी", "दरवाजा"] }],
+  ["Civil", { re: /\b(crack\w*|wall|plaster|ceiling|damp\w*|tiles?|door|window|grill|paint\w*|roof|terrace)\b/i, deva: ["भिंत", "तडा", "भेग", "सीलन", "दीवार", "छत", "खिडकी", "खिड़की", "दरवाजा", "दरवाज़"] }],
   ["Garden", { re: /\b(garden|trees?|plants?|grass|lawn|hedge|branch)\b/i, deva: ["बाग", "झाड", "पेड़", "गवत"] }],
 ];
 
