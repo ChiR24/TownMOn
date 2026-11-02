@@ -2,14 +2,15 @@
 @import "./surfaces.css";
 
 /*
- * Design tokens. Every surface and text colour is a role, not a hex, so the resident app can follow the phone's
- * dark mode while staff consoles (desk tools, printed reports) stay light. Dark mode is scoped to `.theme-auto`.
+ * Design tokens. Every surface and text colour is a role, not a hex, so every screen, for every role, follows the
+ * device's light or dark mode (`.theme-auto`, set on <body>). Paper is always light: dark mode is screen-only, so
+ * receipts and the monthly report print in black on white.
  *
  * The look: airy warm-grey canvas, white cards with large radii and soft shadows, near-black for the one primary
  * action on a screen, and a single lime accent for highlights and progress.
  */
 @custom-variant dark {
-  @media (prefers-color-scheme: dark) {
+  @media screen and (prefers-color-scheme: dark) {
     &:where(.theme-auto, .theme-auto *) {
       @slot;
     }
@@ -64,7 +65,7 @@
   --accent-soft: #eef8d6;
 }
 
-@media (prefers-color-scheme: dark) {
+@media screen and (prefers-color-scheme: dark) {
   .theme-auto {
     color-scheme: dark;
     --canvas: #0d0d0c;
@@ -80,6 +81,23 @@
     --accent-ink: #c8f26d;
     --accent-soft: rgb(200 242 109 / 0.13);
   }
+}
+
+/*
+ * The gate tablet is always dark. Its greys are the app's own dark-mode greys (warm, not Tailwind's cool zinc), so
+ * the guard's screen and a resident's phone in dark mode are one palette.
+ */
+.gate-theme {
+  color-scheme: dark;
+  --color-zinc-100: #f4f4f2;
+  --color-zinc-200: #e2e2de;
+  --color-zinc-300: #c6c6c1;
+  --color-zinc-400: #a3a39d;
+  --color-zinc-500: #7c7c76;
+  --color-zinc-700: #34342f;
+  --color-zinc-800: #222220;
+  --color-zinc-900: #181817;
+  --color-zinc-950: #0d0d0c;
 }
 
 @layer base {
@@ -103,12 +121,6 @@
   html:lang(mr) :not(input),
   html:lang(hi) :not(input) {
     letter-spacing: normal !important;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body:has(.theme-auto) {
-    background: #0d0d0c;
   }
 }
 

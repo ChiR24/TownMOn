@@ -38,7 +38,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
     { icon: Eye, text: t("welcome.p4"), tone: "violet" },
   ];
   return (
-    <main className="theme-auto resident-backdrop min-h-dvh text-ink">
+    <main className="app-backdrop min-h-dvh text-ink">
       <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-10 pt-[max(env(safe-area-inset-top),1.5rem)] motion-safe:animate-enter">
         {accepted ? (
           <RoundLink href={u.role === "RESIDENT" ? "/more" : homeFor(u.role)} label={t("common.back")}>

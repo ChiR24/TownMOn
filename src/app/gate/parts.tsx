@@ -13,7 +13,7 @@ export function GateHeader({ t, gate, onGate, online, toSync, lang, onLang }: { 
     <header className="flex flex-wrap items-center gap-3">
       <div className="flex rounded-full bg-zinc-800 p-1">
         {[1, 2, 3, 4].map((g) => (
-          <button key={g} onClick={() => onGate(g)} className={`h-12 min-w-14 rounded-full px-4 text-lg font-semibold ${g === gate ? LIME : "text-zinc-300"}`} aria-pressed={g === gate}>
+          <button key={g} onClick={() => onGate(g)} className={`h-12 min-w-14 whitespace-nowrap rounded-full px-3 text-lg font-semibold sm:px-4 ${g === gate ? LIME : "text-zinc-300"}`} aria-pressed={g === gate}>
             {t("gate")} {g}
           </button>
         ))}

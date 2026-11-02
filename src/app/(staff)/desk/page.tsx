@@ -68,7 +68,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
             className={cx("press flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1", k === view ? "bg-cta text-cta-ink ring-cta" : "bg-surface text-ink-2 ring-line hover:bg-muted")}
           >
             {VIEWS[k]}
-            <span className={cx("tabular-nums", k === view ? "text-white/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-ink-3")}>{Number(counts[k])}</span>
+            <span className={cx("tabular-nums", k === view ? "text-cta-ink/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-ink-3")}>{Number(counts[k])}</span>
           </Link>
         ))}
       </nav>

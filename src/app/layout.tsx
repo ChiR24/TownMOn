@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lang = await getLang();
   return (
     <html lang={`${lang}-IN`} className={poppins.variable}>
-      <body className="min-h-dvh font-sans text-[15px] antialiased">{children}</body>
+      <body className="theme-auto min-h-dvh font-sans text-[15px] antialiased">{children}</body>
     </html>
   );
 }

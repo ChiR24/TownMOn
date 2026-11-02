@@ -6,7 +6,7 @@ import { rupees } from "@/lib/money";
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
 // Colours are roles (see globals.css): near-black `cta` is the one primary action on a screen, lime `accent`
-// highlights. Dark mode only applies inside `.theme-auto`.
+// highlights. Dark mode follows the device, on screen only (globals.css).
 const lift = "shadow-[0_1px_2px_rgb(18_18_18/0.05),0_10px_24px_-14px_rgb(18_18_18/0.22)] dark:shadow-none dark:ring-1 dark:ring-line";
 const VARIANT = {
   primary: "bg-cta text-cta-ink shadow-[0_12px_24px_-12px_rgb(18_18_18/0.55)] hover:opacity-90 dark:shadow-none",

@@ -2,16 +2,17 @@ import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "@/app/actions";
+import { AppSidebar } from "@/components/app-sidebar";
 import { Logo } from "@/components/brand";
-import { Avatar } from "@/components/ui";
+import { BottomNav, PageEnter, type NavLink } from "@/components/nav";
 import { db } from "@/db";
 import { bankTxns, complaints } from "@/db/schema";
 import { AREAS, requireUser, type Role } from "@/lib/auth";
 import { fmtLongDate, todayIST } from "@/lib/dates";
-import { StaffNav, type NavLink } from "./staff-nav";
 
 const ROLE_LABEL: Partial<Record<Role, string>> = { HELPDESK: "Help desk", ACCOUNTS: "Accounts", COMMITTEE: "Committee", MANAGER: "Duty manager" };
 
+// The same shell as the resident app: a sidebar on computers; on phones and tablets a glass header and tab bar.
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser(["HELPDESK", "ACCOUNTS", "COMMITTEE", "MANAGER"]);
   const can = (area: keyof typeof AREAS) => (AREAS[area] as readonly Role[]).includes(user.role);
@@ -21,7 +22,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     can("accounts") ? db.select({ n: count() }).from(bankTxns).where(eq(bankTxns.status, "NEEDS_REVIEW")) : [{ n: 0 }],
   ]);
   const links = [
-    can("desk") && { href: "/desk", label: "Complaints", icon: "desk", count: active[0].n },
+    can("desk") && { href: "/desk", label: "Complaints", icon: "complaints", count: active[0].n },
     can("desk") && { href: "/desk/notices", label: "Notices", icon: "notices" },
     can("accounts") && { href: "/accounts", label: "Accounts", icon: "accounts" },
     can("accounts") && { href: "/accounts/review", label: "Review queue", icon: "review", count: review[0].n },
@@ -31,45 +32,25 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const home = links[0]?.href ?? "/";
 
   return (
-    <div className="min-h-dvh lg:flex lg:gap-5 lg:p-4">
-      <aside className="card no-print sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 flex-col p-4 lg:flex">
-        <Link href={home} className="flex items-center gap-2.5 px-2 pt-1">
-          <Logo className="size-9" />
-          <span className="text-lg font-semibold">Township</span>
-        </Link>
-        <StaffNav links={links} vertical />
-        <div className="mt-auto rounded-[22px] bg-[linear-gradient(135deg,#eef8d6,#f3eefe)] p-3">
-          <div className="flex items-center gap-3">
-            <Avatar name={user.name} className="size-10 text-sm" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{user.name}</p>
-              <p className="text-xs text-ink-3">{ROLE_LABEL[user.role]}</p>
-            </div>
-          </div>
-          <form action={signOut} className="mt-2">
-            <button className="press flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-sm font-medium text-ink-2 hover:bg-white/70 hover:text-ink">
+    <div className="app-backdrop min-h-dvh text-ink lg:flex lg:gap-5 lg:p-4">
+      <AppSidebar home={home} links={links} navLabel="Staff" name={user.name} subtitle={ROLE_LABEL[user.role] ?? ""} signOutLabel="Sign out" />
+      <div className="w-full min-w-0">
+        <header className="edge-top no-print sticky top-0 z-20 flex items-center gap-2 px-4 pb-2 pt-[max(env(safe-area-inset-top),0.75rem)] lg:hidden">
+          <Link href={home} className="glass press flex size-11 items-center justify-center rounded-full" aria-label="Township">
+            <Logo className="size-7" />
+          </Link>
+          <form action={signOut} className="ml-auto">
+            <button className="glass press flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-ink">
               <LogOut className="size-4" aria-hidden /> Sign out
             </button>
           </form>
-        </div>
-      </aside>
-
-      <header className="no-print sticky top-0 z-20 border-b border-line bg-white/90 backdrop-blur lg:hidden">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <Link href={home} className="shrink-0" aria-label="Township">
-            <Logo className="size-8" />
-          </Link>
-          <StaffNav links={links} />
-          <form action={signOut} className="ml-auto shrink-0">
-            <button className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-muted hover:text-ink">Sign out</button>
-          </form>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full min-w-0 max-w-6xl px-4 py-6 lg:px-2 lg:py-3">
-        <p className="no-print mb-1 text-sm font-medium text-ink-3">{fmtLongDate(todayIST())}</p>
-        {children}
-      </main>
+        </header>
+        <main className={`mx-auto w-full max-w-6xl px-4 pt-3 lg:px-2 lg:py-3 ${links.length > 1 ? "pb-32" : "pb-10"}`}>
+          <p className="no-print mb-1 text-sm font-medium text-ink-3">{fmtLongDate(todayIST())}</p>
+          <PageEnter>{children}</PageEnter>
+        </main>
+        <BottomNav links={links} label="Staff" />
+      </div>
     </div>
   );
 }

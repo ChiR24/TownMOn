@@ -56,7 +56,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   } as Parameters<typeof LoginForm>[0]["s"];
 
   return (
-    <main className="theme-auto resident-backdrop min-h-dvh text-ink">
+    <main className="app-backdrop min-h-dvh text-ink">
       <div className="mx-auto max-w-md px-4 pb-10 pt-[max(env(safe-area-inset-top),1.25rem)] motion-safe:animate-enter">
         <div className="flex items-center gap-2.5 px-1">
           <Logo className="size-10" />
