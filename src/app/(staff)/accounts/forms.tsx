@@ -15,7 +15,7 @@ export function UploadForm() {
         name="file"
         accept=".csv,text/csv"
         required
-        className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink-2 hover:file:bg-zinc-200"
+        className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink-2 hover:file:bg-ink/10"
       />
       {state.error && (
         <p className="text-sm text-red-700" role="alert">
@@ -37,8 +37,13 @@ export function OtherFlatForm({ txnId }: { txnId: number }) {
         <label className="sr-only" htmlFor={`flat-${txnId}`}>
           Flat number
         </label>
-        <input id={`flat-${txnId}`} name="flatId" required placeholder="Another flat, e.g. T07-1203" className={`${inputCls} py-2 text-sm`} />
-        {state.error && <p className="mt-1 text-xs text-red-700">{state.error}</p>}
+        {/* Keyed on the last try, so a mistyped flat stays in the box to correct instead of vanishing. */}
+        <input key={state.value} id={`flat-${txnId}`} name="flatId" required defaultValue={state.value} placeholder="Another flat, e.g. T07-1203" className={`${inputCls} py-2 text-sm`} />
+        {state.error && (
+          <p className="mt-1 text-xs text-red-700" role="alert">
+            {state.error}
+          </p>
+        )}
       </div>
       <SubmitButton size="sm" variant="secondary" className="h-10">
         Post
@@ -54,12 +59,16 @@ export function ReverseForm({ paymentId }: { paymentId: number }) {
     <details className="text-left">
       <summary className="cursor-pointer text-xs font-medium text-red-700">Reverse</summary>
       <form action={action} className="mt-2 flex gap-2">
-        <input name="reason" required minLength={5} placeholder="Why? e.g. belongs to T07-1204" className={`${inputCls} py-1.5 text-sm`} />
+        <input key={state.value} name="reason" required minLength={5} defaultValue={state.value} placeholder="Why? e.g. belongs to T07-1204" className={`${inputCls} py-1.5 text-sm`} />
         <SubmitButton size="sm" variant="danger">
           Reverse
         </SubmitButton>
       </form>
-      {state.error && <p className="mt-1 text-xs text-red-700">{state.error}</p>}
+      {state.error && (
+        <p className="mt-1 text-xs text-red-700" role="alert">
+          {state.error}
+        </p>
+      )}
     </details>
   );
 }

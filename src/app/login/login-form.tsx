@@ -72,7 +72,7 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
             <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full bg-muted px-3 py-2 text-sm font-semibold text-ink-2" aria-hidden>
               +91
             </span>
-            <input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="98XXXXXXXX" className={cx(inputCls, "h-14 !rounded-full pl-[4.75rem] text-lg tracking-wide")} autoFocus />
+            <input key={state.typed ?? ""} id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" required defaultValue={state.typed} placeholder="98XXXXXXXX" className={cx(inputCls, "h-14 !rounded-full pl-[4.75rem] text-lg tracking-wide")} autoFocus />
           </div>
         </Field>
         <SubmitButton name="intent" value="send" size="lg" className="w-full">

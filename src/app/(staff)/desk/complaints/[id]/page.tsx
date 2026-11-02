@@ -1,6 +1,7 @@
 import { alias } from "drizzle-orm/pg-core";
 import { asc, eq } from "drizzle-orm";
-import { Bot, Link2, Phone, Siren } from "lucide-react";
+import { Link2, Phone, Siren } from "lucide-react";
+import { AiNote } from "@/components/ai";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,14 +55,16 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
               <img src={`/api/photos/${c.photoId}`} alt="Photo from the resident" className="max-h-80 rounded-xl ring-1 ring-line" />
             )}
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <a href={`tel:+91${row.residentPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-medium text-ink-2 hover:bg-zinc-200">
+              <a href={`tel:+91${row.residentPhone}`} className="press inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 font-semibold text-ink-2 hover:bg-ink/10">
                 <Phone className="size-3.5" aria-hidden /> Call {row.residentName.split(" ")[0]}
               </a>
-              {c.classifiedBy === "AI" && (
-                <Badge tone={c.needsTriage ? "amber" : "brand"}>
-                  <Bot className="size-3" aria-hidden /> AI {c.aiConfidence}% sure{c.needsTriage ? ", please check" : ""}
-                </Badge>
-              )}
+            </div>
+            {c.classifiedBy === "AI" && (
+              <AiNote title={c.needsTriage ? `AI is only ${c.aiConfidence}% sure. Please check the category.` : `AI sorted this as ${c.category}, ${c.urgency.toLowerCase()} urgency, ${c.aiConfidence}% sure.`}>
+                One tap below changes it; every correction is counted for the committee.
+              </AiNote>
+            )}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               {c.reopenCount > 0 && <Badge tone="red">Reopened {c.reopenCount}×</Badge>}
               {c.rating && <Badge tone="amber">{"★".repeat(c.rating)} {c.ratingComment ? `“${c.ratingComment}”` : ""}</Badge>}
             </div>
@@ -96,7 +99,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                       {k.flatId} · “{k.description}” · {relTime(k.createdAt)}
                     </span>
                     <form action={unlink.bind(null, k.id)}>
-                      <SubmitButton size="sm" variant="ghost" className="text-xs">
+                      <SubmitButton size="sm" variant="ghost" className="text-xs" aria-label={`Unlink #${k.id}: a different problem`}>
                         Unlink
                       </SubmitButton>
                     </form>
@@ -164,7 +167,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <form action={setUrgency.bind(null, c.id)} className="flex items-end gap-2">
               <label className="min-w-0 flex-1 text-sm font-semibold">
                 Urgency
-                <select name="urgency" defaultValue={c.urgency} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
+                <select key={c.urgency} name="urgency" defaultValue={c.urgency} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
                   {URGENCIES.map((u) => (
                     <option key={u} value={u}>
                       {URGENCY_LABEL[u]}
@@ -180,7 +183,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
               <form action={assign.bind(null, c.id)} className="flex items-end gap-2">
                 <label className="min-w-0 flex-1 text-sm font-semibold">
                   Technician
-                  <select name="techId" defaultValue={c.assignedTo ?? ""} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
+                  <select key={c.assignedTo ?? "none"} name="techId" defaultValue={c.assignedTo ?? ""} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
                     <option value="" disabled>
                       Choose…
                     </option>

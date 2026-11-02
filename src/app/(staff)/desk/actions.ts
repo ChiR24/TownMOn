@@ -1,28 +1,20 @@
 "use server";
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db, type Q } from "@/db";
-import { complaintEvents, complaints, notices, notifications, users } from "@/db/schema";
+import { db } from "@/db";
+import { complaintEvents, complaints, notices, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
 import { CATEGORIES, responseDue, teamFor, URGENCIES, URGENCY_LABEL, type Category, type Urgency } from "@/lib/complaints";
-import { flatPeople } from "@/lib/data";
-import { linkedIds, pickTechnician } from "@/lib/triage";
+import { postUpdate } from "@/lib/desk";
+import { pickTechnician } from "@/lib/triage";
 
 const desk = () => requireUser(AREAS.desk);
 const refresh = (id: number) => {
   revalidatePath("/desk");
   revalidatePath(`/desk/complaints/${id}`);
 };
-
-async function tellResidents(q: Q, complaintIds: number[], title: string, body: string | null) {
-  const rows = await q.select({ id: complaints.id, flatId: complaints.flatId }).from(complaints).where(inArray(complaints.id, complaintIds));
-  for (const r of rows) {
-    const people = await flatPeople(r.flatId, q);
-    if (people.length) await q.insert(notifications).values(people.map((p) => ({ userId: p.id, title: `Complaint #${r.id}: ${title}`, body, link: `/complaints/${r.id}` })));
-  }
-}
 
 /** One tap fixes the AI's category. Counted, so the committee can see how often the AI is corrected. */
 export async function setCategory(id: number, category: string) {
@@ -59,37 +51,24 @@ export async function assign(id: number, form: FormData) {
   const techId = z.coerce.number().int().parse(form.get("techId"));
   const [tech] = await db.select({ id: users.id, name: users.name }).from(users).where(and(eq(users.id, techId), eq(users.role, "TECHNICIAN")));
   if (!tech) return;
-  await db.update(complaints).set({ assignedTo: tech.id, status: "ASSIGNED" }).where(and(eq(complaints.id, id), inArray(complaints.status, ["OPEN", "ASSIGNED"])));
+  const [c] = await db.select({ status: complaints.status }).from(complaints).where(eq(complaints.id, id));
+  // Any open complaint can change hands (a technician swapped mid-job keeps it "in progress"); fixed or closed can't.
+  if (!c || !["OPEN", "ASSIGNED", "IN_PROGRESS"].includes(c.status)) return;
+  await db
+    .update(complaints)
+    .set({ assignedTo: tech.id, ...(c.status === "OPEN" ? { status: "ASSIGNED" as const } : {}) })
+    .where(and(eq(complaints.id, id), inArray(complaints.status, ["OPEN", "ASSIGNED", "IN_PROGRESS"])));
   await db.insert(complaintEvents).values({ complaintId: id, actorId: user.id, kind: "ASSIGNED", note: `Assigned to ${tech.name}` });
   refresh(id);
 }
 
 const Update = z.object({ intent: z.enum(["note", "start", "resolve"]), note: z.string().trim().max(500).optional() });
 
-/**
- * Status updates and notes. The first human update stops the response clock. "Fixed" asks the resident to
- * confirm and rate; it never closes the complaint for them. Linked duplicates get the same update.
- */
+/** Status updates and notes (the rules live in lib/desk.ts, where they are tested). */
 export async function update(id: number, form: FormData) {
   const user = await desk();
   const { intent, note } = Update.parse(Object.fromEntries(form));
-  const text = note || (intent === "start" ? "Work has started" : intent === "resolve" ? "Fixed. Please confirm it works." : "");
-  if (!text) return;
-  const now = new Date();
-  await db.transaction(async (tx) => {
-    const ids = [id, ...(await linkedIds(tx, id))];
-    const status = intent === "start" ? "IN_PROGRESS" : intent === "resolve" ? "RESOLVED" : undefined;
-    for (const cid of ids) {
-      await tx
-        .update(complaints)
-        .set({ ...(status ? { status } : {}), ...(status === "RESOLVED" ? { resolvedAt: now } : {}) })
-        .where(and(eq(complaints.id, cid), inArray(complaints.status, ["OPEN", "ASSIGNED", "IN_PROGRESS"])));
-      await tx.update(complaints).set({ firstResponseAt: now }).where(and(eq(complaints.id, cid), isNull(complaints.firstResponseAt)));
-      await tx.insert(complaintEvents).values({ complaintId: cid, actorId: user.id, kind: "STATUS", note: cid === id ? text : `Update on #${id}: ${text}` });
-    }
-    await tellResidents(tx, ids, intent === "resolve" ? "fixed? Please confirm" : intent === "start" ? "work started" : "update", text);
-  });
-  refresh(id);
+  if (await postUpdate(db, { id, actorId: user.id, intent, note })) refresh(id);
 }
 
 export async function unlink(childId: number) {
@@ -102,13 +81,15 @@ export async function unlink(childId: number) {
   refresh(c.parentId);
 }
 
-const Notice = z.object({ title: z.string().trim().min(5).max(120), body: z.string().trim().min(5).max(1500), tower: z.string() });
+const Notice = z.object({ title: z.string().trim().min(5).max(120), body: z.string().trim().min(5).max(1500), tower: z.union([z.literal("all"), z.coerce.number().int().min(1).max(28)]) });
+export type NoticeState = { error?: string; ok?: boolean; values?: { title: string; body: string; tower: string } };
 
-export async function postNotice(_: { error?: string; ok?: boolean }, form: FormData) {
+export async function postNotice(_: NoticeState, form: FormData): Promise<NoticeState> {
   const user = await desk();
-  const p = Notice.safeParse(Object.fromEntries(form));
-  if (!p.success) return { error: "Give the notice a title and a few lines of text." };
-  const tower = p.data.tower === "all" ? null : z.coerce.number().int().min(1).max(28).parse(p.data.tower);
+  const values = { title: String(form.get("title") ?? ""), body: String(form.get("body") ?? ""), tower: String(form.get("tower") ?? "all") };
+  const p = Notice.safeParse(values);
+  if (!p.success) return { error: "Give the notice a title and a few lines of text.", values };
+  const tower = p.data.tower === "all" ? null : p.data.tower;
   await db.insert(notices).values({ title: p.data.title, body: p.data.body, tower, createdBy: user.id });
   revalidatePath("/desk/notices");
   return { ok: true };

@@ -13,19 +13,21 @@ import { isMember } from "@/lib/data";
 import { savePhoto } from "@/lib/photos";
 import { createComplaint, refineWithAi } from "@/lib/triage";
 
-export type State = { error?: "short" | "photo" | "rating" };
+// `text` sends the description back on an error, so the resident never has to type it again.
+export type State = { error?: "short" | "photo" | "rating"; text?: string };
 
 export async function submitComplaint(_: State, form: FormData): Promise<State> {
   const { user, flat } = await requireResident();
-  const description = String(form.get("description") ?? "").trim();
-  if (description.length < 5 || description.length > 1000) return { error: "short" };
+  const text = String(form.get("description") ?? "").slice(0, 1000);
+  const description = text.trim();
+  if (description.length < 5) return { error: "short", text };
   const photo = form.get("photo");
   const id = await db.transaction(async (tx) => {
     const photoId = photo instanceof File && photo.size > 0 ? await savePhoto(tx, photo) : null;
     if (photo instanceof File && photo.size > 0 && !photoId) return null;
     return createComplaint(tx, { flatId: flat.flatId, raisedBy: user.id, description, photoId });
   });
-  if (!id) return { error: "photo" };
+  if (!id) return { error: "photo", text };
   // The resident sees the rules' answer at once; Claude refines it a few seconds later, off the request.
   after(() => refineWithAi(db, id));
   redirect(`/complaints/${id}?new=1`);

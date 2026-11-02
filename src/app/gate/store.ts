@@ -3,7 +3,7 @@ import type { GateKey } from "./strings";
 
 export type Purpose = "GUEST" | "DELIVERY" | "CAB" | "SERVICE" | "OTHER";
 export type Outcome = "PENDING" | "INTERCOM_APPROVED" | "INTERCOM_DENIED" | "CODE";
-export type Entry = { id: number; clientId: string; flatId: string; name: string; purpose: Purpose; status: string; approvalMode: string | null; photoId: number | null; arrivedAt: string };
+export type Entry = { id: number; clientId: string; flatId: string; name: string; purpose: Purpose; status: string; approvalMode: string | null; photoId: number | null; arrivedAt: string; gate?: number };
 export type Code = { id: number; flatId: string; guestName: string; salt: string; hash: string; validFrom: string; validTo: string };
 export type Queued = { clientId: string; flatId: string; name: string; phone: string; purpose: Purpose; gate: number; arrivedAt: string; outcome: Outcome; guestCodeId?: number; photo?: Blob };
 export type CodeResult = { ok: true; guestName: string; flatId: string } | { error: "invalid" | "used" | "expired" };

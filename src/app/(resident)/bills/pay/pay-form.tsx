@@ -3,12 +3,12 @@
 import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { cx, inputCls } from "@/components/ui";
-import { startPayment } from "./actions";
+import { startPayment, type PayState } from "./actions";
 
 type S = Record<"full" | "other" | "amount" | "continue" | "test" | "error", string>;
 
 export function PayForm({ balance, balanceLabel, s }: { balance: number; balanceLabel: string; s: S }) {
-  const [state, action] = useActionState(startPayment, {});
+  const [state, action] = useActionState(startPayment, {} as PayState);
   const [choice, setChoice] = useState<"full" | "other">(balance > 0 ? "full" : "other");
   const option = (value: "full" | "other", title: string, detail?: string) => (
     <label className={cx("press flex cursor-pointer items-center justify-between gap-3 rounded-[24px] bg-surface px-5 py-4", choice === value ? "ring-2 ring-cta" : "ring-1 ring-line")}>
@@ -31,7 +31,7 @@ export function PayForm({ balance, balanceLabel, s }: { balance: number; balance
           <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-ink-3" aria-hidden>
             ₹
           </span>
-          <input id="amount" name="amount" type="number" inputMode="decimal" min={1} max={500000} step="0.01" required placeholder={s.amount} className={cx(inputCls, "!rounded-[24px] py-4 pl-10 text-lg font-semibold")} autoFocus />
+          <input key={state.typed ?? ""} id="amount" name="amount" type="number" inputMode="decimal" min={1} max={500000} step="0.01" required defaultValue={state.typed} placeholder={s.amount} className={cx(inputCls, "!rounded-[24px] py-4 pl-10 text-lg font-semibold")} autoFocus />
         </div>
       )}
       {state.error && (

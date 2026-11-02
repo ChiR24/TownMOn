@@ -3,7 +3,7 @@ import { ArrowRight, Download, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/submit-button";
-import { Card, cardCls, cx, inputCls, PageTitle, Section } from "@/components/ui";
+import { Card, cx, inputCls, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { bankImports, bankTxns, bills, flats, payments, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -40,10 +40,10 @@ export default async function AccountsPage() {
   const collectedP = Number(collected?.total ?? 0);
 
   const stats = [
-    { label: `Billed for ${fmtMonth(period)}`, value: rupees(billedP), note: `${billCount.n.toLocaleString("en-IN")} of ${flatCount.n.toLocaleString("en-IN")} flats` },
-    { label: "Collected this month", value: rupees(collectedP), note: billedP ? `${Math.round((100 * collectedP) / billedP)}% of this month's billing` : "" },
-    { label: "Waiting for review", value: queue.n.toLocaleString("en-IN"), note: "Never posted until someone decides", href: "/accounts/review" },
-    { label: "Matched automatically", value: `${autoRate}%`, note: "Resident payments, last 30 days" },
+    { label: `Billed for ${fmtMonth(period)}`, value: rupees(billedP), note: `${billCount.n.toLocaleString("en-IN")} of ${flatCount.n.toLocaleString("en-IN")} flats`, tone: "tile-lime" },
+    { label: "Collected this month", value: rupees(collectedP), note: billedP ? `${Math.round((100 * collectedP) / billedP)}% of this month's billing` : "", tone: "tile-mint" },
+    { label: "Waiting for review", value: queue.n.toLocaleString("en-IN"), note: "Never posted until someone decides", href: "/accounts/review", tone: "tile-peach" },
+    { label: "Matched automatically", value: `${autoRate}%`, note: "Resident payments, last 30 days", tone: "tile-lavender" },
   ];
 
   return (
@@ -53,17 +53,20 @@ export default async function AccountsPage() {
         {stats.map((s) => {
           const body = (
             <>
-              <p className="text-sm text-ink-3">{s.label}</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{s.value}</p>
-              <p className="mt-1 text-xs text-ink-3">{s.note}</p>
+              <p className="text-sm font-medium text-ink-2">{s.label}</p>
+              <p className="mt-2 text-[26px] font-semibold leading-none tracking-tight tabular-nums">{s.value}</p>
+              <p className="mt-2 text-xs text-ink-3">{s.note}</p>
             </>
           );
+          const cls = cx(s.tone, "block rounded-[24px] p-5");
           return s.href ? (
-            <Link key={s.label} href={s.href} className={cx(cardCls, "press hover:bg-muted")}>
+            <Link key={s.label} href={s.href} className={cx(cls, "press hover:brightness-[0.98]")}>
               {body}
             </Link>
           ) : (
-            <Card key={s.label}>{body}</Card>
+            <div key={s.label} className={cls}>
+              {body}
+            </div>
           );
         })}
       </div>

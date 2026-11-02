@@ -39,7 +39,7 @@ export function CodeForm({ s, place, lang }: { s: S; place: string; lang: string
       )}
       <form action={action} className="space-y-4">
         <Field label={s.guestName} htmlFor="guestName" error={state.error ? s.nameError : undefined}>
-          <input id="guestName" name="guestName" required minLength={2} maxLength={60} autoComplete="off" className={inputCls} />
+          <input key={state.typed ?? ""} id="guestName" name="guestName" required minLength={2} maxLength={60} defaultValue={state.typed} autoComplete="off" className={inputCls} />
         </Field>
         <fieldset>
           <legend className="mb-2 px-1 text-sm font-medium text-ink-2">{s.validFor}</legend>

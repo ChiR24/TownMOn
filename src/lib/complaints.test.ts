@@ -24,6 +24,12 @@ describe("keyword triage", () => {
     expect(classifyByRules("Water leaking from the bathroom ceiling, coming from the flat above")).toMatchObject({ category: "Plumbing", urgency: "MEDIUM", safety: null });
   });
 
+  it("files a danger under the team that handles it, not under the other words", () => {
+    // Found in testing: "smell" used to make this Cleaning.
+    expect(classifyByRules("Gas smell near the kitchen pipeline since morning")).toMatchObject({ category: "Security", urgency: "EMERGENCY", confident: true });
+    expect(classifyByRules("Sparks from the light switch in the bedroom")).toMatchObject({ category: "Electrical", urgency: "EMERGENCY" });
+  });
+
   it("reads Marathi and Hindi", () => {
     expect(classifyByRules("आमच्या मजल्यावर पाणी नाही").category).toBe("Water supply");
     expect(classifyByRules("सीढ़ियों पर बहुत कचरा पड़ा है").category).toBe("Cleaning");

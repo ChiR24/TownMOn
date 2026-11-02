@@ -61,8 +61,8 @@ export function Face({ entry, blob, small }: { entry: { name: string; photoId: n
   return url ? <img src={url} alt="" className={`${size} shrink-0 rounded-2xl object-cover`} /> : <span className={`${size} flex shrink-0 items-center justify-center rounded-2xl bg-zinc-700 font-semibold`}>{entry.name.slice(0, 1).toUpperCase()}</span>;
 }
 
-/** Everyone inside right now, each with the one button the guard needs when they leave. */
-export function InsideList({ t, inside, onLeft }: { t: GateT; inside: Entry[]; onLeft: (id: number) => void }) {
+/** Everyone inside right now (whichever gate they came in by), each with the one button the guard needs when they leave. */
+export function InsideList({ t, inside, gate, onLeft }: { t: GateT; inside: Entry[]; gate: number; onLeft: (id: number) => void }) {
   return (
     <>
       <h2 className="mb-2 mt-7 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("inside")}</h2>
@@ -76,9 +76,10 @@ export function InsideList({ t, inside, onLeft }: { t: GateT; inside: Entry[]; o
               <p className="text-sm text-zinc-400">
                 {e.flatId} · {t(e.purpose)}
                 {e.approvalMode === "CODE" && ` · ${t("guestCode")}`}
+                {e.gate && e.gate !== gate && ` · ${t("gate")} ${e.gate}`}
               </p>
             </div>
-            <button onClick={() => onLeft(e.id)} className="h-12 rounded-full bg-zinc-700 px-6 text-lg font-semibold">
+            <button onClick={() => onLeft(e.id)} aria-label={`${t("left")}: ${e.name}`} className="h-12 rounded-full bg-zinc-700 px-6 text-lg font-semibold">
               {t("left")}
             </button>
           </li>

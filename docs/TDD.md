@@ -120,26 +120,34 @@ repeatable and auditable.
   dues with one Pay button, open complaints with their status, today's visitors and notices. Pay, raise a complaint,
   create a guest code and book are one tap from home; nothing is more than two.
 - **Elderly and multilingual.** 15–17 px body text, large touch targets, a bottom tab bar. English, Marathi and Hindi
-  switch on every screen with no JavaScript. One type family (Mukta) covers Latin and Devanagari, so the three
+  switch on every screen with no JavaScript. One type family (Poppins) covers Latin and Devanagari, so the three
   languages look like one app; Devanagari gets taller lines and never letter-spacing (it breaks how conjuncts join).
   Numbers stay in Latin digits so amounts and dates read the same everywhere. Residents see their complaints in their
-  own words; the AI's short English title is for the help desk.
+  own words; the AI's short English title is for the help desk. A complaint can be spoken instead of typed (the
+  phone's own speech recognition, in the app's language; the button hides where the phone can't do it).
+- **Always see where a complaint stands:** a five-step tracker, Received → Assigned → Being fixed →
+  Fixed → Closed, on the complaint and as a mini track on every complaint card.
 - **The gate tablet** is dark with very large buttons for night shifts. Photos are brightened on the tablet
   (auto-levels) so faces taken at night are readable, and the screen states plainly whether it is online and how
   many entries are waiting to sync.
-- **Restrained palette, as roles.** Warm neutrals and one teal accent. Colours are named by role (canvas, surface, ink,
-  accent), so the resident app follows the phone's dark mode while staff consoles and printed reports stay light. Red,
-  amber and green only carry status, and always with an icon and words, never colour alone. Chart colours were checked
-  with a palette validator (ordinal teal ramp for dues by age).
+- **Restrained palette, as roles.** A warm light-grey canvas, white cards with large radii and soft shadows, near-black
+  for the one primary action on a screen, and a single lime accent for highlights and progress. Colours are named by
+  role (canvas, surface, ink, cta, accent), so the resident app follows the phone's dark mode (where the primary
+  action turns lime) while staff consoles and printed reports stay light. Red, amber and green only carry status, and
+  always with an icon and words, never colour alone. Chart colours were checked with a palette validator (ordinal green
+  ramp for dues by age); the committee's four targets are gauges with the target marked.
+- **The AI has a visible signature.** Anything Claude decided (a category, an urgency, a duplicate link) carries a
+  violet sparkle and its confidence; rules and staff decisions never do. Residents see "AI sorted this as Plumbing (94%
+  sure)" and that the help desk checks it; the help desk sees the AI's unsure calls in amber.
 - **Glass for the navigation layer only.** The top bar, the floating tab bar and the booking sheet are translucent so
   content stays in view behind them, and content fades softly as it scrolls underneath. Content itself sits on opaque
   cards, because text on glass is harder to read. Glass turns solid when the phone asks for less transparency or the
   browser cannot blur. Motion is small (pages ease in, buttons press) and off for people who ask for reduced motion.
 - **One hero per screen.** On home it is the dues card with its Pay button; everything else is a quiet card.
 - **Every list has an empty state**, every page a loading skeleton and an error view with retry. Every form shows its
-  error in words next to the field.
-- **Staff screens are dense and English** (assumption A14): queue views with counts, one-tap fixes, and the reason
-  next to every automated decision ("Payment note says T07-1203 · Amount equals the full dues").
+  error in words next to the field, and keeps what was typed so nobody types a complaint twice.
+- **Staff screens are dense and English** (assumption A14): a sidebar with live queue counts, queue views, one-tap
+  fixes, and the reason next to every automated decision ("Payment note says T07-1203 · Amount equals the full dues").
 
 ## 7. Security and privacy
 
@@ -157,7 +165,7 @@ repeatable and auditable.
 
 ## 8. Testing
 
-75 tests (Vitest), each database test on its own in-memory Postgres with the real migrations:
+80 tests (Vitest), each database test on its own in-memory Postgres with the real migrations:
 
 | Area | What the tests pin down |
 |---|---|
@@ -166,9 +174,17 @@ repeatable and auditable.
 | Import end to end | Re-import posts nothing; a reviewed entry teaches the UPI ID; reversal sends the line back to the queue |
 | Sign-in | Single use; lockout after 5 tries; expiry; rate limit |
 | Payments | Idempotent capture; callback signatures; receipt numbering; amounts in words |
-| Complaints | Safety words in three languages and the non-safety near-misses; AI + rules decisions; least-loaded assignment; duplicate linking; the AI-down fallback |
+| Complaints | Safety words in three languages and the non-safety near-misses; a danger filed under the team that handles it; AI + rules decisions; least-loaded assignment; duplicate linking; the AI-down fallback; help-desk notes, "work started" and "fixed" reaching every linked flat |
 | Gate | Idempotent replays; intercom outcomes; guest codes one-use and windowed; offline hashes never expose codes; the 90-day photo purge |
 | Reports | The reconciliation identity to the paisa; on-time rate; amenity rules |
+
+Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
+mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test
+payments, part payment, receipt), complaints (photo, safety escalation, rating, reopen), the help desk (category, urgency,
+reassign, notes, unlink), bank import (wrong file, re-import, review queue, typed flat, reversal), the gate tablet
+(codes valid, used and wrong; intercom; offline queue and replay), bookings (weekly limit, cancel), the household, and
+the daily job. That pass found and fixed ten bugs, the worst being a crash when the help desk posted a plain note and
+"gas smell" being filed as cleaning (both now have tests).
 
 ## 9. The numbers
 

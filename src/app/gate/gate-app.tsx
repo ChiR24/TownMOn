@@ -222,7 +222,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
         ))}
       </ul>
 
-      <InsideList t={t} inside={entries.filter((e) => e.status === "INSIDE")} onLeft={(id) => act(id, "left")} />
+      <InsideList t={t} inside={entries.filter((e) => e.status === "INSIDE")} gate={gate} onLeft={(id) => act(id, "left")} />
 
       <footer className="mt-8 flex items-center justify-between text-xs text-zinc-500">
         <span>{guardName}</span>

@@ -10,7 +10,7 @@ import { ignoreTxn, importStatement, postTxnToFlat, reversePayment } from "@/lib
 import { generateBills } from "@/lib/billing-run";
 import { todayIST } from "@/lib/dates";
 
-export type FormState = { error?: string; ok?: string };
+export type FormState = { error?: string; ok?: string; value?: string };
 const accounts = () => requireUser(AREAS.accounts);
 
 export async function uploadStatement(_: FormState, form: FormData): Promise<FormState> {
@@ -36,8 +36,9 @@ export async function postToFlat(txnId: number, flatId: string) {
 
 export async function postToTypedFlat(txnId: number, _: FormState, form: FormData): Promise<FormState> {
   const user = await accounts();
-  const r = await postTxnToFlat(db, txnId, asFlatId(String(form.get("flatId") ?? "")), user.id);
-  if ("error" in r) return { error: r.error };
+  const raw = String(form.get("flatId") ?? "");
+  const r = await postTxnToFlat(db, txnId, asFlatId(raw), user.id);
+  if ("error" in r) return { error: r.error, value: raw };
   revalidatePath("/accounts", "layout");
   return { ok: "Posted" };
 }
@@ -52,10 +53,11 @@ export async function ignoreEntry(txnId: number, form: FormData) {
 
 export async function reverse(paymentId: number, _: FormState, form: FormData): Promise<FormState> {
   const user = await accounts();
-  const reason = String(form.get("reason") ?? "").trim();
-  if (reason.length < 5) return { error: "Say why, in a few words. It goes on the flat's ledger." };
+  const value = String(form.get("reason") ?? "");
+  const reason = value.trim();
+  if (reason.length < 5) return { error: "Say why, in a few words. It goes on the flat's ledger.", value };
   const r = await reversePayment(db, paymentId, user.id, reason.slice(0, 200));
-  if ("error" in r) return { error: r.error };
+  if ("error" in r) return { error: r.error, value };
   revalidatePath("/accounts", "layout");
   return { ok: "Reversed. The bank entry is back in the review queue." };
 }

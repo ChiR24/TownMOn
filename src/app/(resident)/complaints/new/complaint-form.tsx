@@ -6,12 +6,16 @@ import { SubmitButton } from "@/components/submit-button";
 import { cx, Field, IconChip, inputCls } from "@/components/ui";
 import { shrinkPhoto } from "@/lib/shrink-photo";
 import { submitComplaint, type State } from "../actions";
+import { VoiceButton } from "./voice-button";
 
-type S = Record<"what" | "whatHint" | "photo" | "photoHint" | "send" | "errShort" | "errPhoto", string>;
+type S = Record<"what" | "whatHint" | "photo" | "photoHint" | "send" | "errShort" | "errPhoto" | "speak" | "listening" | "removePhoto", string>;
 
-export function ComplaintForm({ s }: { s: S }) {
+export function ComplaintForm({ s, lang }: { s: S; lang: string }) {
   const [state, action] = useActionState(submitComplaint, {} as State);
-  const [preview, setPreview] = useState<string | null>(null);
+  // The preview remembers which answer it was picked after: React empties the file input when the form is sent,
+  // so after an error an old preview would show a photo that is no longer attached.
+  const [preview, setPreview] = useState<{ url: string; after: State } | null>(null);
+  const shown = preview?.after === state ? preview.url : null;
   const input = useRef<HTMLInputElement>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -23,34 +27,38 @@ export function ComplaintForm({ s }: { s: S }) {
       const dt = new DataTransfer();
       dt.items.add(small);
       el.files = dt.files; // upload the ~150 KB version, not the camera original
-      setPreview(URL.createObjectURL(small));
+      setPreview({ url: URL.createObjectURL(small), after: state });
     } catch {
-      setPreview(URL.createObjectURL(file)); // the server re-checks the bytes either way
+      setPreview({ url: URL.createObjectURL(file), after: state }); // the server re-checks the bytes either way
     }
   }
 
   return (
     <form action={action} className="space-y-5">
       <Field label={s.what} hint={s.whatHint} error={state.error === "short" ? s.errShort : undefined} htmlFor="description">
-        <textarea id="description" name="description" required minLength={5} maxLength={1000} rows={5} className={cx(inputCls, "!rounded-[24px]")} autoFocus />
+        <div className="relative">
+          {/* Keyed on the last answer, so after an error the description comes back as typed. */}
+          <textarea key={state.text ?? ""} id="description" name="description" required minLength={5} maxLength={1000} rows={5} defaultValue={state.text} className={cx(inputCls, "!rounded-[24px] pb-16")} autoFocus />
+          <VoiceButton lang={lang} target="description" labels={{ start: s.speak, stop: s.listening }} />
+        </div>
       </Field>
       <div>
         <p className="mb-2 px-1 text-sm font-medium text-ink-2">{s.photo}</p>
         <input ref={input} id="photo" type="file" name="photo" accept="image/*" className="sr-only" onChange={onPick} />
-        {preview ? (
+        {shown ? (
           <div className="relative w-fit">
             {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-            <img src={preview} alt="" className="h-36 rounded-[20px] object-cover" />
+            <img src={shown} alt="" className="h-36 rounded-[20px] object-cover" />
             <button
               type="button"
-              aria-label="Remove photo"
+              aria-label={s.removePhoto}
               onClick={() => {
                 if (input.current) input.current.value = "";
                 setPreview(null);
               }}
-              className="absolute -right-2 -top-2 rounded-full bg-zinc-900 p-1 text-white"
+              className="press absolute -right-2 -top-2 rounded-full bg-cta p-1.5 text-cta-ink"
             >
-              <X className="size-4" />
+              <X className="size-4" aria-hidden />
             </button>
           </div>
         ) : (
@@ -61,7 +69,11 @@ export function ComplaintForm({ s }: { s: S }) {
             {s.photoHint}
           </label>
         )}
-        {state.error === "photo" && <p className="mt-1.5 text-sm text-red-700 dark:text-red-300">{s.errPhoto}</p>}
+        {state.error === "photo" && (
+          <p className="mt-1.5 px-1 text-sm text-red-700 dark:text-red-300" role="alert">
+            {s.errPhoto}
+          </p>
+        )}
       </div>
       <SubmitButton size="lg" className="w-full">
         {s.send}

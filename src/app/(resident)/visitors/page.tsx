@@ -95,7 +95,7 @@ export default async function VisitorsPage() {
                 </div>
                 {!c.usedAt && (
                   <form action={revokeCode.bind(null, c.id)}>
-                    <SubmitButton size="sm" variant="ghost">
+                    <SubmitButton size="sm" variant="ghost" aria-label={`${t("v.revoke")}: ${c.guestName}`}>
                       {t("v.revoke")}
                     </SubmitButton>
                   </form>

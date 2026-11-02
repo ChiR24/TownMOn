@@ -8,13 +8,13 @@ import { guestCodes } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
 import { createGuestCode } from "@/lib/gate";
 
-export type CodeState = { code?: string; guestName?: string; validTo?: string; error?: string };
+export type CodeState = { code?: string; guestName?: string; validTo?: string; error?: string; typed?: string };
 const Input = z.object({ guestName: z.string().trim().min(2).max(60), hours: z.enum(["4", "24", "72"]) });
 
 export async function makeCode(_: CodeState, form: FormData): Promise<CodeState> {
   const { user, flat } = await requireResident();
   const p = Input.safeParse(Object.fromEntries(form));
-  if (!p.success) return { error: "name" };
+  if (!p.success) return { error: "name", typed: String(form.get("guestName") ?? "") };
   const r = await createGuestCode(db, { flatId: flat.flatId, createdBy: user.id, guestName: p.data.guestName, hours: Number(p.data.hours) });
   revalidatePath("/visitors");
   return { code: r.code, guestName: p.data.guestName, validTo: r.validTo.toISOString() };

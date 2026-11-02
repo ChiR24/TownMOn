@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt, ne, sql, type SQL } from "drizzle-orm";
-import { Bot, Link2, Siren } from "lucide-react";
+import { Link2, Siren } from "lucide-react";
+import { AiBadge } from "@/components/ai";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, cx, EmptyState, PageTitle, type Tone } from "@/components/ui";
@@ -96,9 +97,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <Badge tone="zinc">{c.category}</Badge>
                         {c.classifiedBy === "AI" ? (
-                          <Badge tone={c.needsTriage ? "amber" : "brand"}>
-                            <Bot className="size-3" aria-hidden /> AI {c.aiConfidence}%
-                          </Badge>
+                          <AiBadge confidence={c.aiConfidence} unsure={c.needsTriage} />
                         ) : (
                           <Badge tone="zinc">{c.classifiedBy === "STAFF" ? "Set by desk" : "Rules"}</Badge>
                         )}

@@ -30,8 +30,8 @@ export function BottomNav({ labels }: { labels: Record<(typeof ITEMS)[number]["k
                 aria-label={labels[key]}
                 title={labels[key]}
                 aria-current={active ? "page" : undefined}
-                className={`press flex h-12 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors ${
-                  active ? "bg-cta px-4 text-cta-ink" : "w-12 text-ink-3 hover:text-ink"
+                className={`press flex h-12 items-center justify-center gap-2 rounded-full text-[13px] font-semibold transition-colors ${
+                  active ? "bg-cta px-3.5 text-cta-ink" : "w-11 text-ink-3 hover:text-ink"
                 }`}
               >
                 <Icon className="size-[22px] shrink-0" strokeWidth={active ? 2.2 : 1.9} aria-hidden />

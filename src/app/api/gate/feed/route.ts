@@ -7,8 +7,8 @@ import { denied, guardOnly, json } from "../guard";
 
 /**
  * Everything a gate tablet needs, fetched every few seconds while online and cached for when it isn't:
- * today's entries at this gate, anyone still inside, live guest codes (as salted hashes) and, on request,
- * the list of flats so the tablet can check a flat number offline.
+ * today's entries at this gate, everyone still inside (from any gate: people leave by whichever gate is nearest),
+ * live guest codes (as salted hashes) and, on request, the list of flats so the tablet can check a flat offline.
  */
 export async function GET(req: Request) {
   const user = await guardOnly(req);
@@ -17,9 +17,9 @@ export async function GET(req: Request) {
   const gate = Math.min(4, Math.max(1, Number(url.searchParams.get("gate")) || 1));
   const [entries, codes, flatList] = await Promise.all([
     db
-      .select({ id: visitors.id, clientId: visitors.clientId, flatId: visitors.flatId, name: visitors.name, purpose: visitors.purpose, status: visitors.status, approvalMode: visitors.approvalMode, photoId: visitors.photoId, arrivedAt: visitors.arrivedAt })
+      .select({ id: visitors.id, clientId: visitors.clientId, flatId: visitors.flatId, name: visitors.name, purpose: visitors.purpose, status: visitors.status, approvalMode: visitors.approvalMode, photoId: visitors.photoId, arrivedAt: visitors.arrivedAt, gate: visitors.gate })
       .from(visitors)
-      .where(and(eq(visitors.gate, gate), or(gte(visitors.arrivedAt, startOfTodayIST()), eq(visitors.status, "INSIDE"), eq(visitors.status, "PENDING"))))
+      .where(or(eq(visitors.status, "INSIDE"), and(eq(visitors.gate, gate), or(gte(visitors.arrivedAt, startOfTodayIST()), eq(visitors.status, "PENDING")))))
       .orderBy(desc(visitors.arrivedAt))
       .limit(80),
     codesForTablet(db),

@@ -1,8 +1,9 @@
 import { asc, eq } from "drizzle-orm";
+import { CircleCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, PageTitle, type Tone } from "@/components/ui";
+import { Badge, Card, Notice, PageTitle, type Tone } from "@/components/ui";
 import { db } from "@/db";
 import { bankImports, bankTxns, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -58,7 +59,13 @@ export default async function ImportPage({ params }: { params: Promise<{ id: str
         </p>
       )}
 
-      <div className="mt-6 overflow-x-auto card">
+      {rows.length === 0 && (
+        <Notice tone="emerald" icon={<CircleCheck className="size-4" aria-hidden />} className="mt-6">
+          Every line in this file was imported before, so nothing was posted twice.
+        </Notice>
+      )}
+
+      <div className={rows.length ? "mt-6 overflow-x-auto card" : "hidden"}>
         <table className="w-full min-w-[760px] text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-ink-3">
             <tr className="border-b border-line">

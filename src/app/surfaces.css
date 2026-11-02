@@ -126,6 +126,46 @@
     }
   }
 
+  /* The AI's signature: a violet-to-pink gradient for its mark, a faint wash for its notes. Used only for AI output. */
+  .ai-grad {
+    background: linear-gradient(135deg, #6d5dfc 0%, #a46cf5 55%, #f08cb3 100%);
+  }
+  .ai-soft {
+    background: linear-gradient(135deg, rgb(109 93 252 / 0.1), rgb(240 140 179 / 0.1)), var(--surface);
+    box-shadow: inset 0 0 0 1px rgb(109 93 252 / 0.14);
+  }
+
+  /* Pastel stat tiles (lavender, peach, mint, lime), for numbers that sit side by side. */
+  .tile-lavender {
+    background: linear-gradient(160deg, #efeafe, #f8f5ff);
+  }
+  .tile-peach {
+    background: linear-gradient(160deg, #ffeadc, #fff6ef);
+  }
+  .tile-mint {
+    background: linear-gradient(160deg, #dff5ea, #f1fbf6);
+  }
+  .tile-lime {
+    background: linear-gradient(160deg, #e9f7c8, #f6fce7);
+  }
+  @media (prefers-color-scheme: dark) {
+    .theme-auto .tile-lavender {
+      background: rgb(167 139 250 / 0.14);
+    }
+    .theme-auto .tile-peach {
+      background: rgb(251 146 60 / 0.13);
+    }
+    .theme-auto .tile-mint {
+      background: rgb(52 211 153 / 0.12);
+    }
+    .theme-auto .tile-lime {
+      background: rgb(200 242 109 / 0.12);
+    }
+    .theme-auto .ai-soft {
+      background: linear-gradient(135deg, rgb(109 93 252 / 0.18), rgb(240 140 179 / 0.12)), var(--surface);
+    }
+  }
+
   /* Tap feedback: a slight press, as on a native app. */
   .press {
     transition:

@@ -19,15 +19,16 @@ export function StatusNote({ status, children }: { status: Status; children: Rea
   );
 }
 
-export function StatTile({ label, value, note, href }: { label: string; value: ReactNode; note?: ReactNode; href?: string }) {
+/** A number with its label. `tone` gives it a pastel tile (lavender, peach, mint, lime) when tiles sit side by side. */
+export function StatTile({ label, value, note, href, tone }: { label: string; value: ReactNode; note?: ReactNode; href?: string; tone?: "lavender" | "peach" | "mint" | "lime" }) {
   const body = (
     <>
-      <p className="text-sm text-ink-3">{label}</p>
-      <p className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-ink">{value}</p>
+      <p className="text-sm font-medium text-ink-2">{label}</p>
+      <p className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight text-ink">{value}</p>
       {note && <div className="mt-1.5">{note}</div>}
     </>
   );
-  const cls = "card block p-5";
+  const cls = tone ? `tile-${tone} block rounded-[24px] p-5` : "card block p-5";
   return href ? (
     <a href={href} className={cx(cls, "press hover:bg-muted")}>
       {body}

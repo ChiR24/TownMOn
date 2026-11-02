@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { CircleCheck, Clock, Link2, Phone, Siren } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AiNote } from "@/components/ai";
 import { STAGES } from "@/components/complaint-row";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge, Card, Notice, PageTitle, Section } from "@/components/ui";
@@ -52,6 +53,12 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
       <Card className="!px-3 !pb-4 !pt-5">
         <Steps steps={steps} current={STAGES.indexOf(x.status as (typeof STAGES)[number])} label={t("c.progress")} />
       </Card>
+
+      {x.classifiedBy === "AI" && (
+        <AiNote className="mt-3" title={t("c.ai.title", { cat: t(`cat.${x.category}` as Key), pct: x.aiConfidence ?? 0 })}>
+          {t("c.ai.body")}
+        </AiNote>
+      )}
 
       <Card className="mt-3 space-y-3.5">
         <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink">{x.description}</p>

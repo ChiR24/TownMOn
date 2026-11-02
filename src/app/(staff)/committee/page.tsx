@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import { AiNote } from "@/components/ai";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AgeingBars, PercentColumns, StatTile, StatusNote, type Status } from "@/components/charts";
@@ -108,8 +109,10 @@ export default async function CommitteePage() {
             </table>
           </div>
           <div className="space-y-3">
-            <StatTile label="AI categories the help desk corrected" value={last.complaints.aiCorrected == null ? "—" : `${last.complaints.aiCorrected}%`} note={<span className="text-xs text-ink-2">Each correction is logged with what the AI said.</span>} />
-            <StatTile label="Average rating from residents" value={last.complaints.rating == null ? "—" : `${last.complaints.rating} / 5`} note={<span className="text-xs text-ink-2">{last.complaints.reports} reports, grouped into {last.complaints.received} problems</span>} />
+            <AiNote title={last.complaints.aiCorrected == null ? "No AI decisions to check yet" : `The help desk corrected ${last.complaints.aiCorrected}% of AI categories`}>
+              Each correction is logged with what the AI said, and the AI&apos;s unsure calls wait in &ldquo;Needs triage&rdquo;.
+            </AiNote>
+            <StatTile tone="peach" label="Average rating from residents" value={last.complaints.rating == null ? "—" : `${last.complaints.rating} / 5`} note={<span className="text-xs text-ink-2">{last.complaints.reports} reports, grouped into {last.complaints.received} problems</span>} />
           </div>
         </div>
       </Section>

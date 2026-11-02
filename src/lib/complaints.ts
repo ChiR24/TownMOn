@@ -13,17 +13,18 @@ export const responseDue = (u: Urgency, from = new Date()) => new Date(from.getT
 type Rule = { re: RegExp; deva: string[] };
 const hits = (text: string, rule: Rule) => (text.match(new RegExp(rule.re, "gi"))?.length ?? 0) + rule.deva.filter((w) => text.includes(w)).length;
 
-const SAFETY: Rule = {
-  re: /\b(fire|smoke|burning|gas|sparks?|sparking|shock|electrocut\w*|current lag\w*|aag|dhua+n?)\b/i,
-  deva: ["आग", "धूर", "धुआं", "धुआँ", "गॅस", "गैस", "शॉक", "करंट", "ठिणगी", "चिंगारी"],
-};
+// Two kinds of danger, so the category follows the danger: fire and gas go to security, sparks and shocks to electrical.
+const FIRE: Rule = { re: /\b(fire|smoke|burning|gas|aag|dhua+n?)\b/i, deva: ["आग", "धूर", "धुआं", "धुआँ", "गॅस", "गैस"] };
+const SHOCK: Rule = { re: /\b(sparks?|sparking|shock|electrocut\w*|current lag\w*)\b/i, deva: ["शॉक", "करंट", "ठिणगी", "चिंगारी"] };
 const STUCK: Rule = { re: /\b(stuck|trapped|fas\w*|phas\w*)\b/i, deva: ["अडक", "फंस", "फँस"] };
 const LIFT: Rule = { re: /\b(lift|elevator)s?\b/i, deva: ["लिफ्ट"] };
 
 /** Safety words escalate to the duty manager by rule, whatever the AI says. Returns why, or null. */
 export function safetyReason(text: string): string | null {
-  const word = text.match(SAFETY.re)?.[0] ?? SAFETY.deva.find((w) => text.includes(w));
-  if (word) return `mentions "${word}"`;
+  for (const rule of [FIRE, SHOCK]) {
+    const word = text.match(rule.re)?.[0] ?? rule.deva.find((w) => text.includes(w));
+    if (word) return `mentions "${word}"`;
+  }
   if (hits(text, LIFT) && hits(text, STUCK)) return "someone may be stuck in a lift";
   return null;
 }
@@ -52,13 +53,15 @@ export type RuleResult = { category: Category; urgency: Urgency; safety: string 
 export function classifyByRules(text: string): RuleResult {
   const scored = RULES.map(([category, rule]) => ({ category, n: hits(text, rule) })).filter((s) => s.n > 0);
   const best = scored.reduce<(typeof scored)[number] | undefined>((a, s) => (!a || s.n > a.n ? s : a), undefined);
-  const category: Category = best?.category ?? "Other";
   const safety = safetyReason(text);
+  // A gas smell is a security emergency, not cleaning, whatever else the words say; a spark is electrical.
+  const danger: Category | null = hits(text, FIRE) ? "Security" : hits(text, SHOCK) ? "Electrical" : null;
+  const category: Category = danger ?? best?.category ?? "Other";
   let urgency: Urgency = hits(text, LOW) ? "LOW" : "MEDIUM";
   if (hits(text, HIGH) || ["Lift", "Water supply", "Security"].includes(category)) urgency = "HIGH";
   if (safety) urgency = "EMERGENCY";
   const runnerUp = scored.filter((s) => s !== best).some((s) => s.n === best?.n);
-  return { category, urgency, safety, confident: !!best && !runnerUp };
+  return { category, urgency, safety, confident: !!danger || (!!best && !runnerUp) };
 }
 
 /** Which technician team takes a category. Parking and noise go to security; "Other" waits for the help desk. */

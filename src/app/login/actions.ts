@@ -14,14 +14,16 @@ export type LoginState = {
   phone?: string;
   error?: "phone" | "wrong" | "expired" | "locked" | "tooMany" | "noaccess";
   demoCode?: string;
+  typed?: string; // the number as typed, sent back on an error so it stays in the box
 };
 
 /** One action, three intents: send a code, verify it, or go back to change the number. */
 export async function login(_: LoginState, form: FormData): Promise<LoginState> {
   const intent = form.get("intent");
   if (intent === "change") return { step: "phone" };
-  const phone = normalizePhone(String(form.get("phone") ?? ""));
-  if (!phone) return { step: "phone", error: "phone" };
+  const typed = String(form.get("phone") ?? "");
+  const phone = normalizePhone(typed);
+  if (!phone) return { step: "phone", error: "phone", typed };
 
   const [user] = await db
     .select({ id: users.id, role: users.role, privacyAcceptedAt: users.privacyAcceptedAt })

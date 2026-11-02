@@ -124,7 +124,8 @@ export default async function AmenitiesPage({ searchParams }: { searchParams: Pr
         </ul>
       </Section>
 
-      {chosen != null && slotsFor(a).includes(chosen) && (
+      {/* Only a slot that can still be booked gets the sheet (a stale link to a past or taken slot shows the grid only). */}
+      {chosen != null && slotsFor(a).includes(chosen) && !taken.some((x) => x.startMinute === chosen) && !(day === today && chosen <= nowMin) && (
         // A sheet on the floating layer, just above the tab bar, so the choice stays in reach while you scroll.
         <div className="glass sticky bottom-28 z-10 mt-4 rounded-[28px] p-4 motion-safe:animate-sheet">
           <p className="px-1 text-[15px] font-semibold">
@@ -155,7 +156,7 @@ export default async function AmenitiesPage({ searchParams }: { searchParams: Pr
                 </div>
                 {canCancel(b.date, b.startMinute) && (
                   <form action={cancelBooking.bind(null, b.id)}>
-                    <SubmitButton size="sm" variant="ghost">
+                    <SubmitButton size="sm" variant="ghost" aria-label={`${t("a.cancel")}: ${b.name}, ${fmtDay(b.date, lang)} ${fmtMinute(b.startMinute)}`}>
                       {t("a.cancel")}
                     </SubmitButton>
                   </form>
