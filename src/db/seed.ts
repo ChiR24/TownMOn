@@ -563,7 +563,7 @@ async function seedComplaints({ residents, uid, techFor, HELPDESK, MANAGER }: Co
     const createdAt = ago(minutes);
     const days = minutes / 60 / 24;
     const x = rand();
-    const status: Row["status"] = days > 7 ? (x < 0.9 ? "CLOSED" : x < 0.95 ? "RESOLVED" : "IN_PROGRESS") : days > 2 ? (x < 0.5 ? "CLOSED" : x < 0.7 ? "RESOLVED" : x < 0.9 ? "IN_PROGRESS" : "ASSIGNED") : x < 0.4 ? "ASSIGNED" : x < 0.8 ? "IN_PROGRESS" : "RESOLVED";
+    const status: Row["status"] = days > 7 ? "CLOSED" : days > 3 ? (x < 0.75 ? "CLOSED" : "RESOLVED") : days > 1 ? (x < 0.4 ? "CLOSED" : x < 0.6 ? "RESOLVED" : "IN_PROGRESS") : x < 0.5 ? "ASSIGNED" : "IN_PROGRESS";
     const sla = { EMERGENCY: 15, HIGH: 60, MEDIUM: 240, LOW: 1440 }[urgency];
     const g = rand();
     add({
