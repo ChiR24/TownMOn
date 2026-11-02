@@ -25,10 +25,10 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const syncing = useRef(false);
   const router = useRouter();
 
-  const say = (text: string, ok = true) => {
+  const say = useCallback((text: string, ok = true) => {
     setToast({ text, ok });
     setTimeout(() => setToast(null), 5000);
-  };
+  }, []);
   const saveQueue = async (q: Queued[]) => {
     queueRef.current = q;
     setQueue(q);
@@ -94,6 +94,8 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
           const sent = queueRef.current.find((x) => x.clientId === clientId);
           if (!sent) continue;
           const r = await send(sent);
+          if (r.status === 403) return; // signed out meanwhile: keep the queue; the next feed check asks for a sign-in
+          if (!r.ok) say(`${sent.name}: ${(await r.json()).error ?? "Error"}`, false); // e.g. no such flat: never savable
           const latest = queueRef.current.find((x) => x.clientId === clientId);
           // Settled on the intercom while it was on its way: apply that to the visitor the server just recorded.
           if (r.ok && latest && latest.outcome !== sent.outcome && latest.outcome.startsWith("INTERCOM")) {
@@ -111,7 +113,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       setOnline(false);
       setNow(Date.now());
     }
-  }, [gate, flats.length, send, router]);
+  }, [gate, flats.length, send, router, say]);
 
   // Poll every 5 s: the gate's equivalent of a live feed, and the moment queued entries get replayed.
   useEffect(() => {

@@ -3,7 +3,22 @@
 // Gate API calls are never cached here: the app queues entries in IndexedDB and replays them itself.
 const CACHE = "gate-v1";
 
-self.addEventListener("install", () => self.skipWaiting());
+// The visit that registers this worker was loaded before it existed (usually at /login, then a client-side hop to
+// /gate), so its fetch handler never saw that page. Cache the gate screen and the static files it names right away,
+// or a reload with no network straight after signing in would show the browser's offline page.
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    fetch("/gate")
+      .then(async (res) => {
+        if (!res.ok || res.redirected) return;
+        const cache = await caches.open(CACHE);
+        const files = new Set((await res.clone().text()).match(/\/_next\/static\/[^"'\\\s<>]+/g));
+        await Promise.all([cache.put("/gate", res), ...[...files].map((f) => cache.add(f).catch(() => {}))]);
+      })
+      .catch(() => {}),
+  );
+});
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("fetch", (event) => {
