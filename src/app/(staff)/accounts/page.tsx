@@ -121,7 +121,7 @@ export default async function AccountsPage() {
                 <th className="px-4 py-3 text-right font-medium">Credits</th>
                 <th className="px-4 py-3 text-right font-medium">Posted itself</th>
                 <th className="px-4 py-3 text-right font-medium">To review</th>
-                <th className="px-4 py-3 text-right font-medium">Already seen</th>
+                <th className="px-4 py-3 text-right font-medium">Already imported</th>
                 <th />
               </tr>
             </thead>

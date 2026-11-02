@@ -3,7 +3,7 @@ import { PrintButton } from "@/app/receipts/[id]/print-button";
 import { Logo } from "@/components/brand";
 import { TOWNSHIP } from "@/lib/config";
 
-export const metadata: Metadata = { title: "Notice for visitors" };
+export const metadata: Metadata = { title: "Notice to visitors" };
 
 const TEXT = [
   {
@@ -12,7 +12,7 @@ const TEXT = [
     body: [
       "For everyone's safety, the guard records your name, the flat you are visiting and a photo, and asks the resident to let you in.",
       "Photos are deleted automatically after 90 days. Only the residents you visit, the guards and the help desk can see them.",
-      "To ask about your data, contact the help desk at the clubhouse.",
+      "To ask about your data, contact the help desk.",
     ],
   },
   {
@@ -21,7 +21,7 @@ const TEXT = [
     body: [
       "सर्वांच्या सुरक्षेसाठी गार्ड तुमचे नाव, तुम्ही ज्या फ्लॅटला भेट देत आहात तो फ्लॅट आणि तुमचा फोटो नोंदवतो आणि रहिवाशाची परवानगी घेतो.",
       "फोटो 90 दिवसांनी आपोआप हटवले जातात. ते फक्त तुम्ही भेटत असलेले रहिवासी, गार्ड आणि हेल्प डेस्क पाहू शकतात.",
-      "तुमच्या माहितीबद्दल विचारण्यासाठी क्लबहाउसमधील हेल्प डेस्कशी संपर्क करा.",
+      "तुमच्या माहितीबद्दल विचारण्यासाठी हेल्प डेस्कशी संपर्क करा.",
     ],
   },
   {
@@ -30,7 +30,7 @@ const TEXT = [
     body: [
       "सबकी सुरक्षा के लिए गार्ड आपका नाम, जिस फ्लैट में आप जा रहे हैं वह फ्लैट और आपकी फ़ोटो दर्ज करता है और निवासी से अनुमति लेता है।",
       "फ़ोटो 90 दिन बाद अपने-आप हटा दी जाती हैं। इन्हें सिर्फ़ आपके मेज़बान निवासी, गार्ड और हेल्प डेस्क देख सकते हैं।",
-      "अपनी जानकारी के बारे में पूछने के लिए क्लबहाउस में हेल्प डेस्क से संपर्क करें।",
+      "अपनी जानकारी के बारे में पूछने के लिए हेल्प डेस्क से संपर्क करें।",
     ],
   },
 ];
