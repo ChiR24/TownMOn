@@ -1,44 +1,13 @@
 "use client";
 
-import { Camera, Check, CircleCheck, CloudOff, Delete, KeyRound, Phone, UserPlus, Wifi, X } from "lucide-react";
+import { KeyRound, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { findFlatCodes } from "@/lib/bank";
-import { shrinkPhoto } from "@/lib/shrink-photo";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CodeEntry } from "./code-entry";
+import { NewVisitor } from "./new-visitor";
+import { Face, GateHeader, InsideList, IntercomButtons } from "./parts";
+import { kvGet, kvSet, sha256, type Code, type Entry, type Outcome, type Queued } from "./store";
 import { GATE_TEXT, type GateKey, type GateLang } from "./strings";
-
-type Purpose = "GUEST" | "DELIVERY" | "CAB" | "SERVICE" | "OTHER";
-type Outcome = "PENDING" | "INTERCOM_APPROVED" | "INTERCOM_DENIED" | "CODE";
-type Entry = { id: number; clientId: string; flatId: string; name: string; purpose: Purpose; status: string; approvalMode: string | null; photoId: number | null; arrivedAt: string };
-type Code = { id: number; flatId: string; guestName: string; salt: string; hash: string; validFrom: string; validTo: string };
-type Queued = { clientId: string; flatId: string; name: string; phone: string; purpose: Purpose; gate: number; arrivedAt: string; outcome: Outcome; guestCodeId?: number; photo?: Blob };
-
-// ---- a tiny IndexedDB key-value store: survives reloads and network drops ----
-const open = () =>
-  new Promise<IDBDatabase>((res, rej) => {
-    const r = indexedDB.open("gate", 1);
-    r.onupgradeneeded = () => r.result.createObjectStore("kv");
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-async function kvGet<T>(key: string): Promise<T | undefined> {
-  const db = await open();
-  return new Promise((res) => {
-    const q = db.transaction("kv").objectStore("kv").get(key);
-    q.onsuccess = () => res(q.result as T);
-    q.onerror = () => res(undefined);
-  });
-}
-async function kvSet(key: string, value: unknown) {
-  const db = await open();
-  return new Promise<void>((res) => {
-    const t = db.transaction("kv", "readwrite");
-    t.objectStore("kv").put(value, key);
-    t.oncomplete = () => res();
-    t.onerror = () => res();
-  });
-}
-const sha256 = async (s: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
 export function GateApp({ guardName, initialLang }: { guardName: string; initialLang: GateLang }) {
   const [lang, setLang] = useState<GateLang>(initialLang);
@@ -162,53 +131,46 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
     }
   };
 
-  const settleQueued = async (clientId: string, outcome: Outcome) => saveQueue(queueRef.current.map((x) => (x.clientId === clientId ? { ...x, outcome } : x)));
+  // With the network down, a guest code is checked against the hashes the tablet already holds.
+  const checkOffline = async (code: string) => {
+    const at = Date.now();
+    for (const c of codes) {
+      if (at < new Date(c.validFrom).getTime() || at >= new Date(c.validTo).getTime()) continue;
+      if ((await sha256(`${c.salt}:${code}`)) === c.hash) {
+        await saveQueue([...queueRef.current, { clientId: `code-${c.id}`, flatId: c.flatId, name: c.guestName, phone: "", purpose: "GUEST", gate, arrivedAt: new Date().toISOString(), outcome: "CODE", guestCodeId: c.id }]);
+        setCodes(codes.filter((x) => x.id !== c.id));
+        return { ok: true as const, guestName: c.guestName, flatId: c.flatId };
+      }
+    }
+    return { error: "invalid" as const };
+  };
+  const checkOnline = async (code: string) => {
+    const r = await fetch("/api/gate/code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, gate }) });
+    const data = await r.json();
+    refresh();
+    return data;
+  };
 
+  const settleQueued = async (clientId: string, outcome: Outcome) => saveQueue(queueRef.current.map((x) => (x.clientId === clientId ? { ...x, outcome } : x)));
   const waiting = entries.filter((e) => e.status === "PENDING");
   const decided = entries.filter((e) => (e.status === "APPROVED" || e.status === "DENIED") && now - new Date(e.arrivedAt).getTime() < 30 * 60_000);
-  const inside = entries.filter((e) => e.status === "INSIDE");
   const mins = (iso: string) => Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000));
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-3 text-zinc-100">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-2xl bg-zinc-800 p-1">
-          {[1, 2, 3, 4].map((g) => (
-            <button
-              key={g}
-              onClick={() => (setGate(g), localStorage.setItem("gate", String(g)))}
-              className={`h-12 min-w-14 rounded-xl px-3 text-lg font-semibold ${g === gate ? "bg-teal-500 text-zinc-950" : "text-zinc-300"}`}
-              aria-pressed={g === gate}
-            >
-              {t("gate")} {g}
-            </button>
-          ))}
-        </div>
-        <span className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium ${online ? "bg-emerald-950 text-emerald-300" : "bg-amber-950 text-amber-200"}`}>
-          {online ? <Wifi className="size-4" aria-hidden /> : <CloudOff className="size-4" aria-hidden />}
-          {online ? t("online") : t("offline")}
-          {queue.length > 0 && ` · ${t("toSync", { n: queue.length })}`}
-        </span>
-        <div className="ml-auto flex gap-1 text-sm">
-          {(["en", "mr", "hi"] as GateLang[]).map((l) => (
-            <button key={l} onClick={() => setLang(l)} className={`rounded-lg px-2.5 py-1.5 ${l === lang ? "bg-zinc-700 text-white" : "text-zinc-400"}`}>
-              {l === "en" ? "EN" : l === "mr" ? "मराठी" : "हिंदी"}
-            </button>
-          ))}
-        </div>
-      </header>
+      <GateHeader t={t} gate={gate} onGate={(g) => (setGate(g), localStorage.setItem("gate", String(g)))} online={online} toSync={queue.length} lang={lang} onLang={setLang} />
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <button onClick={() => setView("new")} className="flex h-28 flex-col items-center justify-center gap-2 rounded-3xl bg-teal-500 text-xl font-semibold text-zinc-950 active:bg-teal-400">
+        <button onClick={() => setView("new")} className="flex h-28 flex-col items-center justify-center gap-2 rounded-[32px] bg-[#c8f26d] text-xl font-semibold text-zinc-950 active:brightness-95">
           <UserPlus className="size-8" aria-hidden /> {t("newVisitor")}
         </button>
-        <button onClick={() => setView("code")} className="flex h-28 flex-col items-center justify-center gap-2 rounded-3xl bg-zinc-800 text-xl font-semibold text-white active:bg-zinc-700">
+        <button onClick={() => setView("code")} className="flex h-28 flex-col items-center justify-center gap-2 rounded-[32px] bg-zinc-800 text-xl font-semibold text-white active:bg-zinc-700">
           <KeyRound className="size-8" aria-hidden /> {t("guestCode")}
         </button>
       </div>
 
-      {[...decided].map((e) => (
-        <div key={e.id} className={`mt-3 flex items-center gap-4 rounded-3xl p-4 ${e.status === "APPROVED" ? "bg-emerald-900" : "bg-red-950"}`}>
+      {decided.map((e) => (
+        <div key={e.id} className={`mt-3 flex items-center gap-4 rounded-[28px] p-4 ${e.status === "APPROVED" ? "bg-emerald-900" : "bg-red-950"}`}>
           <Face entry={e} />
           <div className="min-w-0 flex-1">
             <p className="text-xl font-semibold">{e.name}</p>
@@ -217,20 +179,20 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
             </p>
           </div>
           {e.status === "APPROVED" ? (
-            <button onClick={() => act(e.id, "enter")} className="h-16 rounded-2xl bg-emerald-400 px-6 text-xl font-bold text-zinc-950">
+            <button onClick={() => act(e.id, "enter")} className="h-16 rounded-full bg-emerald-400 px-7 text-xl font-bold text-zinc-950">
               {t("letIn")}
             </button>
           ) : (
-            <span className="rounded-2xl bg-red-500 px-4 py-3 text-lg font-bold text-white">{t("doNotLetIn")}</span>
+            <span className="rounded-full bg-red-500 px-5 py-3 text-lg font-bold text-white">{t("doNotLetIn")}</span>
           )}
         </div>
       ))}
 
-      <h2 className="mb-2 mt-6 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("waiting")}</h2>
+      <h2 className="mb-2 mt-7 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("waiting")}</h2>
       {waiting.length + queue.length === 0 && <p className="text-zinc-500">{t("nobody")}</p>}
       <ul className="space-y-3">
         {queue.map((q) => (
-          <li key={q.clientId} className="rounded-3xl bg-zinc-800 p-4">
+          <li key={q.clientId} className="rounded-[28px] bg-zinc-800 p-4">
             <div className="flex items-center gap-4">
               <Face entry={{ name: q.name, photoId: null }} blob={q.photo} />
               <div className="min-w-0 flex-1">
@@ -245,7 +207,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
           </li>
         ))}
         {waiting.map((e) => (
-          <li key={e.id} className="rounded-3xl bg-zinc-800 p-4">
+          <li key={e.id} className="rounded-[28px] bg-zinc-800 p-4">
             <div className="flex items-center gap-4">
               <Face entry={e} />
               <div className="min-w-0 flex-1">
@@ -260,25 +222,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
         ))}
       </ul>
 
-      <h2 className="mb-2 mt-6 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("inside")}</h2>
-      {inside.length === 0 && <p className="text-zinc-500">{t("nobodyInside")}</p>}
-      <ul className="divide-y divide-zinc-800 rounded-3xl bg-zinc-900">
-        {inside.map((e) => (
-          <li key={e.id} className="flex items-center gap-3 p-3">
-            <Face entry={e} small />
-            <div className="min-w-0 flex-1">
-              <p className="text-lg font-medium">{e.name}</p>
-              <p className="text-sm text-zinc-400">
-                {e.flatId} · {t(e.purpose)}
-                {e.approvalMode === "CODE" && " · code"}
-              </p>
-            </div>
-            <button onClick={() => act(e.id, "left")} className="h-12 rounded-xl bg-zinc-700 px-5 text-lg font-medium">
-              {t("left")}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <InsideList t={t} inside={entries.filter((e) => e.status === "INSIDE")} onLeft={(id) => act(id, "left")} />
 
       <footer className="mt-8 flex items-center justify-between text-xs text-zinc-500">
         <span>{guardName}</span>
@@ -288,196 +232,12 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       </footer>
 
       {view === "new" && <NewVisitor t={t} gate={gate} flats={flats} onClose={() => setView("home")} onSubmit={(q) => (setView("home"), record(q))} />}
-      {view === "code" && (
-        <CodeEntry
-          t={t}
-          online={online}
-          onClose={() => setView("home")}
-          onOffline={async (code) => {
-            const now = Date.now();
-            for (const c of codes) {
-              if (now < new Date(c.validFrom).getTime() || now >= new Date(c.validTo).getTime()) continue;
-              if ((await sha256(`${c.salt}:${code}`)) === c.hash) {
-                await saveQueue([...queueRef.current, { clientId: `code-${c.id}`, flatId: c.flatId, name: c.guestName, phone: "", purpose: "GUEST", gate, arrivedAt: new Date().toISOString(), outcome: "CODE", guestCodeId: c.id }]);
-                setCodes(codes.filter((x) => x.id !== c.id));
-                return { ok: true as const, guestName: c.guestName, flatId: c.flatId };
-              }
-            }
-            return { error: "invalid" as const };
-          }}
-          onOnline={async (code) => {
-            const r = await fetch("/api/gate/code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, gate }) });
-            const data = await r.json();
-            refresh();
-            return data;
-          }}
-        />
-      )}
+      {view === "code" && <CodeEntry t={t} online={online} onClose={() => setView("home")} onOffline={checkOffline} onOnline={checkOnline} />}
       {toast && (
-        <div role="status" className={`fixed inset-x-4 bottom-4 mx-auto max-w-xl rounded-2xl px-5 py-4 text-lg font-medium shadow-2xl ${toast.ok ? "bg-emerald-400 text-zinc-950" : "bg-red-500 text-white"}`}>
+        <div role="status" className={`fixed inset-x-4 bottom-4 mx-auto max-w-xl rounded-[24px] px-5 py-4 text-lg font-semibold shadow-2xl ${toast.ok ? "bg-[#c8f26d] text-zinc-950" : "bg-red-500 text-white"}`}>
           {toast.text}
         </div>
       )}
-    </div>
-  );
-}
-
-function IntercomButtons({ t, onApprove, onDeny }: { t: (k: GateKey) => string; onApprove: () => void; onDeny: () => void }) {
-  return (
-    <div className="mt-3">
-      <p className="mb-2 flex items-center gap-2 text-sm text-amber-200">
-        <Phone className="size-4" aria-hidden /> {t("noAnswer")}
-      </p>
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={onApprove} className="h-14 rounded-2xl bg-emerald-500 text-lg font-semibold text-zinc-950">
-          {t("approvedCall")}
-        </button>
-        <button onClick={onDeny} className="h-14 rounded-2xl bg-zinc-700 text-lg font-semibold">
-          {t("deniedCall")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Face({ entry, blob, small }: { entry: { name: string; photoId: number | null }; blob?: Blob; small?: boolean }) {
-  const url = useMemo(() => (blob ? URL.createObjectURL(blob) : entry.photoId ? `/api/photos/${entry.photoId}` : null), [blob, entry.photoId]);
-  const size = small ? "size-12 text-base" : "size-20 text-2xl";
-  // eslint-disable-next-line @next/next/no-img-element -- private photo route / local blob
-  return url ? <img src={url} alt="" className={`${size} shrink-0 rounded-2xl object-cover`} /> : <span className={`${size} flex shrink-0 items-center justify-center rounded-2xl bg-zinc-700 font-semibold`}>{entry.name.slice(0, 1).toUpperCase()}</span>;
-}
-
-function NewVisitor({ t, gate, flats, onClose, onSubmit }: { t: (k: GateKey, v?: Record<string, string | number>) => string; gate: number; flats: string[]; onClose: () => void; onSubmit: (q: Queued) => void }) {
-  const [photo, setPhoto] = useState<Blob | undefined>();
-  const [flatRaw, setFlatRaw] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [purpose, setPurpose] = useState<Purpose>("DELIVERY");
-  const flatId = findFlatCodes(/^\s*\d/.test(flatRaw) ? `T${flatRaw}` : flatRaw)[0];
-  const flatOk = !!flatId && (flats.length === 0 || flats.includes(flatId));
-  const preview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
-  const field = "h-16 w-full rounded-2xl bg-zinc-800 px-4 text-2xl text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-400";
-
-  return (
-    <div className="fixed inset-0 z-40 overflow-y-auto bg-zinc-950 px-4 pb-10 pt-4">
-      <div className="mx-auto max-w-2xl space-y-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">{t("newVisitor")}</h2>
-          <button onClick={onClose} className="rounded-xl bg-zinc-800 p-3" aria-label={t("cancel")}>
-            <X className="size-6" />
-          </button>
-        </div>
-        <label className="flex h-48 cursor-pointer items-center justify-center overflow-hidden rounded-3xl bg-zinc-800 text-xl font-semibold">
-          {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element -- local preview
-            <img src={preview} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex flex-col items-center gap-2">
-              <Camera className="size-10" aria-hidden /> {t("photo")}
-            </span>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              if (f) setPhoto(await shrinkPhoto(f, { max: 960, brighten: true }).catch(() => f));
-            }}
-          />
-        </label>
-        {preview && <p className="-mt-3 text-center text-sm text-zinc-400">{t("retake")}: tap the photo</p>}
-        <div>
-          <label className="mb-1 block text-zinc-400" htmlFor="flat">
-            {t("flat")}
-          </label>
-          <input id="flat" value={flatRaw} onChange={(e) => setFlatRaw(e.target.value.toUpperCase())} placeholder={t("flatHint")} className={field} autoComplete="off" />
-          {flatRaw && <p className={`mt-1 text-lg ${flatOk ? "text-emerald-400" : "text-red-400"}`}>{flatOk ? `✓ ${flatId}` : t("noFlat")}</p>}
-        </div>
-        <div>
-          <label className="mb-1 block text-zinc-400" htmlFor="vname">
-            {t("name")}
-          </label>
-          <input id="vname" value={name} onChange={(e) => setName(e.target.value)} className={field} autoComplete="off" />
-        </div>
-        <div>
-          <p className="mb-1 text-zinc-400">{t("purposeLabel")}</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-            {(["DELIVERY", "GUEST", "CAB", "SERVICE", "OTHER"] as Purpose[]).map((p) => (
-              <button key={p} onClick={() => setPurpose(p)} aria-pressed={purpose === p} className={`h-14 rounded-2xl text-lg font-medium ${purpose === p ? "bg-teal-500 text-zinc-950" : "bg-zinc-800"}`}>
-                {t(p)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="mb-1 block text-zinc-400" htmlFor="vphone">
-            {t("phone")}
-          </label>
-          <input id="vphone" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(-10))} inputMode="numeric" className={field} />
-        </div>
-        <button
-          disabled={!flatOk || name.trim().length < 2}
-          onClick={() => onSubmit({ clientId: crypto.randomUUID(), flatId: flatId!, name: name.trim(), phone: /^[6-9]\d{9}$/.test(phone) ? phone : "", purpose, gate, arrivedAt: new Date().toISOString(), outcome: "PENDING", photo })}
-          className="h-20 w-full rounded-3xl bg-teal-500 text-2xl font-bold text-zinc-950 disabled:opacity-40"
-        >
-          {t("ask")}
-        </button>
-        <p className="text-center text-sm text-zinc-500">{t("notice")}</p>
-      </div>
-    </div>
-  );
-}
-
-type CodeResult = { ok: true; guestName: string; flatId: string } | { error: "invalid" | "used" | "expired" };
-
-function CodeEntry({ t, online, onClose, onOnline, onOffline }: { t: (k: GateKey, v?: Record<string, string | number>) => string; online: boolean; onClose: () => void; onOnline: (c: string) => Promise<CodeResult>; onOffline: (c: string) => Promise<CodeResult> }) {
-  const [code, setCode] = useState("");
-  const [result, setResult] = useState<CodeResult | null>(null);
-  const check = async () => {
-    try {
-      setResult(online ? await onOnline(code) : await onOffline(code));
-    } catch {
-      setResult(await onOffline(code));
-    }
-  };
-  const key = (k: string) => {
-    setResult(null);
-    setCode((c) => (k === "del" ? c.slice(0, -1) : (c + k).slice(0, 6)));
-  };
-  return (
-    <div className="fixed inset-0 z-40 overflow-y-auto bg-zinc-950 px-4 pb-10 pt-4">
-      <div className="mx-auto max-w-md">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">{t("enterCode")}</h2>
-          <button onClick={onClose} className="rounded-xl bg-zinc-800 p-3" aria-label={t("cancel")}>
-            <X className="size-6" />
-          </button>
-        </div>
-        <p className="my-6 text-center font-mono text-6xl tracking-[0.3em] text-white" aria-live="polite">
-          {code.padEnd(6, "·")}
-        </p>
-        {result && (
-          <div className={`mb-4 flex items-center gap-3 rounded-2xl p-4 text-lg font-medium ${"ok" in result ? "bg-emerald-400 text-zinc-950" : "bg-red-500 text-white"}`}>
-            {"ok" in result ? <CircleCheck className="size-7 shrink-0" /> : <X className="size-7 shrink-0" />}
-            {"ok" in result ? t("codeOk", { name: result.guestName, flat: result.flatId }) : result.error === "used" ? t("codeUsed") : result.error === "expired" ? t("codeExpired") : t("codeBad")}
-          </div>
-        )}
-        <div className="grid grid-cols-3 gap-2">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "del", "0", "ok"].map((k) =>
-            k === "ok" ? (
-              <button key={k} disabled={code.length !== 6} onClick={check} className="h-20 rounded-2xl bg-teal-500 text-zinc-950 disabled:opacity-40" aria-label={t("check")}>
-                <Check className="mx-auto size-8" />
-              </button>
-            ) : (
-              <button key={k} onClick={() => key(k)} className="h-20 rounded-2xl bg-zinc-800 text-3xl font-semibold active:bg-zinc-700" aria-label={k === "del" ? "Delete" : k}>
-                {k === "del" ? <Delete className="mx-auto size-8" /> : k}
-              </button>
-            ),
-          )}
-        </div>
-      </div>
     </div>
   );
 }

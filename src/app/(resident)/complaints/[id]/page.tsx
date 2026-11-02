@@ -2,9 +2,10 @@ import { asc, eq } from "drizzle-orm";
 import { CircleCheck, Clock, Link2, Phone, Siren } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ComplaintStatus } from "@/components/badges";
+import { STAGES } from "@/components/complaint-row";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge, Card, Notice, PageTitle, Section } from "@/components/ui";
+import { Steps } from "@/components/viz";
 import { db } from "@/db";
 import { complaintEvents, complaints, users } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
@@ -30,10 +31,11 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
   const isNew = (await searchParams).new === "1";
   const waiting = !x.firstResponseAt && x.status !== "RESOLVED" && x.status !== "CLOSED";
   const late = waiting && x.responseDueAt < new Date();
+  const steps = STAGES.map((s) => t(s === "RESOLVED" ? "c.step.RESOLVED" : (`c.status.${s}` as Key)));
 
   return (
     <div>
-      <PageTitle title={t(`cat.${x.category}` as Key)} subtitle={`#${x.id} · ${fmtDateTime(x.createdAt, lang)}`} back={{ href: "/complaints", label: t("common.back") }} action={<ComplaintStatus status={x.status} t={t} />} />
+      <PageTitle title={t(`cat.${x.category}` as Key)} subtitle={`#${x.id} · ${fmtDateTime(x.createdAt, lang)}`} back={{ href: "/complaints", label: t("common.back") }} />
 
       {isNew && (
         <Notice tone="emerald" icon={<CircleCheck className="size-4" aria-hidden />} className="mb-4">
@@ -42,19 +44,23 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
       )}
       {x.safety && x.status !== "CLOSED" && (
         <Notice tone="red" icon={<Siren className="size-4" aria-hidden />} className="mb-4">
-          <p className="font-medium">{t("c.emergency")}</p>
+          <p className="font-semibold">{t("c.emergency")}</p>
           <p>{t("c.call112")}</p>
         </Notice>
       )}
 
-      <Card className="space-y-3">
+      <Card className="!px-3 !pb-4 !pt-5">
+        <Steps steps={steps} current={STAGES.indexOf(x.status as (typeof STAGES)[number])} label={t("c.progress")} />
+      </Card>
+
+      <Card className="mt-3 space-y-3.5">
         <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink">{x.description}</p>
         {x.photoId && (
           // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-          <img src={`/api/photos/${x.photoId}`} alt="" className="max-h-64 rounded-xl object-cover ring-1 ring-line" />
+          <img src={`/api/photos/${x.photoId}`} alt="" className="max-h-64 rounded-[20px] object-cover" />
         )}
         <div className="flex flex-wrap gap-2 text-sm text-ink-2">
-          {c.tech && <Badge tone="teal">{t("c.with", { name: c.tech })}</Badge>}
+          {c.tech && <Badge tone="brand">{t("c.with", { name: c.tech })}</Badge>}
           {waiting && (
             <Badge tone={late ? "red" : "zinc"}>
               <Clock className="size-3" aria-hidden /> {t("c.respondBy", { time: fmtTime(x.responseDueAt, lang) })}
@@ -70,9 +76,9 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
       </Card>
 
       {x.status === "RESOLVED" && (
-        <Card className="mt-4 space-y-4 ring-violet-200 dark:ring-violet-400/30">
-          <p className="text-[15px] font-semibold text-ink">{t("c.status.RESOLVED")}</p>
-          <RateForm id={x.id} s={{ rate: t("c.rate"), comment: t("c.comment"), close: t("c.close") }} />
+        <Card className="mt-3 space-y-4 ring-2 ring-accent">
+          <p className="text-[17px] font-semibold text-ink">{t("c.status.RESOLVED")}</p>
+          <RateForm id={x.id} s={{ rate: t("c.rate"), comment: t("c.comment"), close: t("c.close"), err: t("c.err.rating") }} />
           <form action={reopen.bind(null, x.id)}>
             <SubmitButton variant="secondary" className="w-full">
               {t("c.notFixed")}
@@ -80,24 +86,26 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
           </form>
         </Card>
       )}
-      {x.status === "CLOSED" && x.rating && <p className="mt-4 text-sm text-ink-2">{t("c.rated", { n: x.rating })}</p>}
+      {x.status === "CLOSED" && x.rating && <p className="mt-4 px-1 text-sm text-ink-2">{t("c.rated", { n: x.rating })}</p>}
 
       <Section title={t("c.updates")}>
-        <ol className="relative space-y-4 border-l border-line pl-5">
-          {events.map((e) => (
-            <li key={e.id} className="relative">
-              <span className={`absolute -left-[25px] top-1.5 size-2.5 rounded-full ${e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "RATED" ? "bg-amber-400" : "bg-teal-600"}`} />
-              <p className="text-[15px] text-ink">{e.note ?? (e.kind === "CREATED" ? t("c.status.OPEN") : e.kind)}</p>
-              <p className="text-xs text-ink-3" title={fmtDateTime(e.createdAt, lang)}>
-                {relTime(e.createdAt, lang)}
-              </p>
-            </li>
-          ))}
-        </ol>
+        <Card>
+          <ol className="relative space-y-5 border-l-2 border-line pl-5">
+            {events.map((e) => (
+              <li key={e.id} className="relative">
+                <span className={`absolute -left-[27px] top-1.5 size-3 rounded-full ring-4 ring-surface ${e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "RATED" ? "bg-amber-400" : "bg-ink"}`} />
+                <p className="text-[15px] text-ink">{e.note ?? (e.kind === "CREATED" ? t("c.status.OPEN") : e.kind)}</p>
+                <p className="mt-0.5 text-xs text-ink-3" title={fmtDateTime(e.createdAt, lang)}>
+                  {relTime(e.createdAt, lang)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </Card>
       </Section>
 
       <p className="mt-8 flex items-center justify-center gap-2 text-sm text-ink-3">
-        <Phone className="size-4" aria-hidden /> Help desk: dial 9 on the intercom
+        <Phone className="size-4" aria-hidden /> {t("c.helpdesk")}
       </p>
     </div>
   );

@@ -1,17 +1,17 @@
 import { and, desc, eq, gt, gte, isNull, ne } from "drizzle-orm";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Users } from "lucide-react";
 import type { Metadata } from "next";
 import { VisitorStatus } from "@/components/badges";
 import { SubmitButton } from "@/components/submit-button";
-import { Avatar, Card, EmptyState, PageTitle, Section } from "@/components/ui";
+import { Avatar, Card, cardCls, cx, EmptyState, IconChip, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { guestCodes, visitors } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
 import { TOWNSHIP } from "@/lib/config";
-import { daysAgo, fmtDateTime, fmtTime, relTime } from "@/lib/dates";
+import { daysAgo, fmtDateTime, fmtTime } from "@/lib/dates";
 import { getLang } from "@/lib/lang";
 import { translator, type Key } from "@/lib/i18n";
-import { decideVisitor } from "./actions";
+import { GateRequest } from "../gate-request";
 import { revokeCode } from "./code-actions";
 import { CodeForm } from "./code-form";
 
@@ -36,50 +36,23 @@ export default async function VisitorsPage() {
 
       <Section title={t("v.waiting")} className="mt-0">
         {waiting.length === 0 ? (
-          <p className="text-sm text-ink-3">{t("v.none")}</p>
+          <p className="px-1 text-sm text-ink-3">{t("v.none")}</p>
         ) : (
-          <ul className="space-y-3">
+          <div className="space-y-3">
             {waiting.map((v) => (
-              <li key={v.id}>
-                <Card className="bg-amber-50 ring-amber-200/80 dark:bg-amber-400/10 dark:ring-amber-300/20">
-                  <div className="flex items-center gap-3">
-                    {v.photoId ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-                      <img src={`/api/photos/${v.photoId}`} alt="" className="size-16 rounded-xl object-cover" />
-                    ) : (
-                      <Avatar name={v.name} className="size-16 rounded-xl text-lg" />
-                    )}
-                    <div>
-                      <p className="text-[15px] font-semibold">{v.name}</p>
-                      <p className="text-sm text-ink-2">
-                        {t(`v.purpose.${v.purpose}` as Key)} · {t("v.at", { gate: v.gate, time: relTime(v.arrivedAt, lang) })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <form action={decideVisitor.bind(null, v.id, "APPROVED")}>
-                      <SubmitButton className="w-full">{t("home.letIn")}</SubmitButton>
-                    </form>
-                    <form action={decideVisitor.bind(null, v.id, "DENIED")}>
-                      <SubmitButton variant="secondary" className="w-full">
-                        {t("home.deny")}
-                      </SubmitButton>
-                    </form>
-                  </div>
-                </Card>
-              </li>
+              <GateRequest key={v.id} v={v} t={t} lang={lang} />
             ))}
-          </ul>
+          </div>
         )}
       </Section>
 
       {inside.length > 0 && (
         <Section title={t("v.inside")}>
-          <ul className="divide-y divide-line card">
+          <ul className={cx(cardCls, "divide-y divide-line !py-1")}>
             {inside.map((v) => (
-              <li key={v.id} className="flex items-center gap-3 px-3.5 py-3">
-                <Avatar name={v.name} className="size-9 text-xs" />
-                <p className="flex-1 text-[15px]">{v.name}</p>
+              <li key={v.id} className="flex items-center gap-3 py-3">
+                <Avatar name={v.name} className="size-11 text-sm" />
+                <p className="min-w-0 flex-1 truncate text-[15px] font-semibold">{v.name}</p>
                 <span className="text-xs text-ink-3">{fmtTime(v.arrivedAt, lang)}</span>
               </li>
             ))}
@@ -90,9 +63,10 @@ export default async function VisitorsPage() {
       <Section title={t("v.codes")}>
         <div id="codes" className="scroll-mt-20" />
         <Card>
-          <p className="mb-4 text-sm text-ink-2">{t("v.codesHint")}</p>
+          <p className="mb-5 text-sm leading-relaxed text-ink-2">{t("v.codesHint")}</p>
           <CodeForm
             place={TOWNSHIP}
+            lang={lang}
             s={{
               guestName: t("v.guestName"),
               validFor: t("v.validFor"),
@@ -104,16 +78,19 @@ export default async function VisitorsPage() {
               d3: t("v.days", { n: 3 }),
               shareText: t("v.shareText"),
               validTill: t("v.validTill"),
+              nameError: t("v.err.name"),
             }}
           />
         </Card>
         {codes.length > 0 && (
-          <ul className="mt-3 divide-y divide-line card">
+          <ul className={cx(cardCls, "mt-3 divide-y divide-line !py-1")}>
             {codes.map((c) => (
-              <li key={c.id} className="flex items-center gap-3 px-3.5 py-3">
-                <KeyRound className="size-4 text-accent-ink" aria-hidden />
+              <li key={c.id} className="flex items-center gap-3 py-3">
+                <IconChip tone="violet">
+                  <KeyRound className="size-5" aria-hidden />
+                </IconChip>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[15px]">{c.guestName}</p>
+                  <p className="truncate text-[15px] font-semibold">{c.guestName}</p>
                   <p className="text-xs text-ink-3">{c.usedAt ? `${t("v.used")} ${fmtDateTime(c.usedAt, lang)}` : t("v.validTill", { time: fmtDateTime(c.validTo, lang) })}</p>
                 </div>
                 {!c.usedAt && (
@@ -131,15 +108,15 @@ export default async function VisitorsPage() {
 
       <Section title={t("v.recent")}>
         {recent.length === 0 ? (
-          <EmptyState title={t("v.none")} />
+          <EmptyState icon={<Users className="size-5" aria-hidden />} title={t("v.none")} />
         ) : (
-          <ul className="divide-y divide-line card">
+          <ul className={cx(cardCls, "divide-y divide-line !py-1")}>
             {recent.map((v) => (
-              <li key={v.id} className="flex items-center gap-3 px-3.5 py-3">
-                <Avatar name={v.name} className="size-9 text-xs" />
+              <li key={v.id} className="flex items-center gap-3 py-3">
+                <Avatar name={v.name} className="size-11 text-sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px]">{v.name}</p>
-                  <p className="text-xs text-ink-3">
+                  <p className="truncate text-[15px] font-semibold">{v.name}</p>
+                  <p className="truncate text-xs text-ink-3">
                     {t(`v.purpose.${v.purpose}` as Key)} · {t("v.at", { gate: v.gate, time: fmtDateTime(v.arrivedAt, lang) })}
                   </p>
                 </div>

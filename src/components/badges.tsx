@@ -2,7 +2,7 @@ import type { T } from "@/lib/i18n";
 import { Badge, type Tone } from "./ui";
 
 const COMPLAINT_TONE: Record<string, Tone> = { OPEN: "sky", ASSIGNED: "sky", IN_PROGRESS: "amber", RESOLVED: "violet", CLOSED: "zinc" };
-const VISITOR_TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "teal", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
+const VISITOR_TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "brand", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
 
 export function ComplaintStatus({ status, t }: { status: string; t: T }) {
   return <Badge tone={COMPLAINT_TONE[status]}>{t(`c.status.${status}` as never)}</Badge>;

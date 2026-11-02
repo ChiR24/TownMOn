@@ -1,7 +1,8 @@
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import type { DB, Q, Tx } from "@/db";
 import { auditLog, bankImports, bankTxns, bills, flatMembers, flats, gatewayOrders, ledger, payerAccounts, payments, users } from "@/db/schema";
-import { matchCredit, oneSlip, readNarration, readStatement, type MatchContext } from "./bank";
+import { matchCredit, oneSlip, readNarration, type MatchContext } from "./bank";
+import { readStatement } from "./bank-csv";
 import { sha256 } from "./crypto";
 import { flatPositions } from "./data";
 import { todayIST } from "./dates";

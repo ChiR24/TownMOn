@@ -1,7 +1,9 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AgeingBars, Meter, PercentColumns, StatTile, StatusNote, type Status } from "@/components/charts";
-import { Card, PageTitle, Section } from "@/components/ui";
+import { AgeingBars, PercentColumns, StatTile, StatusNote, type Status } from "@/components/charts";
+import { Card, LinkButton, PageTitle, Section } from "@/components/ui";
+import { Gauge, ProgressBar } from "@/components/viz";
 import { db } from "@/db";
 import { AREAS, requireUser } from "@/lib/auth";
 import { fmtDate, fmtMonth, shiftPeriod, todayIST } from "@/lib/dates";
@@ -29,45 +31,35 @@ export default async function CommitteePage() {
         title="How the township is doing"
         subtitle={`Live from the ledger and the help desk, as of ${fmtDate(today)}.`}
         action={
-          <Link href={`/committee/report?month=${lastPeriod}`} className="whitespace-nowrap rounded-xl bg-surface px-3 py-2 text-sm font-medium ring-1 ring-line hover:bg-muted">
-            Monthly report →
-          </Link>
+          <LinkButton href={`/committee/report?month=${lastPeriod}`} variant="secondary" size="sm">
+            Monthly report <ArrowUpRight className="size-4" aria-hidden />
+          </LinkButton>
         }
       />
 
-      <Card className="sm:p-6">
-        <p className="text-sm text-ink-3">Collected in {fmtMonth(period)}</p>
-        <p className="mt-1 text-5xl font-semibold tracking-tight text-ink sm:text-6xl">{compactINR(now.money.collected)}</p>
-        <p className="mt-2 text-[15px] text-ink-2">
+      <section className="hero rounded-[32px] p-6 sm:p-8">
+        <p className="text-sm font-medium text-white/65">Collected in {fmtMonth(period)}</p>
+        <p className="mt-2 text-5xl font-semibold tracking-[-0.03em] sm:text-6xl">{compactINR(now.money.collected)}</p>
+        <p className="mt-3 max-w-2xl text-[15px] text-white/75">
           of {compactINR(now.money.billedTotal)} billed this month ({now.collectionRate ?? 0}%). Bills are due on the 15th; most residents pay by the 10th.
         </p>
-        <div className="mt-4 max-w-xl">
-          <Meter value={now.collectionRate ?? 0} label="Share of this month's billing collected" />
-        </div>
-      </Card>
+        <ProgressBar onDark value={(now.collectionRate ?? 0) / 100} label="Share of this month's billing collected" className="mt-5 max-w-xl" />
+      </section>
 
+      {/* The success measures, each against its target (the red tick). */}
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile
-          label={`Bills paid on time, ${lastMonth}`}
-          value={last.onTime == null ? "—" : `${Math.round(last.onTime)}%`}
-          note={<StatusNote status={band(last.onTime, 90, 75)}>Target 90% (was 70% before the app)</StatusNote>}
-        />
-        <StatTile
-          label="Bank payments that matched themselves"
-          value={last.matching.autoRate == null ? "—" : `${Math.round(last.matching.autoRate)}%`}
-          note={<StatusNote status={band(last.matching.autoRate, 80, 60)}>{now.matching.waiting} waiting for accounts now</StatusNote>}
-          href="/accounts/review"
-        />
-        <StatTile
-          label={`Complaints answered in time, ${lastMonth}`}
-          value={last.complaints.withinTarget == null ? "—" : `${Math.round(last.complaints.withinTarget)}%`}
-          note={<StatusNote status={band(last.complaints.withinTarget, 90, 75)}>Median first response {Math.round(last.complaints.responseMedianMin ?? 0)} min</StatusNote>}
-        />
-        <StatTile
-          label={`Complaints reopened, ${lastMonth}`}
-          value={last.complaints.reopenRate == null ? "—" : `${last.complaints.reopenRate}%`}
-          note={<StatusNote status={band(last.complaints.reopenRate, 8, 15, true)}>Target under 8% (was 25%)</StatusNote>}
-        />
+        <Card>
+          <Gauge value={last.onTime == null ? null : Math.round(last.onTime)} target={90} label={`Paid on time, ${lastMonth}`} note={<StatusNote status={band(last.onTime, 90, 75)}>Target 90% (was 70% before the app)</StatusNote>} />
+        </Card>
+        <Link href="/accounts/review" className="card press block p-5 hover:bg-muted">
+          <Gauge value={last.matching.autoRate == null ? null : Math.round(last.matching.autoRate)} target={80} label="Bank payments matched themselves" note={<StatusNote status={band(last.matching.autoRate, 80, 60)}>{now.matching.waiting} waiting for accounts now</StatusNote>} />
+        </Link>
+        <Card>
+          <Gauge value={last.complaints.withinTarget == null ? null : Math.round(last.complaints.withinTarget)} target={90} label={`Answered in time, ${lastMonth}`} note={<StatusNote status={band(last.complaints.withinTarget, 90, 75)}>Median first response {Math.round(last.complaints.responseMedianMin ?? 0)} min</StatusNote>} />
+        </Card>
+        <Card>
+          <Gauge value={last.complaints.reopenRate} target={8} max={30} lowerIsBetter label={`Reopened, ${lastMonth}`} note={<StatusNote status={band(last.complaints.reopenRate, 8, 15, true)}>Target under 8% (was 25%)</StatusNote>} />
+        </Card>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">

@@ -1,11 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { notifications, users } from "@/db/schema";
 import { currentUser, endSession, residentFlats } from "@/lib/auth";
 import { isLang } from "@/lib/i18n";
 
@@ -24,6 +24,14 @@ export async function switchFlat(flatId: string) {
   if (!u) redirect("/login");
   const { all } = await residentFlats(u.id);
   if (all.some((f) => f.flatId === flatId)) (await cookies()).set("flat", flatId, { path: "/", maxAge: YEAR, sameSite: "lax" });
+  revalidatePath("/", "layout");
+}
+
+/** Clears the unread dot on the bell once the resident has seen their messages. */
+export async function markMessagesRead() {
+  const u = await currentUser();
+  if (!u) return;
+  await db.update(notifications).set({ readAt: new Date() }).where(and(eq(notifications.userId, u.id), isNull(notifications.readAt)));
   revalidatePath("/", "layout");
 }
 

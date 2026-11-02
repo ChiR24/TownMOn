@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { findFlatCodes, matchCredit, nameMatch, oneSlip, parseAmount, parseCsv, parseDate, readNarration, readStatement, type MatchContext } from "./bank";
+import { findFlatCodes, matchCredit, nameMatch, oneSlip, readNarration, type MatchContext } from "./bank";
+import { parseAmount, parseCsv, parseDate, readStatement } from "./bank-csv";
 
 describe("reading a statement", () => {
   it("parses quoted CSV cells", () => {

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Statement import" };
 
 const STATUS: Record<string, [string, Tone]> = {
   AUTO_MATCHED: ["Posted itself", "emerald"],
-  MATCHED: ["Posted by accounts", "teal"],
+  MATCHED: ["Posted by accounts", "brand"],
   NEEDS_REVIEW: ["Waiting for review", "amber"],
   SETTLEMENT: ["Gateway payout", "sky"],
   IGNORED: ["Not a resident payment", "zinc"],

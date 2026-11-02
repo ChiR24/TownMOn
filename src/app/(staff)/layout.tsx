@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
-import { Logo } from "@/components/ui";
+import { Logo } from "@/components/brand";
 import { AREAS, requireUser, type Role } from "@/lib/auth";
 import { StaffNav } from "./staff-nav";
 

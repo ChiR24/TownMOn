@@ -60,7 +60,7 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
             {people.map((p) => (
               <li key={p.phone} className="flex justify-between gap-2">
                 <span>
-                  {p.name} {p.isPrimary && <Badge tone="teal">pays</Badge>}
+                  {p.name} {p.isPrimary && <Badge tone="brand">pays</Badge>}
                 </span>
                 <span className="text-ink-3">
                   {p.relation.toLowerCase()} · {maskPhone(p.phone)}

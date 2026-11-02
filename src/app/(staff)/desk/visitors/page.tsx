@@ -9,7 +9,7 @@ import { daysAgo, fmtDateTime, startOfTodayIST } from "@/lib/dates";
 import { findFlatCodes } from "@/lib/bank";
 
 export const metadata: Metadata = { title: "Visitor log" };
-const TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "teal", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
+const TONE: Record<string, Tone> = { PENDING: "amber", APPROVED: "brand", DENIED: "red", INSIDE: "emerald", LEFT: "zinc" };
 
 export default async function VisitorLogPage({ searchParams }: { searchParams: Promise<{ gate?: string; flat?: string; days?: string }> }) {
   await requireUser(AREAS.desk);
@@ -40,7 +40,7 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
           <option value="1">Today</option>
           <option value="7">Last 7 days</option>
         </select>
-        <button className="press h-10 rounded-xl bg-accent px-4 text-sm font-semibold text-white">Show</button>
+        <button className="press h-10 rounded-xl bg-cta px-4 text-sm font-semibold text-cta-ink">Show</button>
       </form>
       <div className="overflow-x-auto card">
         <table className="w-full min-w-[720px] text-sm">

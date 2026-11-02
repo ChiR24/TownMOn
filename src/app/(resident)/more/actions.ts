@@ -19,8 +19,18 @@ export async function addMember(_: MemberState, form: FormData): Promise<MemberS
   const phone = normalizePhone(String(form.get("phone") ?? ""));
   if (!phone) return { error: "phone" };
   // An existing number is never linked silently: that would let one household pull in someone else's account.
+  // The one exception is a family member this same household removed earlier: adding them back restores them.
   const [exists] = await db.select({ id: users.id }).from(users).where(eq(users.phone, phone));
-  if (exists) return { error: "taken" };
+  if (exists) {
+    const [was] = await db
+      .select({ id: flatMembers.id })
+      .from(flatMembers)
+      .where(and(eq(flatMembers.flatId, flat.flatId), eq(flatMembers.userId, exists.id), eq(flatMembers.relation, "FAMILY"), eq(flatMembers.active, false)));
+    if (!was) return { error: "taken" };
+    await db.update(flatMembers).set({ active: true }).where(eq(flatMembers.id, was.id));
+    revalidatePath("/more");
+    return { ok: true };
+  }
   await db.transaction(async (tx) => {
     const [u] = await tx.insert(users).values({ name: name.data, phone }).returning({ id: users.id });
     await tx.insert(flatMembers).values({ flatId: flat.flatId, userId: u.id, relation: "FAMILY" });

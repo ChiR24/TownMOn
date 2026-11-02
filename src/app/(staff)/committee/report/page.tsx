@@ -2,7 +2,7 @@ import { CircleCheck, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PrintButton } from "@/app/receipts/[id]/print-button";
-import { Logo } from "@/components/ui";
+import { Logo } from "@/components/brand";
 import { db } from "@/db";
 import { AREAS, requireUser } from "@/lib/auth";
 import { TOWNSHIP } from "@/lib/config";

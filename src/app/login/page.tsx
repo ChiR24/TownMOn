@@ -1,8 +1,8 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Logo, TownshipArt } from "@/components/brand";
 import { LangSwitch } from "@/components/lang-switch";
-import { Logo, Skyline } from "@/components/ui";
 import { db } from "@/db";
 import { flatMembers, users } from "@/db/schema";
 import { currentUser, homeFor } from "@/lib/auth";
@@ -48,7 +48,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (user && !e) redirect(homeFor(user.role));
   const lang = await getLang();
   const t = translator(lang);
-  const keys = ["phone", "send", "sentTo", "code", "verify", "change", "resend", "demo", "demoHint", "demoSms"] as const;
+  const keys = ["phone", "send", "sentTo", "code", "verify", "change", "resend", "demo", "demoHint", "demoSms", "use"] as const;
   const errs = ["phone", "wrong", "expired", "locked", "tooMany", "noaccess", "noflat"] as const;
   const s = {
     ...Object.fromEntries(keys.map((k) => [k, t(`login.${k}` as Key)])),
@@ -56,24 +56,21 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   } as Parameters<typeof LoginForm>[0]["s"];
 
   return (
-    <main className="theme-auto min-h-dvh bg-canvas text-ink">
-      <div className="relative overflow-hidden bg-[linear-gradient(160deg,#12806f_0%,#0b5a50_55%,#08332e_100%)] pb-24 pt-[max(env(safe-area-inset-top),2.5rem)] text-white">
-        <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-[#f6c453]/20 blur-3xl" aria-hidden />
-        <Skyline className="absolute inset-x-0 bottom-0 h-32 w-full" />
-        <div className="relative mx-auto max-w-sm px-6">
-          <div className="flex items-center gap-3">
-            <Logo className="size-12 rounded-[16px] shadow-lg shadow-black/20" />
-            <div>
-              <p className="text-lg font-bold leading-tight">Township</p>
-              <p className="text-sm text-white/70">{TOWNSHIP}</p>
-            </div>
-          </div>
-          <h1 className="mt-10 text-[34px] font-bold leading-tight tracking-tight">{t("login.title")}</h1>
-          <p className="mt-2 text-[16px] text-white/80">{t("login.subtitle")}</p>
+    <main className="theme-auto resident-backdrop min-h-dvh text-ink">
+      <div className="mx-auto max-w-md px-4 pb-10 pt-[max(env(safe-area-inset-top),1.25rem)] motion-safe:animate-enter">
+        <div className="flex items-center gap-2.5 px-1">
+          <Logo className="size-10" />
+          <p className="text-lg font-semibold">Township</p>
         </div>
-      </div>
-      <div className="relative mx-auto -mt-14 max-w-sm px-4 pb-10 motion-safe:animate-enter">
-        <div className="card p-5">
+        <div className="mt-5 overflow-hidden rounded-[32px] shadow-[0_18px_40px_-24px_rgb(18_18_18/0.35)]">
+          <TownshipArt className="h-44 w-full" />
+        </div>
+        <h1 className="mt-7 px-1 text-[30px] font-semibold leading-[1.12] tracking-[-0.02em]">
+          {t("login.title")}
+          <span className="block text-ink-3">{TOWNSHIP}</span>
+        </h1>
+        <p className="mt-2.5 px-1 text-[15px] leading-relaxed text-ink-2">{t("login.subtitle")}</p>
+        <div className="card mt-6 p-5">
           <LoginForm s={s} demo={DEMO_MODE ? await demoAccounts() : []} initialError={e === "noflat" || e === "noaccess" ? s[`err.${e}`] : undefined} />
         </div>
         <div className="mt-8 flex justify-center">

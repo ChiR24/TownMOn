@@ -58,7 +58,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                 <Phone className="size-3.5" aria-hidden /> Call {row.residentName.split(" ")[0]}
               </a>
               {c.classifiedBy === "AI" && (
-                <Badge tone={c.needsTriage ? "amber" : "teal"}>
+                <Badge tone={c.needsTriage ? "amber" : "brand"}>
                   <Bot className="size-3" aria-hidden /> AI {c.aiConfidence}% sure{c.needsTriage ? ", please check" : ""}
                 </Badge>
               )}
@@ -112,7 +112,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <ol className="relative space-y-3 border-l border-line pl-5 text-sm">
               {events.map(({ e, actor }) => (
                 <li key={e.id} className="relative">
-                  <span className={cx("absolute -left-[25px] top-1.5 size-2.5 rounded-full", e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "CLASSIFIED" ? "bg-violet-500" : "bg-teal-600")} />
+                  <span className={cx("absolute -left-[25px] top-1.5 size-2.5 rounded-full", e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "CLASSIFIED" ? "bg-violet-500" : "bg-accent-ink")} />
                   <p className="text-ink">{e.note ?? (e.kind === "CREATED" ? "Complaint raised" : e.kind.toLowerCase())}</p>
                   <p className="text-xs text-ink-3">
                     {fmtDateTime(e.createdAt)} · {actor ?? "system"}
@@ -152,7 +152,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map((cat) => (
                 <form key={cat} action={setCategory.bind(null, c.id, cat)}>
-                  <button className={cx("rounded-full px-2.5 py-1 text-xs font-medium ring-1", cat === c.category ? "bg-accent text-white ring-accent" : "bg-surface text-ink-2 ring-line hover:bg-muted")} aria-pressed={cat === c.category}>
+                  <button className={cx("rounded-full px-2.5 py-1 text-xs font-medium ring-1", cat === c.category ? "bg-cta text-cta-ink ring-cta" : "bg-surface text-ink-2 ring-line hover:bg-muted")} aria-pressed={cat === c.category}>
                     {cat}
                   </button>
                 </form>

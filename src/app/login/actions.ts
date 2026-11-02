@@ -38,7 +38,9 @@ export async function login(_: LoginState, form: FormData): Promise<LoginState> 
 
   const code = String(form.get("code") ?? "").replace(/\D/g, "");
   const result = code.length === 6 ? await checkOtp(db, phone, code) : "wrong";
-  if (result !== "ok") return { step: "code", phone, error: result };
+  // In demo mode the on-screen "SMS" stays up after a typo (the form sends it back); a real SMS would still be there too.
+  const echo = String(form.get("demo") ?? "");
+  if (result !== "ok") return { step: "code", phone, error: result, demoCode: DEMO_MODE && result === "wrong" && /^\d{6}$/.test(echo) ? echo : undefined };
   if (!user) return { step: "code", phone, error: "wrong" };
   if (user.role === "TECHNICIAN") return { step: "phone", error: "noaccess" };
   await startSession(user.id);

@@ -3,7 +3,7 @@
 import { Camera, X } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
-import { Field, inputCls } from "@/components/ui";
+import { cx, Field, IconChip, inputCls } from "@/components/ui";
 import { shrinkPhoto } from "@/lib/shrink-photo";
 import { submitComplaint, type State } from "../actions";
 
@@ -32,15 +32,15 @@ export function ComplaintForm({ s }: { s: S }) {
   return (
     <form action={action} className="space-y-5">
       <Field label={s.what} hint={s.whatHint} error={state.error === "short" ? s.errShort : undefined} htmlFor="description">
-        <textarea id="description" name="description" required minLength={5} maxLength={1000} rows={5} className={inputCls} autoFocus />
+        <textarea id="description" name="description" required minLength={5} maxLength={1000} rows={5} className={cx(inputCls, "!rounded-[24px]")} autoFocus />
       </Field>
       <div>
-        <p className="mb-1.5 text-sm font-medium text-ink-2">{s.photo}</p>
+        <p className="mb-2 px-1 text-sm font-medium text-ink-2">{s.photo}</p>
         <input ref={input} id="photo" type="file" name="photo" accept="image/*" className="sr-only" onChange={onPick} />
         {preview ? (
           <div className="relative w-fit">
             {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-            <img src={preview} alt="" className="h-32 rounded-xl object-cover ring-1 ring-line" />
+            <img src={preview} alt="" className="h-36 rounded-[20px] object-cover" />
             <button
               type="button"
               aria-label="Remove photo"
@@ -54,8 +54,10 @@ export function ComplaintForm({ s }: { s: S }) {
             </button>
           </div>
         ) : (
-          <label htmlFor="photo" className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line bg-surface px-4 text-center text-sm text-ink-2 hover:bg-muted">
-            <Camera className="size-6 text-ink-3" aria-hidden />
+          <label htmlFor="photo" className="press flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[24px] border-2 border-dashed border-ink/12 bg-surface/60 px-4 py-6 text-center text-sm text-ink-2 hover:bg-surface dark:border-line">
+            <IconChip tone="peach" className="size-12">
+              <Camera className="size-5" aria-hidden />
+            </IconChip>
             {s.photoHint}
           </label>
         )}

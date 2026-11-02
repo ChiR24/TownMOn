@@ -35,12 +35,12 @@ export default async function ComplaintsPage({ searchParams }: { searchParams: P
           </LinkButton>
         }
       />
-      <div className="mb-4 inline-flex rounded-2xl bg-muted p-1" role="tablist">
+      <div className="mb-5 inline-flex rounded-full bg-surface p-1 shadow-[0_1px_2px_rgb(18_18_18/0.05),0_10px_24px_-14px_rgb(18_18_18/0.22)] dark:ring-1 dark:ring-line" role="tablist">
         {[
           { href: "/complaints", label: t("c.open"), on: !closed },
           { href: "/complaints?tab=closed", label: t("c.closed"), on: closed },
         ].map((tab) => (
-          <Link key={tab.href} href={tab.href} role="tab" aria-selected={tab.on} className={cx("press rounded-xl px-4 py-2 text-sm font-semibold", tab.on ? "bg-surface text-ink shadow-sm" : "text-ink-3")}>
+          <Link key={tab.href} href={tab.href} role="tab" aria-selected={tab.on} className={cx("press rounded-full px-5 py-2.5 text-sm font-semibold", tab.on ? "bg-cta text-cta-ink" : "text-ink-3 hover:text-ink")}>
             {tab.label}
           </Link>
         ))}
@@ -54,7 +54,7 @@ export default async function ComplaintsPage({ searchParams }: { searchParams: P
           )}
         </EmptyState>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {rows.map((c) => (
             <li key={c.id}>
               <ComplaintRow c={c} t={t} lang={lang} />

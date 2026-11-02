@@ -64,7 +64,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
             key={k}
             href={k === "active" ? "/desk" : `/desk?view=${k}`}
             aria-current={k === view ? "page" : undefined}
-            className={cx("press flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1", k === view ? "bg-accent text-white ring-accent" : "bg-surface text-ink-2 ring-line hover:bg-muted")}
+            className={cx("press flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1", k === view ? "bg-cta text-cta-ink ring-cta" : "bg-surface text-ink-2 ring-line hover:bg-muted")}
           >
             {VIEWS[k]}
             <span className={cx("tabular-nums", k === view ? "text-white/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-ink-3")}>{Number(counts[k])}</span>
@@ -96,7 +96,7 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <Badge tone="zinc">{c.category}</Badge>
                         {c.classifiedBy === "AI" ? (
-                          <Badge tone={c.needsTriage ? "amber" : "teal"}>
+                          <Badge tone={c.needsTriage ? "amber" : "brand"}>
                             <Bot className="size-3" aria-hidden /> AI {c.aiConfidence}%
                           </Badge>
                         ) : (
