@@ -283,9 +283,11 @@ now holds every Marathi and Hindi string to its English original: the same place
 A native speaker's read is still planned (A14).
 
 A screenshot sweep then took every role's main screens at phone, tablet and computer sizes, in light and in dark,
-and laid them side by side. It is why every role now shares one theme and one shell (section 6), and it found two
-faults, both fixed: an unreadable count on the active help-desk tab in dark mode, and a sidebar whose sign-out
-squeezed the name beside it.
+and laid them side by side, and a second pass read every page at full size. They are why every role now shares one
+theme and one shell (section 6), and they found faults, all fixed: controls in one row at four different heights,
+with the browser's own dropdown arrows (now one 40 px pill with the app's chevron); status text in dark red on dark
+cards; an unreadable count on the active help-desk tab; empty grey boxes for visitors without a photo; the
+test-payment page's Pay label turning dark on dark; and a sidebar whose sign-out squeezed the name beside it.
 
 Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
 mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test
