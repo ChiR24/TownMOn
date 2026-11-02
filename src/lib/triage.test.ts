@@ -10,7 +10,7 @@ const ai = (x: Partial<AiTriage>): AiTriage => ({ category: "Plumbing", urgency:
 
 describe("combining the AI with the rules", () => {
   it("lets the AI refine the category", () => {
-    expect(decide(classifyByRules("The thing near my door is broken again"), ai({ category: "Civil", confidence: 82 }), [])).toMatchObject({ category: "Civil", by: "AI", needsTriage: false });
+    expect(decide(classifyByRules("The thing near my door is broken again"), ai({ category: "Civil", confidence: 82 }), [])).toMatchObject({ category: "Civil", needsTriage: false });
   });
 
   it("escalates safety words even when the AI calls it routine", () => {
@@ -25,10 +25,6 @@ describe("combining the AI with the rules", () => {
   it("only links to a complaint it was shown", () => {
     expect(decide(classifyByRules("lift down"), ai({ category: "Lift", duplicate_of: 7 }), [7, 9]).duplicateOf).toBe(7);
     expect(decide(classifyByRules("lift down"), ai({ category: "Lift", duplicate_of: 99 }), [7, 9]).duplicateOf).toBeNull();
-  });
-
-  it("falls back to the rules when the AI is unavailable", () => {
-    expect(decide(classifyByRules("Water leaking from the bathroom ceiling"), null, [])).toMatchObject({ category: "Plumbing", by: "RULES" });
   });
 });
 

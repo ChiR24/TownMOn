@@ -68,9 +68,9 @@ async function run(c: Case) {
   const cands = c.candidates ?? [];
   const ai = await aiTriage(c.text, c.flat ?? "T09-0104", cands);
   const ms = Date.now() - started;
+  if (!ai) return { c, d: null, ms, problems: ["no AI answer"] };
   const d = decide(classifyByRules(c.text), ai, cands.map((x) => x.id));
   const problems: string[] = [];
-  if (!ai) problems.push("no AI answer");
   if (!c.cats.includes(d.category)) problems.push(`category ${d.category}`);
   if (!c.urg.includes(d.urgency)) problems.push(`urgency ${d.urgency}`);
   if (c.dup !== undefined && d.duplicateOf !== c.dup) problems.push(`duplicate ${d.duplicateOf} (want ${c.dup})`);
@@ -89,8 +89,12 @@ async function main() {
   await new Promise((r) => setTimeout(r, 300));
 
   for (const r of results) {
+    if (!r.d) {
+      console.log(`FAIL ${r.c.id.padEnd(26)} no AI answer · ${(r.ms / 1000).toFixed(1)}s`);
+      continue;
+    }
     const flags = `${r.d.duplicateOf ? ` · dup #${r.d.duplicateOf}` : ""}${r.d.needsTriage ? " · triage" : ""}`;
-    console.log(`${r.problems.length ? "FAIL" : "ok  "} ${r.c.id.padEnd(26)} ${r.d.by} ${r.d.category} · ${r.d.urgency} · ${r.d.confidence ?? "-"}%${flags} · ${(r.ms / 1000).toFixed(1)}s`);
+    console.log(`${r.problems.length ? "FAIL" : "ok  "} ${r.c.id.padEnd(26)} ${r.d.category} · ${r.d.urgency} · ${r.d.confidence}%${flags} · ${(r.ms / 1000).toFixed(1)}s`);
     console.log(`     title: ${r.d.title ?? "-"}${r.problems.length ? `\n     -> ${r.problems.join("; ")}` : ""}`);
   }
   const passed = results.filter((r) => !r.problems.length).length;

@@ -75,20 +75,18 @@ export async function aiTriage(text: string, flatId: string, candidates: Candida
   }
 }
 
-export type Decision = { category: Category; urgency: Urgency; by: "AI" | "RULES"; confidence: number | null; needsTriage: boolean; safety: boolean; duplicateOf: number | null; title: string | null };
+export type Decision = { category: Category; urgency: Urgency; confidence: number; needsTriage: boolean; safety: boolean; duplicateOf: number | null; title: string | null };
 
 /**
- * Combines the two. Safety words escalate whatever the AI says. A low-confidence AI answer goes to the help desk's
- * triage list. A duplicate must be one of the complaints we showed it. Without the AI, the rules decide.
+ * Combines the AI's answer with the rules. Safety words escalate whatever the AI says. A low-confidence answer goes to
+ * the help desk's triage list. A duplicate must be one of the complaints we showed it. (No answer: refineWithAi keeps
+ * the rules' triage and never gets here.)
  */
-export function decide(rules: RuleResult, ai: AiTriage | null, candidateIds: number[]): Decision {
-  if (!ai)
-    return { category: rules.category, urgency: rules.urgency, by: "RULES", confidence: null, needsTriage: !rules.confident || rules.category === "Other", safety: !!rules.safety, duplicateOf: null, title: null };
+export function decide(rules: RuleResult, ai: AiTriage, candidateIds: number[]): Decision {
   const confidence = Math.max(0, Math.min(100, Math.round(ai.confidence)));
   return {
     category: ai.category,
     urgency: rules.safety ? "EMERGENCY" : ai.urgency,
-    by: "AI",
     confidence,
     needsTriage: confidence < 60 || ai.category === "Other",
     safety: !!rules.safety || ai.urgency === "EMERGENCY",
