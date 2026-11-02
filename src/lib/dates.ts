@@ -15,23 +15,30 @@ export function shiftPeriod(period: string, n: number) {
   return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" });
-const timeFmt = new Intl.DateTimeFormat("en-IN", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
-const dateTimeFmt = new Intl.DateTimeFormat("en-IN", { timeZone: TZ, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
-const monthFmt = new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", month: "long", year: "numeric" });
-
-export const fmtDate = (d: string) => dateFmt.format(new Date(`${d}T00:00:00Z`));
-export const fmtMonth = (period: string) => monthFmt.format(new Date(`${period}-01T00:00:00Z`));
-export const fmtTime = (d: Date) => timeFmt.format(d);
-export const fmtDateTime = (d: Date) => dateTimeFmt.format(d);
-
-/** "5 min ago", "3 h ago", "2 days ago" */
-export function ago(d: Date, now = new Date()) {
-  const min = Math.round((now.getTime() - d.getTime()) / 60_000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min} min ago`;
-  const h = Math.round(min / 60);
-  if (h < 24) return `${h} h ago`;
-  const days = Math.round(h / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
+// Formatters per language, always with Latin digits so dates read the same as amounts (₹ uses Latin digits).
+const cache = new Map<string, Intl.DateTimeFormat>();
+function dtf(lang: string, key: string, opts: Intl.DateTimeFormatOptions) {
+  const k = `${lang}|${key}`;
+  let f = cache.get(k);
+  if (!f) cache.set(k, (f = new Intl.DateTimeFormat(`${lang}-IN-u-nu-latn`, opts)));
+  return f;
 }
+
+export const fmtDate = (d: string, lang = "en") => dtf(lang, "date", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }).format(new Date(`${d}T00:00:00Z`));
+export const fmtDay = (d: string, lang = "en") => dtf(lang, "day", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(`${d}T00:00:00Z`));
+export const fmtMonth = (period: string, lang = "en") => dtf(lang, "month", { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(`${period}-01T00:00:00Z`));
+export const fmtTime = (d: Date, lang = "en") => dtf(lang, "time", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(d);
+export const fmtDateTime = (d: Date, lang = "en") => dtf(lang, "dt", { timeZone: TZ, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d);
+
+/** "5 minutes ago" / "५ मिनिटांपूर्वी"-style relative time, in the reader's language (Latin digits). */
+export function relTime(d: Date, lang = "en", now = new Date()) {
+  const rtf = new Intl.RelativeTimeFormat(`${lang}-IN-u-nu-latn`, { numeric: "auto" });
+  const min = Math.round((d.getTime() - now.getTime()) / 60_000);
+  if (Math.abs(min) < 60) return rtf.format(min, "minute");
+  const h = Math.round(min / 60);
+  if (Math.abs(h) < 24) return rtf.format(h, "hour");
+  return rtf.format(Math.round(h / 24), "day");
+}
+
+/** Midnight today in India time, as a Date. */
+export const startOfTodayIST = (now = new Date()) => new Date(`${todayIST(now)}T00:00:00+05:30`);

@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Devanagari needs taller lines than Latin to read well on small screens. */
+  :lang(mr),
+  :lang(hi) {
+    line-height: 1.65;
+  }
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+}

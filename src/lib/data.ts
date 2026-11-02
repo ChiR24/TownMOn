@@ -1,0 +1,43 @@
+import { and, eq, inArray } from "drizzle-orm";
+import { db, type Q } from "@/db";
+import { flatMembers, ledger, users } from "@/db/schema";
+import { position } from "./billing";
+import { todayIST } from "./dates";
+
+const ledgerCols = { kind: ledger.kind, amount: ledger.amount, date: ledger.date, dueDate: ledger.dueDate, paymentId: ledger.paymentId };
+
+/** Balance, days overdue, ageing and the settled charges for one flat, straight from its ledger. */
+export async function flatPosition(flatId: string, q: Q = db, today = todayIST()) {
+  const rows = await q.select(ledgerCols).from(ledger).where(eq(ledger.flatId, flatId)).orderBy(ledger.id);
+  return position(rows, today);
+}
+
+/** Positions for many flats in one query (dashboard, matcher). */
+export async function flatPositions(q: Q = db, flatIds?: string[], today = todayIST()) {
+  const rows = await q
+    .select({ flatId: ledger.flatId, ...ledgerCols })
+    .from(ledger)
+    .where(flatIds ? inArray(ledger.flatId, flatIds) : undefined)
+    .orderBy(ledger.id);
+  const byFlat = new Map<string, typeof rows>();
+  for (const r of rows) byFlat.set(r.flatId, [...(byFlat.get(r.flatId) ?? []), r]);
+  return new Map([...byFlat].map(([flatId, rs]) => [flatId, position(rs, today)]));
+}
+
+/** Everyone who should hear about something happening at a flat. */
+export async function flatPeople(flatId: string, q: Q = db) {
+  return q
+    .select({ id: users.id, name: users.name })
+    .from(flatMembers)
+    .innerJoin(users, eq(users.id, flatMembers.userId))
+    .where(and(eq(flatMembers.flatId, flatId), eq(flatMembers.active, true), eq(users.active, true)));
+}
+
+/** True if the user is an active member of the flat. Used before every flat-scoped read or write. */
+export async function isMember(userId: number, flatId: string, q: Q = db) {
+  const [m] = await q
+    .select({ id: flatMembers.id })
+    .from(flatMembers)
+    .where(and(eq(flatMembers.userId, userId), eq(flatMembers.flatId, flatId), eq(flatMembers.active, true)));
+  return !!m;
+}
