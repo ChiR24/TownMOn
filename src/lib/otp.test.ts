@@ -35,6 +35,15 @@ describe("one-time codes", () => {
     expect(await checkOtp(db, "9000000002", r.code)).toBe("locked");
   });
 
+  it("gives guesses sent all at once five tries between them, not five each", async () => {
+    const r = await issueOtp(db, "9000000005");
+    if (!r.ok) throw new Error("expected a code");
+    const guesses = Array.from({ length: 30 }, (_, i) => String((Number(r.code) + 1 + i) % 1_000_000).padStart(6, "0"));
+    const results = await Promise.all([...guesses.map((g) => checkOtp(db, "9000000005", g)), checkOtp(db, "9000000005", r.code)]);
+    expect(results.filter((x) => x === "wrong").length + results.filter((x) => x === "ok").length).toBeLessThanOrEqual(5);
+    expect(results.at(-1)).toBe("locked"); // the right code, arriving after five tries were spent, gets nothing
+  });
+
   it("expires after five minutes", async () => {
     const t = new Date("2026-11-02T10:00:00Z");
     const r = await issueOtp(db, "9000000003", t);

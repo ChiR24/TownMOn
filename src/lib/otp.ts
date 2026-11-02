@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, isNull, lt, sql } from "drizzle-orm";
 import type { Q } from "@/db";
 import { otpChallenges } from "@/db/schema";
 import { keyedHash, randomDigits, sameHex } from "./crypto";
@@ -23,7 +23,10 @@ export async function issueOtp(q: Q, phone: string, now = new Date()) {
 
 export type OtpCheck = "ok" | "wrong" | "expired" | "locked";
 
-/** Checks the latest unused code. Every try counts; five wrong tries lock it; a code works once. */
+/**
+ * Checks the latest unused code. Every try counts; five wrong tries lock it; a code works once. The try is taken
+ * and counted in one conditional update, so guesses sent all at once still get five chances between them, not each.
+ */
 export async function checkOtp(q: Q, phone: string, code: string, now = new Date()): Promise<OtpCheck> {
   const [c] = await q
     .select()
@@ -32,13 +35,17 @@ export async function checkOtp(q: Q, phone: string, code: string, now = new Date
     .orderBy(desc(otpChallenges.id))
     .limit(1);
   if (!c || c.expiresAt <= now) return "expired";
-  if (c.attempts >= OTP_MAX_ATTEMPTS) return "locked";
-  const [{ attempts }] = await q
+  const [turn] = await q
     .update(otpChallenges)
     .set({ attempts: sql`${otpChallenges.attempts} + 1` })
-    .where(eq(otpChallenges.id, c.id))
+    .where(and(eq(otpChallenges.id, c.id), lt(otpChallenges.attempts, OTP_MAX_ATTEMPTS), isNull(otpChallenges.consumedAt)))
     .returning({ attempts: otpChallenges.attempts });
-  if (!sameHex(c.codeHash, hashFor(phone, code))) return attempts >= OTP_MAX_ATTEMPTS ? "locked" : "wrong";
-  await q.update(otpChallenges).set({ consumedAt: now }).where(eq(otpChallenges.id, c.id));
-  return "ok";
+  if (!turn) return "locked";
+  if (!sameHex(c.codeHash, hashFor(phone, code))) return turn.attempts >= OTP_MAX_ATTEMPTS ? "locked" : "wrong";
+  const [used] = await q
+    .update(otpChallenges)
+    .set({ consumedAt: now })
+    .where(and(eq(otpChallenges.id, c.id), isNull(otpChallenges.consumedAt)))
+    .returning({ id: otpChallenges.id });
+  return used ? "ok" : "expired";
 }
