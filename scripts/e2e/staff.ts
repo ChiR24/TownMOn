@@ -1,6 +1,6 @@
 // End to end, part 2: the gate tablet, residents answering it, and the help desk working complaints.
 import type { Browser, Page } from "playwright-core";
-import { base, check, desktop, go, phone, photo, see, signIn, submit, tablet } from "./kit";
+import { base, cameraPhoto, check, desktop, go, phone, see, signIn, storedPhoto, submit, tablet } from "./kit";
 
 export async function gateFlows(browser: Browser, swati: Page, guestCode: string) {
   const gate = await signIn(browser, tablet, "Ramesh Pawar");
@@ -10,10 +10,13 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     for (const d of code) await gate.getByRole("button", { name: d, exact: true }).click();
     await gate.getByRole("button", { name: "Check code" }).click();
   }
-  async function newVisitor(flat: string, name: string, withPhoto = false) {
+  async function newVisitor(flat: string, name: string, file?: Awaited<ReturnType<typeof cameraPhoto>>) {
     await go(gate, "/gate");
     await gate.getByRole("button", { name: "New visitor" }).click();
-    if (withPhoto) await gate.locator('input[type="file"]').setInputFiles(photo);
+    if (file) {
+      await gate.locator('input[type="file"]').setInputFiles(file);
+      await gate.locator('label img[src^="blob:"]').waitFor(); // the preview appears once the photo has been shrunk
+    }
     await gate.locator("#flat").fill(flat);
     await gate.locator("#vname").fill(name);
     await gate.getByRole("button", { name: "Guest", exact: true }).click();
@@ -32,9 +35,12 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     await typeCode("000000");
     await see(gate, "Code not valid");
   });
-  await check("gate: a new visitor, with photo, is sent to the flat's residents", gate, async () => {
-    await newVisitor("T12-0408", "Test Visitor", true);
+  await check("gate: a new visitor, with a 12 MP photo stored small and upright, is sent to the flat's residents", gate, async () => {
+    await newVisitor("T12-0408", "Test Visitor", await cameraPhoto(gate));
     await see(gate, "Test Visitor");
+    const feed = await (await gate.request.get(`${base}/api/gate/feed?gate=1`)).json();
+    const stored = await storedPhoto(gate, feed.entries.find((e: { name: string }) => e.name === "Test Visitor")?.photoId);
+    if (!(stored.upright && stored.width === 720 && stored.height === 960)) throw new Error(`stored photo: ${JSON.stringify(stored)}`);
   });
   await check("resident: approves from home; the guard sees it and lets the visitor in", swati, async () => {
     await go(swati, "/");
@@ -67,6 +73,33 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     await gate.getByText("to sync").first().waitFor({ state: "detached", timeout: 30_000 });
     await go(gate, "/gate");
     await see(gate, "Offline Guest");
+  });
+
+  await check("gate: an intercom decision made while that visitor is still syncing is kept", gate, async () => {
+    await go(gate, "/gate");
+    await gate.context().setOffline(true);
+    await gate.getByRole("button", { name: "New visitor" }).click();
+    await gate.locator("#flat").fill("T21-1601");
+    await gate.locator("#vname").fill("Mid-sync Guest");
+    await gate.getByRole("button", { name: "Ask resident" }).click();
+    await see(gate, "to sync");
+    // Back online, hold the replay's upload in flight, settle the visitor on the intercom meanwhile, then let it go.
+    let release = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    await gate.route("**/api/gate/visitors", async (route) => {
+      await held;
+      await route.continue();
+    });
+    const sent = gate.waitForRequest((r) => r.url().endsWith("/api/gate/visitors") && r.method() === "POST", { timeout: 20_000 });
+    await gate.context().setOffline(false);
+    await sent;
+    await gate.locator("li").filter({ hasText: "Mid-sync Guest" }).getByRole("button", { name: "Approved on call" }).click();
+    release();
+    await gate.getByText("to sync").first().waitFor({ state: "detached", timeout: 30_000 });
+    await gate.unroute("**/api/gate/visitors");
+    const feed = await (await gate.request.get(`${base}/api/gate/feed?gate=1`)).json();
+    const entry = feed.entries.find((e: { name: string }) => e.name === "Mid-sync Guest");
+    if (entry?.status !== "INSIDE") throw new Error(`the server has them as ${entry?.status}`);
   });
 
   const neeraj = await signIn(browser, phone, "Neeraj Kulkarni");

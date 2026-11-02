@@ -1,6 +1,6 @@
 // End to end, part 1: sign-in, and a resident's day (Swati, the overdue tenant in T12-0408).
 import type { Browser } from "playwright-core";
-import { check, go, phone, photo, see, settle, signIn, submit } from "./kit";
+import { cameraPhoto, check, go, phone, see, settle, signIn, storedPhoto, submit } from "./kit";
 
 export async function signInChecks(browser: Browser) {
   const page = await (await browser.newContext(phone)).newPage();
@@ -75,15 +75,18 @@ export async function residentFlows(browser: Browser) {
     if (!swati.url().endsWith("/complaints/new")) throw new Error("a too-short complaint was sent");
     if ((await swati.locator("#description").inputValue()) !== "ab") throw new Error("the typed text was lost");
   });
-  await check("complaint: raised with a photo; the rules answer at once", swati, async () => {
+  await check("complaint: raised with a 12 MP phone photo; it is stored small and upright, and the rules answer at once", swati, async () => {
     await go(swati, "/complaints/new");
     await swati.locator("#description").fill("The kitchen sink tap has been leaking since yesterday evening and the cabinet below is wet.");
-    await swati.locator('input[name="photo"]').setInputFiles(photo);
+    await swati.locator('input[name="photo"]').setInputFiles(await cameraPhoto(swati));
+    await swati.locator('img[src^="blob:"]').waitFor(); // the preview appears once the photo has been shrunk
     await swati.getByRole("button", { name: "Send to help desk" }).click();
     await swati.waitForURL(/\/complaints\/\d+\?new=1/, { timeout: 30_000 });
     out.complaint = new URL(swati.url()).pathname.split("/").pop()!;
     await see(swati, "Sent. The help desk will respond soon");
-    await swati.locator('img[src^="/api/photos/"]').waitFor();
+    const src = await swati.locator('img[src^="/api/photos/"]').getAttribute("src");
+    const stored = await storedPhoto(swati, src!.split("/").pop()!);
+    if (!(stored.upright && stored.width === 960 && stored.height === 1280 && stored.kb < 1024)) throw new Error(`stored photo: ${JSON.stringify(stored)}`);
     await see(swati, "Rules:");
   });
   await check("complaint: within 30 seconds Claude sorts it as plumbing (or, with no API key, says AI is unavailable)", swati, async () => {
