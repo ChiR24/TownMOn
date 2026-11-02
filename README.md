@@ -13,8 +13,8 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. No database to install: without `DATABASE_URL` the app uses an embedded Postgres
-(PGlite) in `.data/`, created and seeded on first run. Sign in with any demo account on the sign-in page; in demo
+Open http://localhost:3000. The database is Postgres, and there is no database server to install: without
+`DATABASE_URL` the app runs Postgres embedded (PGlite) in `.data/`, created and seeded on first run. Sign in with any demo account on the sign-in page; in demo
 mode the one-time code is shown on screen instead of being sent by SMS.
 
 | Who | Mobile | Try |

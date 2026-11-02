@@ -1,14 +1,17 @@
 # Technical Design Document: Township
 
-**GitHub:** `<add the public repository URL>`
-**Live app:** `<add the deployed URL>` (demo logins in `deployment.md`)
+**GitHub:** https://github.com/ChiR24/TownMOn
+**Live app:** Not deployed. It runs locally in one command (`npm install && npm run dev`): the Postgres database runs
+embedded, so there is no database server to install (`deployment.md` section 1; section 2 has the Vercel and hosted
+Postgres steps). Demo logins: `deployment.md` section 4.
 **Scope:** A resident app for maintenance, complaints and visitors in a gated township (Company A, Pune; 2,400 flats in 28 towers)
-**Author:** `<your name>` · November 2026
+**Author:** ChiR24 · November 2026
 
 ## 1. What I built
 
-One web app with four faces: residents (phone, installable), the help desk, accounts and the committee (browser),
-and guards (a tablet that keeps working offline). The core works end to end on realistic data:
+One installable web app (no app store), with four faces:
+residents on their phones, the help desk, accounts and the committee in a browser, and guards on a tablet that keeps
+working offline. The core works end to end on realistic data:
 resident login, maintenance bills with a test payment, bank statement matching, complaints with assignment and
 status, and the committee view. Around that core: interest per the bye-laws, receipts and a
 ledger per flat, photos and ratings on complaints, the gate tablet with resident approval and guest codes, amenity
@@ -24,12 +27,20 @@ changing code. What stays simulated is outside services: the payment gateway, SM
 
 ## 2. Architecture, and why
 
-```
-Residents' phones (installable web app) ─┐
-Gate tablets (offline queue, SW cache) ──┼─► Next.js 16 app on Vercel, Mumbai ──► Postgres, Mumbai
-Help desk / accounts / committee ────────┘        │
-                                                   ├─► Claude API: complaint triage (structured output)
-                                                   └─► Mocked: TestPay gateway, SMS/WhatsApp, bank CSV
+```mermaid
+flowchart LR
+  R["Residents' phones<br/>installable web app"] --> A
+  G["Gate tablets<br/>work offline, sync later"] -.-> A
+  S["Staff in a browser<br/>help desk, accounts, committee"] --> A
+  A["Next.js 16 app<br/>Vercel, Mumbai"] --> D[("Postgres<br/>Mumbai; PGlite locally")]
+  A -->|after the response| C["Claude API<br/>complaint triage"]
+  A <--> M["Mocked services<br/>TestPay gateway, bank CSV,<br/>SMS and WhatsApp"]
+  classDef app fill:#15171c,stroke:#15171c,color:#ffffff
+  classDef ai fill:#f1ecff,stroke:#8b5cf6,color:#15171c
+  classDef mock fill:#ffffff,stroke:#9aa0aa,stroke-dasharray:4 3,color:#3f4450
+  class A app
+  class C ai
+  class M mock
 ```
 
 | Decision | Why | What it costs |
@@ -138,6 +149,26 @@ repeatable and auditable.
 
 ## 6. UI and design decisions
 
+The key screens, on the demo data (a phone for residents, a desktop for staff, a tablet at the gate):
+
+| Resident home | A complaint, with the AI's note | Paying |
+|---|---|---|
+| ![Resident home: dues with one Pay button, quick actions and open complaints](screens/resident-home.jpg) | ![A complaint with its five-step tracker and the AI's note](screens/resident-complaint.jpg) | ![Paying the full balance or another amount, in test mode](screens/resident-pay.jpg) |
+
+| Help desk queue | An unsure AI call, fixed in one tap |
+|---|---|
+| ![Help desk queue: emergencies first, AI badges with confidence](screens/desk.jpg) | ![A complaint the AI was 34% sure about, with one-tap categories](screens/desk-complaint.jpg) |
+
+| Bank statement import: posted, or why not | Review queue: the reason and ranked flats |
+|---|---|
+| ![Import result with an outcome and a reason for every credit](screens/accounts-import.jpg) | ![Review queue with the reason and ranked suggestions](screens/accounts-review.jpg) |
+
+| Committee dashboard | Gate tablet |
+|---|---|
+| ![Committee dashboard: collections, four targets as gauges, on-time trend, dues ageing](screens/committee.jpg) | ![Gate tablet: very large buttons, a visitor waiting with the intercom fallback](screens/gate.jpg) |
+
+Why they look the way they do:
+
 - **Residents open the app for seconds.** Home shows, in order, anyone waiting at the gate (with Let in / Deny),
   dues with one Pay button, open complaints with their status, today's visitors and notices. Pay, raise a complaint,
   create a guest code and book are one tap from home; nothing is more than two.
@@ -160,7 +191,8 @@ repeatable and auditable.
   ramp for dues by age); the committee's four targets are gauges with the target marked.
 - **The AI has a visible signature.** Anything Claude decided (a category, an urgency, a duplicate link) carries a
   violet sparkle and its confidence; rules and staff decisions never do. Residents see "AI sorted this as Plumbing (94%
-  sure)" and that the help desk checks it; the help desk sees the AI's unsure calls in amber.
+  sure)" and that the help desk checks it, or, when the AI is unsure, that a person will sort it; the help desk sees
+  the AI's unsure calls in amber.
 - **Glass for the navigation layer only.** The top bar, the floating tab bar and the booking sheet are translucent so
   content stays in view behind them, and content fades softly as it scrolls underneath. Content itself sits on opaque
   cards, because text on glass is harder to read. Glass turns solid when the phone asks for less transparency or the
@@ -243,7 +275,7 @@ Choices made where the details were open. Each is configurable or easy to change
 | A14 | Staff screens in English; resident and gate screens in English, Marathi and Hindi (Marathi and Hindi drafted, to be reviewed by native speakers) |
 | A15 | Owner and tenant both see the flat's dues; the primary member (the tenant if let, else the owner) manages household members |
 | A16 | Hosting in India (Mumbai) for comfort, though the DPDP Act 2023 does not require it |
-| A17 | The AI receives complaint texts and the tower, no names or phone numbers; the AI provider acts as a data processor |
+| A17 | The AI receives complaint texts and flat numbers (for the floor), no names or phone numbers; the AI provider acts as a data processor |
 | A18 | Seed data is synthetic (random name combinations, fictional numbers), and the app is assumed live for three months so trends exist |
 | A19 | The payment gateway, SMS and WhatsApp are mocked |
 | A20 | "Committee view" = a read-only dashboard and monthly report; the duty manager sees every staff area |

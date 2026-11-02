@@ -135,13 +135,13 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                 </label>
                 <textarea id="note" name="note" rows={3} maxLength={500} placeholder="e.g. Plumber will come at 4 pm" className={`${inputCls} text-sm`} />
                 <div className="grid grid-cols-3 gap-2">
-                  <SubmitButton name="intent" value="note" size="sm" variant="secondary">
+                  <SubmitButton name="intent" value="note" size="sm" variant="secondary" className="whitespace-nowrap !px-2">
                     Note
                   </SubmitButton>
-                  <SubmitButton name="intent" value="start" size="sm" variant="secondary" disabled={c.status === "IN_PROGRESS"}>
+                  <SubmitButton name="intent" value="start" size="sm" variant="secondary" disabled={c.status === "IN_PROGRESS"} className="whitespace-nowrap !px-2">
                     Start work
                   </SubmitButton>
-                  <SubmitButton name="intent" value="resolve" size="sm">
+                  <SubmitButton name="intent" value="resolve" size="sm" className="whitespace-nowrap !px-2">
                     Fixed
                   </SubmitButton>
                 </div>

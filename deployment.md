@@ -2,11 +2,12 @@
 
 ## 1. Run it locally
 
-You need Node.js 22 or newer and npm. Nothing else: no database to install.
+You need Node.js 22 or newer and npm. Nothing else: the database is Postgres, run embedded (PGlite) on your
+machine, so there is no database server to install.
 
 ```bash
-git clone <this repository>
-cd township-app
+git clone https://github.com/ChiR24/TownMOn.git
+cd TownMOn
 npm install
 npm run dev
 ```
