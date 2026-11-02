@@ -22,6 +22,7 @@ beforeAll(async () => {
 });
 
 const entry = (x: object = {}) => ({ clientId: crypto.randomUUID(), flatId: "T07-1203", name: "Imran (Swiggy)", purpose: "DELIVERY" as const, gate: 1, arrivedAt: new Date(), outcome: "PENDING" as const, phone: "", ...x });
+const jpeg = () => new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10])], "visitor.jpg", { type: "image/jpeg" });
 
 describe("the gate", () => {
   it("records an entry once even if a flaky network sends it twice, and pings the household", async () => {
@@ -56,9 +57,18 @@ describe("the gate", () => {
     expect(JSON.stringify(list)).not.toContain(code);
   });
 
+  it("stores the photo of a replayed entry once, not again for each replay", async () => {
+    const e = entry();
+    const before = (await db.select().from(photos)).length;
+    await logVisitor(db, e, guard, jpeg());
+    await logVisitor(db, e, guard, jpeg());
+    expect(await db.select().from(photos)).toHaveLength(before + 1);
+    await db.delete(visitors).where(eq(visitors.clientId, e.clientId));
+    await db.delete(photos);
+  });
+
   it("deletes visitor photos after 90 days but keeps the visit", async () => {
-    const [p] = await db.insert(photos).values({ mime: "image/jpeg", bytes: Buffer.from([0xff, 0xd8, 0xff]) }).returning({ id: photos.id });
-    const r = await logVisitor(db, entry({ arrivedAt: new Date(Date.now() - 91 * 86_400_000) }), guard, p.id);
+    const r = await logVisitor(db, entry({ arrivedAt: new Date(Date.now() - 91 * 86_400_000) }), guard, jpeg());
     expect(await purgeVisitorPhotos(db)).toBe(1);
     const [v] = await db.select().from(visitors).where(eq(visitors.id, (r as { id: number }).id));
     expect(v.photoId).toBeNull();

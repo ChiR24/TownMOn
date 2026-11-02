@@ -4,6 +4,7 @@ import type { Q } from "@/db";
 import { flats, guestCodes, notifications, photos, visitors } from "@/db/schema";
 import { keyedHash, randomDigits, randomToken, sha256 } from "./crypto";
 import { flatPeople } from "./data";
+import { savePhoto } from "./photos";
 
 export const PURPOSES = ["GUEST", "DELIVERY", "CAB", "SERVICE", "OTHER"] as const;
 export const PHOTO_DAYS = 90; // DPDP: visitor photos are deleted after 90 days
@@ -51,12 +52,15 @@ export type EntryInput = z.infer<typeof Entry>;
 /**
  * Records a visitor at the gate. Idempotent on the tablet's clientId, so an entry synced twice after a network
  * drop is recorded once. A waiting visitor pings the household (in the app and, mocked, on WhatsApp).
+ * The photo is stored only once the entry is known to be new, so a replay never leaves an extra copy of a face
+ * that nothing points to (and that the 90-day purge would never find).
  */
-export async function logVisitor(q: Q, e: EntryInput, guardId: number, photoId: number | null) {
+export async function logVisitor(q: Q, e: EntryInput, guardId: number, photo: File | null) {
   const [existing] = await q.select({ id: visitors.id }).from(visitors).where(eq(visitors.clientId, e.clientId));
   if (existing) return { id: existing.id, duplicate: true };
   const [flat] = await q.select({ id: flats.id }).from(flats).where(eq(flats.id, e.flatId));
   if (!flat) return { error: "No such flat" as const };
+  const photoId = photo ? await savePhoto(q, photo) : null;
   const settled = e.outcome !== "PENDING";
   const arrived = e.arrivedAt > new Date() ? new Date() : e.arrivedAt; // a tablet clock running fast can't create the future
   const [v] = await q

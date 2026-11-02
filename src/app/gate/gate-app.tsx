@@ -22,6 +22,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const [toast, setToast] = useState<{ text: string; ok: boolean } | null>(null);
   const [now, setNow] = useState(0); // ticks with each poll, so "waiting 3 min" stays honest without impure renders
   const queueRef = useRef<Queued[]>([]);
+  const syncing = useRef(false);
   const router = useRouter();
 
   const say = (text: string, ok = true) => {
@@ -83,16 +84,28 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
         await kvSet("flats", data.flats);
       }
       setOnline(true);
-      // Back online: replay the offline queue. Same clientId -> the server records each entry once.
-      let q = queueRef.current;
-      for (const item of q) {
-        try {
-          await send(item);
-          q = q.filter((x) => x.clientId !== item.clientId);
-          await saveQueue(q);
-        } catch {
-          break;
+      // Back online: replay the offline queue, one replay at a time. Same clientId -> the server records each entry
+      // once. Each entry is taken out of the queue as it is now, never a copy from before the send, so a visitor
+      // queued or settled on the intercom meanwhile is kept.
+      if (syncing.current) return;
+      syncing.current = true;
+      try {
+        for (const { clientId } of [...queueRef.current]) {
+          const sent = queueRef.current.find((x) => x.clientId === clientId);
+          if (!sent) continue;
+          const r = await send(sent);
+          const latest = queueRef.current.find((x) => x.clientId === clientId);
+          // Settled on the intercom while it was on its way: apply that to the visitor the server just recorded.
+          if (r.ok && latest && latest.outcome !== sent.outcome && latest.outcome.startsWith("INTERCOM")) {
+            const { id } = await r.json();
+            await fetch(`/api/gate/visitors/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: latest.outcome === "INTERCOM_APPROVED" ? "intercom-approve" : "intercom-deny" }) });
+          }
+          await saveQueue(queueRef.current.filter((x) => x.clientId !== clientId));
         }
+      } catch {
+        // Still offline, or the server is down: what is left stays queued for the next try.
+      } finally {
+        syncing.current = false;
       }
     } catch {
       setOnline(false);
