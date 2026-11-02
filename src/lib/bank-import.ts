@@ -14,7 +14,7 @@ export const fingerprint = (date: string, narration: string, amount: number) => 
 export async function matchContext(q: Q, today = todayIST()) {
   const [flatRows, positions, currentBills, vpas, members, payouts] = await Promise.all([
     q.select({ id: flats.id }).from(flats),
-    flatPositions(q, undefined, today),
+    flatPositions(q, { today }),
     q.select({ flatId: bills.flatId, amount: sql<number>`(${bills.maintenance} + ${bills.interest})::int` }).from(bills).where(eq(bills.period, today.slice(0, 7))),
     q.select({ vpa: payerAccounts.vpa, flatId: payerAccounts.flatId }).from(payerAccounts),
     q.select({ flatId: flatMembers.flatId, name: users.name }).from(flatMembers).innerJoin(users, eq(users.id, flatMembers.userId)).where(eq(flatMembers.active, true)),

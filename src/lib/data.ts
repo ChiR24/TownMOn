@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, lt } from "drizzle-orm";
 import { db, type Q } from "@/db";
 import { flatMembers, ledger, users } from "@/db/schema";
 import { position } from "./billing";
@@ -12,12 +12,12 @@ export async function flatPosition(flatId: string, q: Q = db, today = todayIST()
   return position(rows, today);
 }
 
-/** Positions for many flats in one query (dashboard, matcher). */
-export async function flatPositions(q: Q = db, flatIds?: string[], today = todayIST()) {
+/** Positions for many flats in one query (dashboard, matcher, reports). `until` cuts the ledger off at a date. */
+export async function flatPositions(q: Q = db, { flatIds, today = todayIST(), until }: { flatIds?: string[]; today?: string; until?: string } = {}) {
   const rows = await q
     .select({ flatId: ledger.flatId, ...ledgerCols })
     .from(ledger)
-    .where(flatIds ? inArray(ledger.flatId, flatIds) : undefined)
+    .where(and(flatIds ? inArray(ledger.flatId, flatIds) : undefined, until ? lt(ledger.date, until) : undefined))
     .orderBy(ledger.id);
   const byFlat = new Map<string, typeof rows>();
   for (const r of rows) byFlat.set(r.flatId, [...(byFlat.get(r.flatId) ?? []), r]);

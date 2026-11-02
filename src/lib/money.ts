@@ -5,6 +5,16 @@ const exact = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR
 /** 747500 -> "₹7,475"; 747550 -> "₹7,475.50" */
 export const rupees = (paise: number) => (paise % 100 === 0 ? whole : exact).format(paise / 100);
 export const toPaise = (rupeeAmount: number) => Math.round(rupeeAmount * 100);
+
+/** Indian compact form for dashboards: ₹1.80 Cr, ₹12.4 L, ₹8.9K. */
+export function compactINR(paise: number) {
+  const r = paise / 100;
+  const a = Math.abs(r);
+  if (a >= 1e7) return `₹${(r / 1e7).toFixed(2)} Cr`;
+  if (a >= 1e5) return `₹${(r / 1e5).toFixed(1)} L`;
+  if (a >= 1e4) return `₹${(r / 1e3).toFixed(1)}K`;
+  return rupees(Math.round(paise / 100) * 100);
+}
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
