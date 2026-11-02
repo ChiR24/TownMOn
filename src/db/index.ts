@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { drizzle as pgDrizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { drizzle as liteDrizzle } from "drizzle-orm/pglite";
 import * as schema from "./schema";
@@ -14,9 +14,36 @@ function create(): DB {
   if (url) return pgDrizzle(url, { schema, casing: "snake_case" });
   // ponytail: PGlite is single-connection; fine for local runs and demos, use DATABASE_URL for production.
   const dir = process.env.PGLITE_DIR ?? ".data/pglite";
-  mkdirSync(dir, { recursive: true });
+  if (!dir.startsWith("memory://")) {
+    mkdirSync(dir, { recursive: true });
+    lockDir(dir);
+  }
   return liteDrizzle(dir, { schema, casing: "snake_case" }) as unknown as DB;
 }
 
+/** PGlite on disk is one process only; two processes on one folder corrupt it. Refuse with a clear message instead. */
+function lockDir(dir: string) {
+  const lock = `${dir}.lock`;
+  try {
+    const pid = Number(readFileSync(lock, "utf8"));
+    if (pid && pid !== process.pid) {
+      process.kill(pid, 0); // throws if that process is gone
+      throw new Error(`The local database is in use by another process (pid ${pid}). Stop "npm run dev" first, then try again.`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("The local database")) throw e;
+  }
+  writeFileSync(lock, String(process.pid));
+  process.once("exit", () => rmSync(lock, { force: true }));
+}
+
+// Connect on first use, not on import: build workers and tests import this module without touching the database.
 const g = globalThis as unknown as { __db?: DB };
-export const db: DB = (g.__db ??= create());
+const instance = () => (g.__db ??= create());
+export const db = new Proxy({} as DB, {
+  get(_, prop) {
+    const real = instance();
+    const value = Reflect.get(real, prop, real);
+    return typeof value === "function" ? value.bind(real) : value;
+  },
+});

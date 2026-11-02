@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findFlatCodes, matchCredit, oneSlip, parseAmount, parseCsv, parseDate, readNarration, readStatement, type MatchContext } from "./bank";
+import { findFlatCodes, matchCredit, nameMatch, oneSlip, parseAmount, parseCsv, parseDate, readNarration, readStatement, type MatchContext } from "./bank";
 
 describe("reading a statement", () => {
   it("parses quoted CSV cells", () => {
@@ -154,6 +154,33 @@ describe("matching a credit to a flat", () => {
 
   it("ignores bank interest", () => {
     expect(match(12_345, "INT.PD 01-07-26 TO 30-09-26").status).toBe("IGNORED");
+  });
+});
+
+describe("payer names", () => {
+  it("tells a resident paying apart from someone who shares a surname", () => {
+    expect(nameMatch("Neeraj Kulkarni", ["Neeraj Kulkarni", "Meera Kulkarni"])).toBe("full");
+    expect(nameMatch("Kulkarni N", ["Neeraj Kulkarni"])).toBe("partial");
+    expect(nameMatch("Shrikant Verma", ["Pooja Verma"])).toBe("partial");
+    expect(nameMatch("R Mehta", ["Aamir Shaikh"])).toBeNull();
+  });
+
+  it("ranks the flat whose resident is paying above flats that only share a surname", () => {
+    const r = matchCredit(
+      637_000,
+      readNarration("NEFT CR-SBIN0001234-SWATI JOSHI-TOWNSHIP FEDERATION-SBINN52026110212346"),
+      {
+        flatExists: () => true,
+        nearestFlat: () => undefined,
+        flatsForVpa: () => [],
+        due: () => ({ outstanding: 637_000, current: 637_000 }),
+        names: (f) => (f === "T12-0408" ? ["Swati Joshi"] : ["Kiran Joshi"]),
+        flatsOwing: () => ["T03-0105", "T12-0408", "T19-0305"],
+        settlement: () => undefined,
+      },
+    );
+    expect(r.status).toBe("NEEDS_REVIEW");
+    expect(r.suggestions[0]).toMatchObject({ flatId: "T12-0408", score: 45 });
   });
 });
 

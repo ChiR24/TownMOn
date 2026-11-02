@@ -180,9 +180,17 @@ export type MatchResult = {
   suggestions: { flatId: string; score: number; reasons: string[] }[];
 };
 
-export function nameMatches(payer: string, residents: string[]) {
+/** "full": the payer is one of the residents (every part of their name appears). "partial": one shared name. */
+export function nameMatch(payer: string, residents: string[]): "full" | "partial" | null {
   const p = payer.toUpperCase().split(/\s+/).filter((w) => w.length >= 3);
-  return residents.some((r) => r.toUpperCase().split(/\s+/).some((w) => w.length >= 3 && p.includes(w)));
+  let partial = false;
+  for (const r of residents) {
+    const words = r.toUpperCase().replace(/\(.*?\)|\./g, " ").split(/\s+/).filter((w) => w.length >= 3);
+    const hits = words.filter((w) => p.includes(w)).length;
+    if (hits >= 2 && hits === words.length) return "full";
+    partial ||= hits > 0;
+  }
+  return partial ? "partial" : null;
 }
 
 /**
@@ -228,7 +236,9 @@ export function matchCredit(amount: number, n: Narration, ctx: MatchContext): Ma
     const d = ctx.due(flatId);
     if (d && d.outstanding > 0 && amount === d.outstanding) add(flatId, 25, `Amount equals the full dues of ${rupees(d.outstanding)}`);
     else if (d && d.current > 0 && amount === d.current) add(flatId, 20, `Amount equals this month's bill of ${rupees(d.current)}`);
-    if (n.payerName && nameMatches(n.payerName, ctx.names(flatId))) add(flatId, 15, `Payer ${n.payerName} matches a resident's name`);
+    const name = n.payerName ? nameMatch(n.payerName, ctx.names(flatId)) : null;
+    if (name === "full") add(flatId, 20, `Payer ${n.payerName} is a resident of ${flatId}`);
+    else if (name === "partial") add(flatId, 8, `Payer ${n.payerName} shares a name with a resident`);
   }
 
   const ranked = [...cands]
@@ -245,7 +255,7 @@ export function matchCredit(amount: number, n: Narration, ctx: MatchContext): Ma
   let why: string;
   if (!top) why = "No flat number, known UPI ID or matching amount";
   else if (strong.length > 1) why = `Signals point to different flats: ${strong.map((c) => c.flatId).join(", ")}`;
-  else if (amountOnly) why = `Only the amount matches, and ${ranked.length} flats owe it`;
+  else if (amountOnly) why = `Only the amount matches, and ${ctx.flatsOwing(amount).length} flats owe it`;
   else if (strong.length === 0) why = "No exact flat number or known UPI ID; check the closest match";
   else why = "Only one signal; a second must agree before it is posted automatically";
   return { status: "NEEDS_REVIEW", confidence: top?.score ?? 0, reasons: [why], suggestions };

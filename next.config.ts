@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // PGlite (embedded Postgres for local runs) loads its own WASM, so keep it out of the bundle.
   serverExternalPackages: ["@electric-sql/pglite"],
+  // Bank statements and photos arrive through server actions; a month's statement is well under this.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   turbopack: {
     rules: {
       "*.css": {
