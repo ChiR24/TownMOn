@@ -22,7 +22,10 @@ npm run dev
    `npm run ai:check` tests the triage against the live API (23 complaints, about $0.006).
 4. To start again from fresh data: stop `npm run dev`, then `npm run db:seed`.
 
-Tests: `npm test` (each test file gets its own in-memory Postgres; nothing touches `.data/`).
+Tests: `npm test` (each test file gets its own in-memory Postgres; nothing touches `.data/`). End to end:
+`npm run db:seed`, then `npm run dev`, then `npm run e2e` in a second terminal. It drives Chrome, Edge or Brave
+(whichever is installed, or the browser at `BROWSER_PATH`) through every main flow and changes the demo data, so run
+`npm run db:seed` again afterwards.
 
 ### With your own Postgres instead
 
@@ -36,8 +39,8 @@ npm run dev
 
 ## 2. How it is deployed
 
-Vercel (Next.js, functions in Mumbai `bom1`, set in `vercel.json`) and Postgres in Mumbai (Supabase `ap-south-1`
-or Neon). Both have free tiers.
+It is not deployed yet; these are the steps for the setup it is built for. Vercel (Next.js, functions
+in Mumbai `bom1`, set in `vercel.json`) and Postgres in Mumbai (Supabase `ap-south-1` or Neon). Both have free tiers.
 
 1. **Database.** Create a Supabase project in South Asia (Mumbai). Copy the *transaction pooler* connection
    string (port 6543); that is `DATABASE_URL`.

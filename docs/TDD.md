@@ -1,25 +1,26 @@
 # Technical Design Document: Township
 
 **GitHub:** https://github.com/ChiR24/TownMOn
-**Live app:** Not deployed. It runs locally in one command (`npm install && npm run dev`): the Postgres database runs
-embedded, so there is no database server to install (`deployment.md` section 1; section 2 has the Vercel and hosted
-Postgres steps). Demo logins: `deployment.md` section 4.
+**Live app:** Not deployed. To run it: `npm install`, then `npm run dev`. The Postgres database runs embedded, so there
+is no database server to install (`deployment.md` section 1; section 2 has the Vercel and hosted Postgres steps). Demo
+logins: `deployment.md` section 4.
 **Scope:** A resident app for maintenance, complaints and visitors in a gated township (Company A, Pune; 2,400 flats in 28 towers)
 **Author:** ChiR24 · November 2026
 
 ## 1. What I built
 
-One installable web app (no app store), with four faces:
-residents on their phones, the help desk, accounts and the committee in a browser, and guards on a tablet that keeps
-working offline. The core works end to end on realistic data:
+One installable web app (no app store), with a face for each
+kind of user: residents on their phones; the help desk, accounts and the committee in a browser; and guards on a
+tablet that keeps working offline. The core works end to end on realistic data:
 resident login, maintenance bills with a test payment, bank statement matching, complaints with assignment and
 status, and the committee view. Around that core: interest per the bye-laws, receipts and a
 ledger per flat, photos and ratings on complaints, the gate tablet with resident approval and guest codes, amenity
 booking with rules and fees, household members, notices, and a monthly report that reconciles.
 
-The seed includes three reference flats, exact to the rupee (T07-1203 paid ₹7,475; T12-0408 owes ₹6,370 a month, about 47
-days overdue, one water leak open; T21-1601 paid ₹5,000 of ₹10,660, 18 days overdue) inside a township of 2,400 flats
-whose monthly billing comes to ₹1.80 crore, which is ₹21.6 crore a year.
+The seed includes three reference flats, with bills and payments exact to the rupee (T07-1203 paid ₹7,475;
+T12-0408 owes ₹6,370 a month, is about 47 days overdue and has a water leak open; T21-1601 paid ₹5,000 of
+₹10,660 and is 18 days overdue; days overdue move with the calendar). They sit in a township of 2,400 flats whose
+monthly billing comes to ₹1.80 crore, which is ₹21.6 crore a year.
 
 All of it lives in the database. The seed is the only code that writes demo data, and every screen (the sign-in
 page's demo list included) reads from the database, so going live means loading the real flats and residents, not
@@ -52,7 +53,8 @@ flowchart LR
 | Plain HTML/CSS charts, no chart library | The dashboard needs a meter, columns and bars; a library would add weight and a dependency for that | Fewer chart types on hand |
 | Claude only where judgement on free text helps (complaints); deterministic rules for money | Money must be explainable and repeatable; complaint text is where language understanding pays | Two systems to reason about, kept separate on purpose |
 
-Hosting: Vercel functions in `bom1` with Postgres in `ap-south-1`, so personal data stays in India (assumption A16).
+Hosting, as designed (it is not deployed yet): Vercel functions in `bom1` with Postgres in `ap-south-1`, so
+personal data stays in India (assumption A16).
 
 ## 3. Data model
 
@@ -133,8 +135,8 @@ as a description, never as instructions.
 **Tested against the live API.** `npm run ai:check` sends 23 complaints through the app's own triage code to Claude:
 English, Marathi, Hindi and Hinglish; every category; the safety cases; a vague one; a prompt injection; and duplicates
 that must and must not link (the same lift and the other lift, the same floor and another, the same corridor and
-another). Three runs gave 23 of 23 as expected each time, every answer complete (stop reason `end_turn`), median about
-5 seconds and slowest under 15, none of which a resident waits for. About 1,300 tokens in and 270 out per complaint:
+another). Four runs gave 23 of 23 as expected each time, every answer complete (stop reason `end_turn`), median about
+5 seconds and slowest under 15, none of which a resident waits for. About 1,300 tokens in and 250 out per complaint:
 $0.006 a run, under $0.50 a month at 1,800 complaints. In the running app, a Marathi "no water" complaint and an English
 follow-up were linked across languages; "burning plastic smell near the switch box" went to the duty manager by rule at
 once, then the AI moved it from Security to Electrical and reassigned it, keeping the emergency; a complaint opening
@@ -233,6 +235,17 @@ the AI against the Claude API (`npm run ai:check`, section 5):
 | Gate | Idempotent replays; intercom outcomes; guest codes one-use and windowed; offline hashes never expose codes; the 90-day photo purge |
 | Reports | The reconciliation identity to the paisa; on-time rate; the AI correction rate counting only the AI's calls; amenity rules |
 
+**End to end.** `npm run e2e` drives a real browser through every main flow as each role, against the running app on
+fresh demo data: 46 checks, all passing. They cover sign-in (a wrong code, an unknown number); a failed and a
+successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
+help desk (note, work started, fixed) and rated by the resident, and another reopened; the one-tap category fix on an
+unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower; guest codes (valid, used,
+wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline then synced; booking and
+cancelling an amenity; household members; Marathi; the bank import, a re-import that posts nothing, the three
+review-queue actions and a reversal; the committee report; and privacy between flats (receipts, complaints, photos). A
+crawl of every page reachable from each role's home found no error page, failed request or console error, and each
+role is kept out of the others' areas.
+
 Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
 mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test
 payments, part payment, receipt), complaints (photo, safety escalation, rating, reopen), the help desk (category, urgency,
@@ -276,7 +289,7 @@ Choices made where the details were open. Each is configurable or easy to change
 | A15 | Owner and tenant both see the flat's dues; the primary member (the tenant if let, else the owner) manages household members |
 | A16 | Hosting in India (Mumbai) for comfort, though the DPDP Act 2023 does not require it |
 | A17 | The AI receives complaint texts and flat numbers (for the floor), no names or phone numbers; the AI provider acts as a data processor |
-| A18 | Seed data is synthetic (random name combinations, fictional numbers), and the app is assumed live for three months so trends exist |
+| A18 | Seed data is synthetic (random name combinations, fictional numbers), with four months of bills (the last three and the current one) so trends exist |
 | A19 | The payment gateway, SMS and WhatsApp are mocked |
 | A20 | "Committee view" = a read-only dashboard and monthly report; the duty manager sees every staff area |
 | A21 | Visitor photos (about 150 KB each after shrinking) are kept in Postgres; at full scale they would move to object storage with a 90-day expiry rule |

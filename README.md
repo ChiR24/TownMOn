@@ -14,13 +14,13 @@ npm run dev
 ```
 
 Open http://localhost:3000. The database is Postgres, and there is no database server to install: without
-`DATABASE_URL` the app runs Postgres embedded (PGlite) in `.data/`, created and seeded on first run. Sign in with any demo account on the sign-in page; in demo
-mode the one-time code is shown on screen instead of being sent by SMS.
+`DATABASE_URL` the app runs Postgres embedded (PGlite) in `.data/`, created and seeded on first run. Sign in with
+any demo account on the sign-in page; in demo mode the one-time code is shown on screen instead of being sent by SMS.
 
 | Who | Mobile | Try |
 |---|---|---|
 | Neeraj Kulkarni, resident (T07-1203) | 9800000001 | All paid; a delivery waiting at the gate; guest codes |
-| Swati Joshi, tenant (T12-0408) | 9800000002 | ₹19,337 overdue (about 47 days); pay it; her water-leak complaint |
+| Swati Joshi, tenant (T12-0408) | 9800000002 | ₹19,337 overdue with interest; pay it; her water-leak complaint |
 | Aamir Shaikh, resident (T21-1601) | 9800000003 | Paid ₹5,000 of ₹10,660; 18 days overdue |
 | Rohan Patil, help desk | 9800000010 | Complaints queue, the T14 lift reported by 10 flats, a gas-smell emergency |
 | Sunita Deshmukh, accounts | 9800000011 | Download the sample statement, import it, work the review queue |
@@ -35,6 +35,7 @@ mode the one-time code is shown on screen instead of being sent by SMS.
 | `npm run dev` | Run locally (seeds the embedded database on first run) |
 | `npm test` | 80+ tests: billing and interest, bank matching, OTP, payments, triage, gate, reports |
 | `npm run ai:check` | The AI triage against the live Claude API: 23 complaints, about $0.006 (needs `ANTHROPIC_API_KEY`) |
+| `npm run e2e` | Every main flow, as each role, in a real browser (Chrome, Edge or Brave). Run `npm run db:seed` and `npm run dev` first; reseed after |
 | `npm run lint` / `npm run typecheck` | ESLint, TypeScript |
 | `npm run db:seed` | Reset and reseed (stop `npm run dev` first when using the embedded database) |
 | `npm run db:generate` | New SQL migration after a schema change |
@@ -49,4 +50,5 @@ src/app/api          gateway callback, gate API, photos, daily cron
 src/lib              the logic, framework-free and tested: billing, bank, triage, gate, metrics, ...
 src/db               schema, migrations runner, seed
 drizzle/             SQL migrations
+scripts/             the live AI check and the end-to-end run
 ```

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ai:check": "tsx scripts/ai-check.ts",
+    "e2e": "tsx scripts/e2e/run.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/seed.ts --migrate-only",
     "db:seed": "tsx src/db/seed.ts"
@@ -35,6 +36,7 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "playwright-core": "^1.52.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
