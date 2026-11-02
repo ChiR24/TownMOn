@@ -2,7 +2,8 @@
 // ~150 KB instead. For gate photos, levels are stretched so faces taken at night are readable.
 
 export async function shrinkPhoto(file: File, { max = 1280, quality = 0.78, brighten = false } = {}): Promise<File> {
-  const img = await createImageBitmap(file);
+  // Phones store portrait shots sideways plus an EXIF "rotate" tag; say so explicitly, as older browsers default to "none".
+  const img = await createImageBitmap(file, { imageOrientation: "from-image" });
   const scale = Math.min(1, max / Math.max(img.width, img.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(img.width * scale);
