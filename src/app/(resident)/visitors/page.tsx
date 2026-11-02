@@ -36,12 +36,12 @@ export default async function VisitorsPage() {
 
       <Section title={t("v.waiting")} className="mt-0">
         {waiting.length === 0 ? (
-          <p className="text-sm text-zinc-500">{t("v.none")}</p>
+          <p className="text-sm text-ink-3">{t("v.none")}</p>
         ) : (
           <ul className="space-y-3">
             {waiting.map((v) => (
               <li key={v.id}>
-                <Card className="bg-amber-50/60 ring-amber-200">
+                <Card className="bg-amber-50 ring-amber-200/80 dark:bg-amber-400/10 dark:ring-amber-300/20">
                   <div className="flex items-center gap-3">
                     {v.photoId ? (
                       // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
@@ -51,7 +51,7 @@ export default async function VisitorsPage() {
                     )}
                     <div>
                       <p className="text-[15px] font-semibold">{v.name}</p>
-                      <p className="text-sm text-zinc-600">
+                      <p className="text-sm text-ink-2">
                         {t(`v.purpose.${v.purpose}` as Key)} · {t("v.at", { gate: v.gate, time: relTime(v.arrivedAt, lang) })}
                       </p>
                     </div>
@@ -75,12 +75,12 @@ export default async function VisitorsPage() {
 
       {inside.length > 0 && (
         <Section title={t("v.inside")}>
-          <ul className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+          <ul className="divide-y divide-line card">
             {inside.map((v) => (
               <li key={v.id} className="flex items-center gap-3 px-3.5 py-3">
                 <Avatar name={v.name} className="size-9 text-xs" />
                 <p className="flex-1 text-[15px]">{v.name}</p>
-                <span className="text-xs text-zinc-500">{fmtTime(v.arrivedAt, lang)}</span>
+                <span className="text-xs text-ink-3">{fmtTime(v.arrivedAt, lang)}</span>
               </li>
             ))}
           </ul>
@@ -90,7 +90,7 @@ export default async function VisitorsPage() {
       <Section title={t("v.codes")}>
         <div id="codes" className="scroll-mt-20" />
         <Card>
-          <p className="mb-4 text-sm text-zinc-600">{t("v.codesHint")}</p>
+          <p className="mb-4 text-sm text-ink-2">{t("v.codesHint")}</p>
           <CodeForm
             place={TOWNSHIP}
             s={{
@@ -108,13 +108,13 @@ export default async function VisitorsPage() {
           />
         </Card>
         {codes.length > 0 && (
-          <ul className="mt-3 divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+          <ul className="mt-3 divide-y divide-line card">
             {codes.map((c) => (
               <li key={c.id} className="flex items-center gap-3 px-3.5 py-3">
-                <KeyRound className="size-4 text-teal-700" aria-hidden />
+                <KeyRound className="size-4 text-accent-ink" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px]">{c.guestName}</p>
-                  <p className="text-xs text-zinc-500">{c.usedAt ? `${t("v.used")} ${fmtDateTime(c.usedAt, lang)}` : t("v.validTill", { time: fmtDateTime(c.validTo, lang) })}</p>
+                  <p className="text-xs text-ink-3">{c.usedAt ? `${t("v.used")} ${fmtDateTime(c.usedAt, lang)}` : t("v.validTill", { time: fmtDateTime(c.validTo, lang) })}</p>
                 </div>
                 {!c.usedAt && (
                   <form action={revokeCode.bind(null, c.id)}>
@@ -133,13 +133,13 @@ export default async function VisitorsPage() {
         {recent.length === 0 ? (
           <EmptyState title={t("v.none")} />
         ) : (
-          <ul className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+          <ul className="divide-y divide-line card">
             {recent.map((v) => (
               <li key={v.id} className="flex items-center gap-3 px-3.5 py-3">
                 <Avatar name={v.name} className="size-9 text-xs" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px]">{v.name}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-ink-3">
                     {t(`v.purpose.${v.purpose}` as Key)} · {t("v.at", { gate: v.gate, time: fmtDateTime(v.arrivedAt, lang) })}
                   </p>
                 </div>

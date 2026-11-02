@@ -3,7 +3,7 @@ import { ArrowRight, Download, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/submit-button";
-import { Card, inputCls, PageTitle, Section } from "@/components/ui";
+import { Card, cardCls, cx, inputCls, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { bankImports, bankTxns, bills, flats, payments, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
@@ -53,13 +53,13 @@ export default async function AccountsPage() {
         {stats.map((s) => {
           const body = (
             <>
-              <p className="text-sm text-zinc-500">{s.label}</p>
+              <p className="text-sm text-ink-3">{s.label}</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{s.value}</p>
-              <p className="mt-1 text-xs text-zinc-500">{s.note}</p>
+              <p className="mt-1 text-xs text-ink-3">{s.note}</p>
             </>
           );
           return s.href ? (
-            <Link key={s.label} href={s.href} className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200/80 hover:ring-teal-700">
+            <Link key={s.label} href={s.href} className={cx(cardCls, "press hover:bg-muted")}>
               {body}
             </Link>
           ) : (
@@ -71,14 +71,14 @@ export default async function AccountsPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h2 className="font-semibold">Import a bank statement</h2>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-ink-2">
             Upload the CSV from net banking. A credit is posted to a flat only when two things agree: the flat number in the note, a UPI ID that has paid for that flat before, the exact dues, or the payer&apos;s name. Everything else waits in the review queue. Lines already imported are skipped.
           </p>
           <div className="mt-4">
             <UploadForm />
           </div>
           {DEMO_MODE && (
-            <a href="/accounts/sample-statement" className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-teal-800 hover:text-teal-900">
+            <a href="/accounts/sample-statement" className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink hover:text-accent-ink">
               <Download className="size-4" aria-hidden /> Download a sample statement for today (demo)
             </a>
           )}
@@ -96,23 +96,23 @@ export default async function AccountsPage() {
           <Card>
             <h2 className="font-semibold">Monthly bills</h2>
             {billCount.n >= flatCount.n ? (
-              <p className="mt-1 text-sm text-zinc-600">All {flatCount.n.toLocaleString("en-IN")} bills for {fmtMonth(period)} are out. Next month&apos;s run happens automatically on the 1st.</p>
+              <p className="mt-1 text-sm text-ink-2">All {flatCount.n.toLocaleString("en-IN")} bills for {fmtMonth(period)} are out. Next month&apos;s run happens automatically on the 1st.</p>
             ) : (
               <form action={runBills} className="mt-2 space-y-2">
-                <p className="text-sm text-zinc-600">{(flatCount.n - billCount.n).toLocaleString("en-IN")} flats don&apos;t have a {fmtMonth(period)} bill yet.</p>
+                <p className="text-sm text-ink-2">{(flatCount.n - billCount.n).toLocaleString("en-IN")} flats don&apos;t have a {fmtMonth(period)} bill yet.</p>
                 <SubmitButton size="sm">Raise {fmtMonth(period)} bills</SubmitButton>
               </form>
             )}
-            <p className="mt-2 text-xs text-zinc-500">₹6.50 per sq ft. Due on the 15th. 21% a year simple interest on overdue maintenance.</p>
+            <p className="mt-2 text-xs text-ink-3">₹6.50 per sq ft. Due on the 15th. 21% a year simple interest on overdue maintenance.</p>
           </Card>
         </div>
       </div>
 
       <Section title="Recent imports">
-        <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-zinc-200/80">
+        <div className="overflow-x-auto card">
           <table className="w-full min-w-[640px] text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-              <tr className="border-b border-zinc-100">
+            <thead className="text-left text-xs uppercase tracking-wide text-ink-3">
+              <tr className="border-b border-line">
                 <th className="px-4 py-3 font-medium">Statement</th>
                 <th className="px-4 py-3 font-medium">Imported</th>
                 <th className="px-4 py-3 text-right font-medium">Credits</th>
@@ -122,19 +122,19 @@ export default async function AccountsPage() {
                 <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-line">
               {imports.map((i) => (
-                <tr key={i.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-medium text-zinc-900">{i.fileName}</td>
-                  <td className="px-4 py-3 text-zinc-600">
+                <tr key={i.id} className="hover:bg-muted">
+                  <td className="px-4 py-3 font-medium text-ink">{i.fileName}</td>
+                  <td className="px-4 py-3 text-ink-2">
                     {fmtDateTime(i.createdAt)} · {i.by}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{i.credits}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-emerald-700">{i.autoMatched}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-amber-700">{i.needsReview}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-zinc-500">{i.duplicates}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-ink-3">{i.duplicates}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/accounts/imports/${i.id}`} className="inline-flex items-center gap-1 font-medium text-teal-800">
+                    <Link href={`/accounts/imports/${i.id}`} className="inline-flex items-center gap-1 font-medium text-accent-ink">
                       Open <ArrowRight className="size-3.5" aria-hidden />
                     </Link>
                   </td>

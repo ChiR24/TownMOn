@@ -33,7 +33,7 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
 
   return (
     <div>
-      <PageTitle title={x.title ?? t("c.title")} subtitle={`#${x.id} · ${t(`cat.${x.category}` as Key)}`} back={{ href: "/complaints", label: t("common.back") }} action={<ComplaintStatus status={x.status} t={t} />} />
+      <PageTitle title={t(`cat.${x.category}` as Key)} subtitle={`#${x.id} · ${fmtDateTime(x.createdAt, lang)}`} back={{ href: "/complaints", label: t("common.back") }} action={<ComplaintStatus status={x.status} t={t} />} />
 
       {isNew && (
         <Notice tone="emerald" icon={<CircleCheck className="size-4" aria-hidden />} className="mb-4">
@@ -48,12 +48,12 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
       )}
 
       <Card className="space-y-3">
-        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-900">{x.description}</p>
+        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink">{x.description}</p>
         {x.photoId && (
           // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-          <img src={`/api/photos/${x.photoId}`} alt="" className="max-h-64 rounded-xl object-cover ring-1 ring-zinc-200" />
+          <img src={`/api/photos/${x.photoId}`} alt="" className="max-h-64 rounded-xl object-cover ring-1 ring-line" />
         )}
-        <div className="flex flex-wrap gap-2 text-sm text-zinc-600">
+        <div className="flex flex-wrap gap-2 text-sm text-ink-2">
           {c.tech && <Badge tone="teal">{t("c.with", { name: c.tech })}</Badge>}
           {waiting && (
             <Badge tone={late ? "red" : "zinc"}>
@@ -61,17 +61,17 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
             </Badge>
           )}
         </div>
-        {late && <p className="text-sm text-red-700">{t("c.late")}</p>}
+        {late && <p className="text-sm text-red-700 dark:text-red-300">{t("c.late")}</p>}
         {x.parentId && (
-          <p className="flex items-start gap-2 text-sm text-zinc-600">
+          <p className="flex items-start gap-2 text-sm text-ink-2">
             <Link2 className="mt-0.5 size-4 shrink-0" aria-hidden /> {t("c.linked")}
           </p>
         )}
       </Card>
 
       {x.status === "RESOLVED" && (
-        <Card className="mt-4 space-y-4 ring-violet-200">
-          <p className="text-[15px] font-semibold text-zinc-900">{t("c.status.RESOLVED")}</p>
+        <Card className="mt-4 space-y-4 ring-violet-200 dark:ring-violet-400/30">
+          <p className="text-[15px] font-semibold text-ink">{t("c.status.RESOLVED")}</p>
           <RateForm id={x.id} s={{ rate: t("c.rate"), comment: t("c.comment"), close: t("c.close") }} />
           <form action={reopen.bind(null, x.id)}>
             <SubmitButton variant="secondary" className="w-full">
@@ -80,15 +80,15 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
           </form>
         </Card>
       )}
-      {x.status === "CLOSED" && x.rating && <p className="mt-4 text-sm text-zinc-600">{t("c.rated", { n: x.rating })}</p>}
+      {x.status === "CLOSED" && x.rating && <p className="mt-4 text-sm text-ink-2">{t("c.rated", { n: x.rating })}</p>}
 
       <Section title={t("c.updates")}>
-        <ol className="relative space-y-4 border-l border-zinc-200 pl-5">
+        <ol className="relative space-y-4 border-l border-line pl-5">
           {events.map((e) => (
             <li key={e.id} className="relative">
               <span className={`absolute -left-[25px] top-1.5 size-2.5 rounded-full ${e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "RATED" ? "bg-amber-400" : "bg-teal-600"}`} />
-              <p className="text-[15px] text-zinc-900">{e.note ?? (e.kind === "CREATED" ? t("c.status.OPEN") : e.kind)}</p>
-              <p className="text-xs text-zinc-500" title={fmtDateTime(e.createdAt, lang)}>
+              <p className="text-[15px] text-ink">{e.note ?? (e.kind === "CREATED" ? t("c.status.OPEN") : e.kind)}</p>
+              <p className="text-xs text-ink-3" title={fmtDateTime(e.createdAt, lang)}>
                 {relTime(e.createdAt, lang)}
               </p>
             </li>
@@ -96,7 +96,7 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
         </ol>
       </Section>
 
-      <p className="mt-8 flex items-center justify-center gap-2 text-sm text-zinc-500">
+      <p className="mt-8 flex items-center justify-center gap-2 text-sm text-ink-3">
         <Phone className="size-4" aria-hidden /> Help desk: dial 9 on the intercom
       </p>
     </div>

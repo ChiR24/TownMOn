@@ -39,30 +39,30 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
       />
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <p className="text-sm text-zinc-500">Balance</p>
+          <p className="text-sm text-ink-3">Balance</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">{rupees(pos.balance)}</p>
           {pos.daysOverdue > 0 ? <Badge tone="red" className="mt-2">{pos.daysOverdue} days overdue</Badge> : <Badge tone="emerald" className="mt-2">Nothing overdue</Badge>}
         </Card>
         <Card>
-          <p className="mb-2 text-sm text-zinc-500">Ageing</p>
+          <p className="mb-2 text-sm text-ink-3">Ageing</p>
           <dl className="space-y-1 text-sm">
             {AGEING_BUCKETS.map((b, i) => (
               <div key={b} className="flex justify-between">
-                <dt className="text-zinc-600">{b}</dt>
+                <dt className="text-ink-2">{b}</dt>
                 <dd className={`tabular-nums ${i >= 3 && pos.ageing[i] ? "font-semibold text-red-700" : ""}`}>{rupees(pos.ageing[i])}</dd>
               </div>
             ))}
           </dl>
         </Card>
         <Card>
-          <p className="mb-2 text-sm text-zinc-500">Household</p>
+          <p className="mb-2 text-sm text-ink-3">Household</p>
           <ul className="space-y-1.5 text-sm">
             {people.map((p) => (
               <li key={p.phone} className="flex justify-between gap-2">
                 <span>
                   {p.name} {p.isPrimary && <Badge tone="teal">pays</Badge>}
                 </span>
-                <span className="text-zinc-500">
+                <span className="text-ink-3">
                   {p.relation.toLowerCase()} · {maskPhone(p.phone)}
                 </span>
               </li>
@@ -72,10 +72,10 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
       </div>
 
       <Section title="Ledger">
-        <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-zinc-200/80">
+        <div className="overflow-x-auto card">
           <table className="w-full min-w-[720px] text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-              <tr className="border-b border-zinc-100">
+            <thead className="text-left text-xs uppercase tracking-wide text-ink-3">
+              <tr className="border-b border-line">
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Entry</th>
                 <th className="px-4 py-3 text-right font-medium">Charge</th>
@@ -84,23 +84,23 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
                 <th className="px-4 py-3 text-right font-medium" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-line">
               {history.map((r) => {
                 const p = r.kind === "PAYMENT" && r.paymentId ? payById.get(r.paymentId) : undefined;
                 return (
-                  <tr key={r.id} className={p?.reversedAt ? "text-zinc-400 line-through" : ""}>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-zinc-600">{fmtDate(r.date)}</td>
+                  <tr key={r.id} className={p?.reversedAt ? "text-ink-3 line-through" : ""}>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-ink-2">{fmtDate(r.date)}</td>
                     <td className="px-4 py-2.5">
                       {r.memo ?? r.kind.toLowerCase()}
                       {p && (
-                        <Link href={`/receipts/${p.id}`} className="ml-2 text-xs font-medium text-teal-800 no-underline">
+                        <Link href={`/receipts/${p.id}`} className="ml-2 text-xs font-medium text-accent-ink no-underline">
                           {receiptNo(p.id, p.paidOn)} · {METHOD_LABEL[p.method]}
                         </Link>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{r.amount > 0 ? rupees(r.amount) : ""}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-emerald-700">{r.amount < 0 ? rupees(-r.amount) : ""}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-zinc-500">{rupees(r.balance)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-ink-3">{rupees(r.balance)}</td>
                     <td className="px-4 py-2.5 text-right">{p && !p.reversedAt && p.source !== "GATEWAY" && <ReverseForm paymentId={p.id} />}</td>
                   </tr>
                 );

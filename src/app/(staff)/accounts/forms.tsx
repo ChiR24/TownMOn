@@ -15,7 +15,7 @@ export function UploadForm() {
         name="file"
         accept=".csv,text/csv"
         required
-        className="block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200"
+        className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink-2 hover:file:bg-zinc-200"
       />
       {state.error && (
         <p className="text-sm text-red-700" role="alert">

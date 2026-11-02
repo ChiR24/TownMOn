@@ -261,6 +261,7 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       </ul>
 
       <h2 className="mb-2 mt-6 text-sm font-semibold uppercase tracking-wide text-zinc-400">{t("inside")}</h2>
+      {inside.length === 0 && <p className="text-zinc-500">{t("nobodyInside")}</p>}
       <ul className="divide-y divide-zinc-800 rounded-3xl bg-zinc-900">
         {inside.map((e) => (
           <li key={e.id} className="flex items-center gap-3 p-3">

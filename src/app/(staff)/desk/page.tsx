@@ -64,10 +64,10 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
             key={k}
             href={k === "active" ? "/desk" : `/desk?view=${k}`}
             aria-current={k === view ? "page" : undefined}
-            className={cx("flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium ring-1", k === view ? "bg-zinc-900 text-white ring-zinc-900" : "bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50")}
+            className={cx("press flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1", k === view ? "bg-accent text-white ring-accent" : "bg-surface text-ink-2 ring-line hover:bg-muted")}
           >
             {VIEWS[k]}
-            <span className={cx("tabular-nums", k === view ? "text-zinc-300" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-zinc-400")}>{Number(counts[k])}</span>
+            <span className={cx("tabular-nums", k === view ? "text-white/75" : (k === "emergency" || k === "overdue") && Number(counts[k]) > 0 ? "text-red-600" : "text-ink-3")}>{Number(counts[k])}</span>
           </Link>
         ))}
       </nav>
@@ -81,15 +81,15 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
             const late = clock && c.responseDueAt < now;
             return (
               <li key={c.id}>
-                <Link href={`/desk/complaints/${c.id}`} className="flex overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/80 hover:ring-zinc-400">
+                <Link href={`/desk/complaints/${c.id}`} className="card press flex overflow-hidden hover:bg-muted/60">
                   <span className={cx("w-1.5 shrink-0", BAR[c.urgency])} aria-hidden />
                   <div className="grid min-w-0 flex-1 gap-2 p-3.5 sm:grid-cols-[1fr_auto] sm:items-center">
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-[15px] font-medium text-zinc-900">
+                      <p className="flex items-center gap-2 text-[15px] font-medium text-ink">
                         {c.safety && <Siren className="size-4 shrink-0 text-red-600" aria-label="Safety escalation" />}
                         <span className="truncate">{c.title ?? c.description}</span>
                       </p>
-                      <p className="mt-0.5 truncate text-sm text-zinc-500">
+                      <p className="mt-0.5 truncate text-sm text-ink-3">
                         #{c.id} · {c.flatId} · {relTime(c.createdAt)}
                         {c.title && ` · “${c.description}”`}
                       </p>
@@ -112,8 +112,8 @@ export default async function DeskPage({ searchParams }: { searchParams: Promise
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                       <Badge tone={STATUS[c.status][1]}>{STATUS[c.status][0]}</Badge>
-                      <span className="text-xs text-zinc-500">{tech ?? "No technician"}</span>
-                      {clock && <span className={cx("text-xs font-medium", late ? "text-red-700" : "text-zinc-500")}>{late ? `Response overdue ${relTime(c.responseDueAt).replace(" ago", "")}` : `Respond ${relTime(c.responseDueAt)}`}</span>}
+                      <span className="text-xs text-ink-3">{tech ?? "No technician"}</span>
+                      {clock && <span className={cx("text-xs font-medium", late ? "text-red-700" : "text-ink-3")}>{late ? `Response overdue ${relTime(c.responseDueAt).replace(" ago", "")}` : `Respond ${relTime(c.responseDueAt)}`}</span>}
                     </div>
                   </div>
                 </Link>

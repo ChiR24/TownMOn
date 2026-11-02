@@ -11,10 +11,10 @@ export function PayForm({ balance, balanceLabel, s }: { balance: number; balance
   const [state, action] = useActionState(startPayment, {});
   const [choice, setChoice] = useState<"full" | "other">(balance > 0 ? "full" : "other");
   const option = (value: "full" | "other", title: string, detail?: string) => (
-    <label className={cx("flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1", choice === value ? "ring-2 ring-teal-700" : "ring-zinc-200")}>
+    <label className={cx("flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-surface p-4 ring-1", choice === value ? "ring-2 ring-accent" : "ring-line")}>
       <span className="flex items-center gap-3">
         <input type="radio" name="choice" value={value} checked={choice === value} onChange={() => setChoice(value)} className="size-5 accent-teal-700" />
-        <span className="text-[15px] font-medium text-zinc-900">{title}</span>
+        <span className="text-[15px] font-medium text-ink">{title}</span>
       </span>
       {detail && <span className="text-[15px] font-semibold tabular-nums">{detail}</span>}
     </label>
@@ -32,14 +32,14 @@ export function PayForm({ balance, balanceLabel, s }: { balance: number; balance
         </div>
       )}
       {state.error && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-red-700 dark:text-red-300" role="alert">
           {s.error}
         </p>
       )}
       <SubmitButton size="lg" className="mt-2 w-full">
         {s.continue}
       </SubmitButton>
-      <p className="text-center text-xs text-zinc-500">{s.test}</p>
+      <p className="text-center text-xs text-ink-3">{s.test}</p>
     </form>
   );
 }

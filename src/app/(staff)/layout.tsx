@@ -20,7 +20,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh">
-      <header className="no-print sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur">
+      <header className="no-print sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
           <Link href={links[0]?.href ?? "/"} className="flex shrink-0 items-center gap-2">
             <Logo className="size-7" />
@@ -28,12 +28,12 @@ export default async function StaffLayout({ children }: { children: React.ReactN
           </Link>
           <StaffNav links={links} />
           <div className="ml-auto flex shrink-0 items-center gap-3">
-            <span className="hidden text-right text-xs leading-tight text-zinc-500 md:block">
-              <span className="block font-medium text-zinc-800">{user.name}</span>
+            <span className="hidden text-right text-xs leading-tight text-ink-3 md:block">
+              <span className="block font-medium text-ink-2">{user.name}</span>
               {ROLE_LABEL[user.role]}
             </span>
             <form action={signOut}>
-              <button className="rounded-lg px-2.5 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900">Sign out</button>
+              <button className="rounded-lg px-2.5 py-1.5 text-sm text-ink-2 hover:bg-muted hover:text-ink">Sign out</button>
             </form>
           </div>
         </div>

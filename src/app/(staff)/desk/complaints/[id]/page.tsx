@@ -51,10 +51,10 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{c.description}</p>
             {c.photoId && (
               // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-              <img src={`/api/photos/${c.photoId}`} alt="Photo from the resident" className="max-h-80 rounded-xl ring-1 ring-zinc-200" />
+              <img src={`/api/photos/${c.photoId}`} alt="Photo from the resident" className="max-h-80 rounded-xl ring-1 ring-line" />
             )}
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <a href={`tel:+91${row.residentPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-2.5 py-1 font-medium text-zinc-800 hover:bg-zinc-200">
+              <a href={`tel:+91${row.residentPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 font-medium text-ink-2 hover:bg-zinc-200">
                 <Phone className="size-3.5" aria-hidden /> Call {row.residentName.split(" ")[0]}
               </a>
               {c.classifiedBy === "AI" && (
@@ -71,7 +71,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <Card className="flex items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-sm">
                 <Link2 className="size-4" aria-hidden /> Linked to{" "}
-                <Link href={`/desk/complaints/${c.parentId}`} className="font-medium text-teal-800">
+                <Link href={`/desk/complaints/${c.parentId}`} className="font-medium text-accent-ink">
                   #{c.parentId}
                 </Link>
                 . Its updates reach this resident.
@@ -86,11 +86,11 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
           {children.length > 0 && (
             <Card>
               <p className="mb-2 text-sm font-semibold">{children.length} more flats reported the same problem</p>
-              <ul className="divide-y divide-zinc-100 text-sm">
+              <ul className="divide-y divide-line text-sm">
                 {children.map((k) => (
                   <li key={k.id} className="flex items-center justify-between gap-3 py-2">
                     <span className="min-w-0 truncate">
-                      <Link href={`/desk/complaints/${k.id}`} className="font-medium text-teal-800">
+                      <Link href={`/desk/complaints/${k.id}`} className="font-medium text-accent-ink">
                         #{k.id}
                       </Link>{" "}
                       {k.flatId} · “{k.description}” · {relTime(k.createdAt)}
@@ -103,18 +103,18 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-zinc-500">Updates you post here go to all of them. None of them is closed for being a duplicate.</p>
+              <p className="mt-2 text-xs text-ink-3">Updates you post here go to all of them. None of them is closed for being a duplicate.</p>
             </Card>
           )}
 
           <Card>
             <p className="mb-3 text-sm font-semibold">Timeline</p>
-            <ol className="relative space-y-3 border-l border-zinc-200 pl-5 text-sm">
+            <ol className="relative space-y-3 border-l border-line pl-5 text-sm">
               {events.map(({ e, actor }) => (
                 <li key={e.id} className="relative">
                   <span className={cx("absolute -left-[25px] top-1.5 size-2.5 rounded-full", e.kind === "ESCALATED" ? "bg-red-500" : e.kind === "CLASSIFIED" ? "bg-violet-500" : "bg-teal-600")} />
-                  <p className="text-zinc-900">{e.note ?? (e.kind === "CREATED" ? "Complaint raised" : e.kind.toLowerCase())}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-ink">{e.note ?? (e.kind === "CREATED" ? "Complaint raised" : e.kind.toLowerCase())}</p>
+                  <p className="text-xs text-ink-3">
                     {fmtDateTime(e.createdAt)} · {actor ?? "system"}
                   </p>
                 </li>
@@ -142,7 +142,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                     Fixed
                   </SubmitButton>
                 </div>
-                <p className="text-xs text-zinc-500">“Fixed” asks the resident to confirm and rate. Only they close it.</p>
+                <p className="text-xs text-ink-3">“Fixed” asks the resident to confirm and rate. Only they close it.</p>
               </form>
             </Card>
           )}
@@ -152,7 +152,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map((cat) => (
                 <form key={cat} action={setCategory.bind(null, c.id, cat)}>
-                  <button className={cx("rounded-full px-2.5 py-1 text-xs font-medium ring-1", cat === c.category ? "bg-teal-700 text-white ring-teal-700" : "bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50")} aria-pressed={cat === c.category}>
+                  <button className={cx("rounded-full px-2.5 py-1 text-xs font-medium ring-1", cat === c.category ? "bg-accent text-white ring-accent" : "bg-surface text-ink-2 ring-line hover:bg-muted")} aria-pressed={cat === c.category}>
                     {cat}
                   </button>
                 </form>
@@ -164,7 +164,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
             <form action={setUrgency.bind(null, c.id)} className="flex items-end gap-2">
               <label className="min-w-0 flex-1 text-sm font-semibold">
                 Urgency
-                <select name="urgency" defaultValue={c.urgency} className="mt-1 block h-10 w-full rounded-xl bg-white px-2 text-sm font-normal ring-1 ring-zinc-300">
+                <select name="urgency" defaultValue={c.urgency} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
                   {URGENCIES.map((u) => (
                     <option key={u} value={u}>
                       {URGENCY_LABEL[u]}
@@ -180,7 +180,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
               <form action={assign.bind(null, c.id)} className="flex items-end gap-2">
                 <label className="min-w-0 flex-1 text-sm font-semibold">
                   Technician
-                  <select name="techId" defaultValue={c.assignedTo ?? ""} className="mt-1 block h-10 w-full rounded-xl bg-white px-2 text-sm font-normal ring-1 ring-zinc-300">
+                  <select name="techId" defaultValue={c.assignedTo ?? ""} className="mt-1 block h-10 w-full rounded-xl bg-surface px-2 text-sm font-normal ring-1 ring-line">
                     <option value="" disabled>
                       Choose…
                     </option>
@@ -197,7 +197,7 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
                 </SubmitButton>
               </form>
             )}
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-ink-3">
               Response due {fmtDateTime(c.responseDueAt)}
               {c.firstResponseAt ? ` · answered ${relTime(c.firstResponseAt)}` : ""}
             </p>

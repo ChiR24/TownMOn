@@ -12,13 +12,13 @@ import { rupees } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Monthly report" };
 
-const H = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 text-base font-semibold text-zinc-900 print:mt-6">{children}</h2>;
+const H = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 text-base font-semibold text-ink print:mt-6">{children}</h2>;
 
 function Table({ head, rows, align }: { head: string[]; rows: (string | number)[][]; align?: ("l" | "r")[] }) {
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-zinc-300 text-left text-xs uppercase tracking-wide text-zinc-500">
+        <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-3">
           {head.map((h, i) => (
             <th key={h} className={`py-2 pr-3 font-medium ${align?.[i] === "r" ? "text-right" : ""}`}>
               {h}
@@ -26,7 +26,7 @@ function Table({ head, rows, align }: { head: string[]; rows: (string | number)[
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-zinc-100 tabular-nums">
+      <tbody className="divide-y divide-line tabular-nums">
         {rows.map((r, i) => (
           <tr key={i}>
             {r.map((c, j) => (
@@ -54,14 +54,14 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   return (
     <div className="mx-auto max-w-3xl">
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/committee" className="text-sm text-zinc-500 hover:text-zinc-900">
+        <Link href="/committee" className="text-sm text-ink-3 hover:text-ink">
           ← Dashboard
         </Link>
         <form className="flex items-center gap-2">
-          <label htmlFor="month" className="text-sm text-zinc-600">
+          <label htmlFor="month" className="text-sm text-ink-2">
             Month
           </label>
-          <select id="month" name="month" defaultValue={period} className="h-10 rounded-xl bg-white px-3 text-sm ring-1 ring-zinc-300">
+          <select id="month" name="month" defaultValue={period} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line">
             {options.map((p) => (
               <option key={p} value={p}>
                 {fmtMonth(p)}
@@ -69,23 +69,23 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               </option>
             ))}
           </select>
-          <button className="h-10 rounded-xl bg-white px-3 text-sm font-medium ring-1 ring-zinc-300 hover:bg-zinc-50">Show</button>
+          <button className="h-10 rounded-xl bg-surface px-3 text-sm font-medium ring-1 ring-line hover:bg-muted">Show</button>
           <PrintButton />
         </form>
       </div>
 
-      <article className="rounded-2xl bg-white p-6 ring-1 ring-zinc-200 sm:p-8 print:p-0 print:ring-0">
-        <header className="flex items-start justify-between gap-4 border-b border-zinc-200 pb-4">
+      <article className="card p-6 sm:p-8 print:p-0 print:ring-0">
+        <header className="flex items-start justify-between gap-4 border-b border-line pb-4">
           <div className="flex items-center gap-3">
             <Logo className="size-10" />
             <div>
               <p className="font-semibold">{TOWNSHIP} Residents&apos; Federation</p>
-              <p className="text-sm text-zinc-500">Maintenance and help desk report</p>
+              <p className="text-sm text-ink-3">Maintenance and help desk report</p>
             </div>
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold">{fmtMonth(period)}</p>
-            <p className="text-xs text-zinc-500">Position as of {fmtDate(r.asOf)}</p>
+            <p className="text-xs text-ink-3">Position as of {fmtDate(r.asOf)}</p>
           </div>
         </header>
 
@@ -104,14 +104,14 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             [`Outstanding at the end of the month`, rupees(m.closing)],
           ]}
         />
-        <p className={`mt-3 flex items-center gap-2 text-sm ${ok ? "text-zinc-700" : "font-medium text-red-700"}`}>
+        <p className={`mt-3 flex items-center gap-2 text-sm ${ok ? "text-ink-2" : "font-medium text-red-700"}`}>
           {ok ? <CircleCheck className="size-4 text-[#0ca30c]" aria-hidden /> : <TriangleAlert className="size-4 text-[#d03b3b]" aria-hidden />}
           {ok ? "Reconciles to the paisa. Every figure comes from the same ledger, which is never edited: corrections are separate, dated lines." : `Does not reconcile: difference ${rupees(m.difference)}. Escalate to accounts.`}
         </p>
 
         <H>2. Collections by mode</H>
         <Table head={["Mode", "Payments", "Amount"]} align={["l", "r", "r"]} rows={r.byMethod.map((x) => [x.method, x.count.toLocaleString("en-IN"), rupees(x.amount)])} />
-        <p className="mt-3 text-sm text-zinc-600">
+        <p className="mt-3 text-sm text-ink-2">
           Collected {rupees(m.collected)} against {rupees(m.billedTotal)} billed ({r.collectionRate ?? 0}%).{" "}
           {r.onTime == null ? "This month's bills are not due yet." : `${r.onTime}% of this month's bills were paid in full by the 15th.`}
         </p>
@@ -129,7 +129,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
           <>
             <p className="mb-2 mt-4 text-sm font-medium">More than 60 days behind ({r.defaulters.length} flats)</p>
             <Table head={["Flat", "Days overdue", "Balance"]} align={["l", "r", "r"]} rows={r.defaulters.slice(0, 25).map((d) => [d.flatId, d.days, rupees(d.balance)])} />
-            {r.defaulters.length > 25 && <p className="mt-2 text-xs text-zinc-500">and {r.defaulters.length - 25} more, listed in the accounts console.</p>}
+            {r.defaulters.length > 25 && <p className="mt-2 text-xs text-ink-3">and {r.defaulters.length - 25} more, listed in the accounts console.</p>}
           </>
         )}
 
@@ -158,7 +158,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
           />
         </div>
 
-        <footer className="mt-8 border-t border-zinc-200 pt-3 text-xs text-zinc-400">
+        <footer className="mt-8 border-t border-line pt-3 text-xs text-ink-3">
           Generated {fmtDateTime(new Date())}. Linked reports of the same problem count once. Response targets: emergency 15 min, high 1 h, medium 4 h, low 24 h.
         </footer>
       </article>

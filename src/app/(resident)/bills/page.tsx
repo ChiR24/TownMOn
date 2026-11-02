@@ -46,7 +46,7 @@ export default async function BillsPage() {
       <PageTitle title={t("bills.title")} />
 
       <Card>
-        <p className="text-sm text-zinc-500">{t("bills.balance")}</p>
+        <p className="text-sm text-ink-3">{t("bills.balance")}</p>
         <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-3xl font-semibold tracking-tight">
             <Money paise={Math.max(0, pos.balance)} />
@@ -54,7 +54,7 @@ export default async function BillsPage() {
           {pos.daysOverdue > 0 ? (
             <Badge tone="red">{t("home.overdue", { days: pos.daysOverdue })}</Badge>
           ) : pos.balance > 0 && nextDue ? (
-            <span className="text-sm text-zinc-600">{t("home.dueBy", { date: fmtDate(nextDue, lang) })}</span>
+            <span className="text-sm text-ink-2">{t("home.dueBy", { date: fmtDate(nextDue, lang) })}</span>
           ) : pos.balance < 0 ? (
             <Badge tone="emerald">{t("home.advance", { amount: rupees(-pos.balance) })}</Badge>
           ) : null}
@@ -71,27 +71,27 @@ export default async function BillsPage() {
           <Card>
             <dl className="space-y-2.5 text-[15px]">
               <div className="flex justify-between gap-4">
-                <dt className="text-zinc-600">{t("bills.maintenance", { area: bill.areaSqft })}</dt>
+                <dt className="text-ink-2">{t("bills.maintenance", { area: bill.areaSqft })}</dt>
                 <dd className="tabular-nums">{rupees(bill.maintenance)}</dd>
               </div>
               {bill.interest > 0 && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-600">{t("bills.interest")}</dt>
+                  <dt className="text-ink-2">{t("bills.interest")}</dt>
                   <dd className="tabular-nums">{rupees(bill.interest)}</dd>
                 </div>
               )}
               {bill.arrears !== 0 && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-600">{bill.arrears > 0 ? t("bills.arrears") : t("bills.arrearsCredit")}</dt>
+                  <dt className="text-ink-2">{bill.arrears > 0 ? t("bills.arrears") : t("bills.arrearsCredit")}</dt>
                   <dd className="tabular-nums">{bill.arrears > 0 ? rupees(bill.arrears) : `− ${rupees(-bill.arrears)}`}</dd>
                 </div>
               )}
-              <div className="flex justify-between gap-4 border-t border-zinc-100 pt-2.5 font-semibold">
+              <div className="flex justify-between gap-4 border-t border-line pt-2.5 font-semibold">
                 <dt>{t("bills.total")}</dt>
                 <dd className="tabular-nums">{rupees(bill.maintenance + bill.interest + bill.arrears)}</dd>
               </div>
             </dl>
-            <p className="mt-3 text-xs text-zinc-500">
+            <p className="mt-3 text-xs text-ink-3">
               {t("home.dueBy", { date: fmtDate(bill.dueDate, lang) })}. {t("bills.interestNote")}
             </p>
           </Card>
@@ -106,28 +106,28 @@ export default async function BillsPage() {
         {history.length === 0 ? (
           <EmptyState title={t("bills.empty")} />
         ) : (
-          <ul className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+          <ul className="divide-y divide-line card">
             {history.slice(0, 40).map((r) => {
               const credit = r.amount < 0;
               const inner = (
                 <>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] text-zinc-900">{label(r, t, lang)}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="truncate text-[15px] text-ink">{label(r, t, lang)}</p>
+                    <p className="text-xs text-ink-3">
                       {fmtDate(r.date, lang)}
                       {r.paymentId && credit && ` · ${t("bills.receipt")} →`}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-[15px] font-medium tabular-nums ${credit ? "text-emerald-700" : "text-zinc-900"}`}>{credit ? `− ${rupees(-r.amount)}` : rupees(r.amount)}</p>
-                    <p className="text-xs tabular-nums text-zinc-400">{rupees(r.balance)}</p>
+                    <p className={`text-[15px] font-medium tabular-nums ${credit ? "text-emerald-700 dark:text-emerald-300" : "text-ink"}`}>{credit ? `− ${rupees(-r.amount)}` : rupees(r.amount)}</p>
+                    <p className="text-xs tabular-nums text-ink-3">{rupees(r.balance)}</p>
                   </div>
                 </>
               );
               return (
                 <li key={r.id}>
                   {r.paymentId && credit ? (
-                    <Link href={`/receipts/${r.paymentId}`} className="flex items-center justify-between gap-3 px-3.5 py-3 hover:bg-zinc-50">
+                    <Link href={`/receipts/${r.paymentId}`} className="flex items-center justify-between gap-3 px-3.5 py-3 hover:bg-muted">
                       {inner}
                     </Link>
                   ) : (

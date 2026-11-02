@@ -25,7 +25,12 @@ function dtf(lang: string, key: string, opts: Intl.DateTimeFormatOptions) {
 }
 
 export const fmtDate = (d: string, lang = "en") => dtf(lang, "date", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }).format(new Date(`${d}T00:00:00Z`));
-export const fmtDay = (d: string, lang = "en") => dtf(lang, "day", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(`${d}T00:00:00Z`));
+const dayFmt = (lang: string) => dtf(lang, "day", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
+export const fmtDay = (d: string, lang = "en") => dayFmt(lang).format(new Date(`${d}T00:00:00Z`));
+/** The pieces of fmtDay ("Mon", "2", "Nov"), for date chips. */
+export const dayParts = (d: string, lang = "en") =>
+  Object.fromEntries(dayFmt(lang).formatToParts(new Date(`${d}T00:00:00Z`)).map((p) => [p.type, p.value])) as Record<"weekday" | "day" | "month", string>;
+export const fmtLongDate = (d: string, lang = "en") => dtf(lang, "long", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
 export const fmtMonth = (period: string, lang = "en") => dtf(lang, "month", { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(`${period}-01T00:00:00Z`));
 export const fmtTime = (d: Date, lang = "en") => dtf(lang, "time", { timeZone: TZ, hour: "numeric", minute: "2-digit" }).format(d);
 export const fmtDateTime = (d: Date, lang = "en") => dtf(lang, "dt", { timeZone: TZ, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d);

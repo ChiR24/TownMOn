@@ -23,11 +23,11 @@ export default async function NoticesPage() {
       <Section title="Posted" className="lg:mt-0">
         <ul className="space-y-2">
           {list.map(({ n, by }) => (
-            <li key={n.id} className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200/80">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{n.tower ? `Tower ${n.tower}` : "Everyone"}</p>
+            <li key={n.id} className="card p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-3">{n.tower ? `Tower ${n.tower}` : "Everyone"}</p>
               <p className="mt-0.5 font-medium">{n.title}</p>
-              <p className="mt-1 text-sm text-zinc-600">{n.body}</p>
-              <p className="mt-2 text-xs text-zinc-400">
+              <p className="mt-1 text-sm text-ink-2">{n.body}</p>
+              <p className="mt-2 text-xs text-ink-3">
                 {fmtDateTime(n.createdAt)} · {by}
               </p>
             </li>

@@ -49,27 +49,27 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
           {t("pay.done")}
         </Notice>
       )}
-      <article className="rounded-2xl bg-white p-6 ring-1 ring-zinc-200 print:p-0 print:ring-0">
-        <header className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4">
+      <article className="card p-6 print:p-0 print:ring-0">
+        <header className="flex items-start justify-between gap-4 border-b border-line pb-4">
           <div className="flex items-center gap-3">
             <Logo className="size-10" />
             <div>
               <p className="font-semibold leading-tight">{TOWNSHIP}</p>
-              <p className="text-sm text-zinc-500">Residents&apos; Federation, Pune</p>
+              <p className="text-sm text-ink-3">Residents&apos; Federation, Pune</p>
             </div>
           </div>
-          <p className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">Receipt</p>
+          <p className="rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-2">Receipt</p>
         </header>
         <div className="py-5">
-          <p className="text-sm text-zinc-500">Amount received</p>
+          <p className="text-sm text-ink-3">Amount received</p>
           <p className="text-4xl font-semibold tracking-tight tabular-nums">{rupees(p.amount)}</p>
-          <p className="mt-1 text-sm text-zinc-600">{inWords(p.amount)}</p>
+          <p className="mt-1 text-sm text-ink-2">{inWords(p.amount)}</p>
         </div>
-        <dl className="divide-y divide-zinc-100 border-t border-zinc-100 text-[15px]">
+        <dl className="divide-y divide-line border-t border-line text-[15px]">
           {rows.map(([k, v]) => (
             <div key={k} className="flex justify-between gap-4 py-2.5">
-              <dt className="text-zinc-500">{k}</dt>
-              <dd className="text-right font-medium text-zinc-900 [overflow-wrap:anywhere]">{v}</dd>
+              <dt className="text-ink-3">{k}</dt>
+              <dd className="text-right font-medium text-ink [overflow-wrap:anywhere]">{v}</dd>
             </div>
           ))}
         </dl>
@@ -78,7 +78,7 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
             Reversed on {fmtDateTime(p.reversedAt)}: {p.reversalReason}
           </Notice>
         )}
-        <p className="mt-5 text-xs text-zinc-400">This is a computer-generated receipt and needs no signature.</p>
+        <p className="mt-5 text-xs text-ink-3">This is a computer-generated receipt and needs no signature.</p>
       </article>
       <div className="no-print mt-4 grid grid-cols-2 gap-2">
         <PrintButton />

@@ -183,6 +183,8 @@ const en = {
   "a.book": "Book for {fee}",
   "a.feeNote": "The fee is added to your next maintenance bill.",
   "a.rules": "Rules",
+  "a.free": "Free",
+  "a.limits": "Up to {max} a week per flat; book up to {days} days ahead.",
   "a.mine": "Your bookings",
   "a.none": "No upcoming bookings.",
   "a.cancel": "Cancel booking",
@@ -211,6 +213,8 @@ const en = {
   "m.err.phoneTaken": "This number is already registered.",
   "m.onlyPrimary": "Only the owner or tenant on record can add or remove members.",
   "m.noNotices": "No notices.",
+  "m.you": "you",
+  "m.messages": "Messages",
 };
 
 export type Key = keyof typeof en;
@@ -394,6 +398,8 @@ const mr: Dict = {
   "a.book": "{fee} मध्ये बुक करा",
   "a.feeNote": "शुल्क तुमच्या पुढील देखभाल बिलात जोडले जाईल.",
   "a.rules": "नियम",
+  "a.free": "मोफत",
+  "a.limits": "प्रत्येक फ्लॅटला आठवड्यात जास्तीत जास्त {max}; {days} दिवस आधीपर्यंत बुकिंग.",
   "a.mine": "तुमची बुकिंग",
   "a.none": "कोणतीही आगामी बुकिंग नाही.",
   "a.cancel": "बुकिंग रद्द करा",
@@ -422,6 +428,8 @@ const mr: Dict = {
   "m.err.phoneTaken": "हा नंबर आधीच नोंदवलेला आहे.",
   "m.onlyPrimary": "फक्त नोंदणीकृत मालक किंवा भाडेकरू सदस्य जोडू किंवा काढू शकतात.",
   "m.noNotices": "सूचना नाहीत.",
+  "m.you": "तुम्ही",
+  "m.messages": "संदेश",
 };
 
 const hi: Dict = {
@@ -602,6 +610,8 @@ const hi: Dict = {
   "a.book": "{fee} में बुक करें",
   "a.feeNote": "शुल्क आपके अगले मेंटेनेंस बिल में जुड़ जाएगा।",
   "a.rules": "नियम",
+  "a.free": "निःशुल्क",
+  "a.limits": "हर फ्लैट के लिए हफ़्ते में अधिकतम {max}; {days} दिन पहले तक बुकिंग।",
   "a.mine": "आपकी बुकिंग",
   "a.none": "कोई आने वाली बुकिंग नहीं।",
   "a.cancel": "बुकिंग रद्द करें",
@@ -630,12 +640,18 @@ const hi: Dict = {
   "m.err.phoneTaken": "यह नंबर पहले से दर्ज है।",
   "m.onlyPrimary": "सिर्फ़ दर्ज मालिक या किरायेदार ही सदस्य जोड़ या हटा सकते हैं।",
   "m.noNotices": "कोई सूचना नहीं।",
+  "m.you": "आप",
+  "m.messages": "संदेश",
 };
 
 const DICTS: Record<Lang, Dict> = { en, mr, hi };
 
 export function translator(lang: Lang) {
   const d = DICTS[lang] ?? en;
-  return (key: Key, vars?: Record<string, string | number>) => d[key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars?.[k] ?? `{${k}}`));
+  return (key: Key, vars?: Record<string, string | number>) => {
+    const s = d[key].replace(/\{(\w+)\}/g, (_, k: string) => String(vars?.[k] ?? `{${k}}`));
+    // English singulars: "1 days overdue" reads "1 day overdue". Marathi and Hindi use one word for both.
+    return d === en ? s.replace(/\b1 (day|hour|minute)s\b/g, "1 $1") : s;
+  };
 }
 export type T = ReturnType<typeof translator>;

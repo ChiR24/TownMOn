@@ -35,12 +35,12 @@ export function ComplaintForm({ s }: { s: S }) {
         <textarea id="description" name="description" required minLength={5} maxLength={1000} rows={5} className={inputCls} autoFocus />
       </Field>
       <div>
-        <p className="mb-1.5 text-sm font-medium text-zinc-800">{s.photo}</p>
+        <p className="mb-1.5 text-sm font-medium text-ink-2">{s.photo}</p>
         <input ref={input} id="photo" type="file" name="photo" accept="image/*" className="sr-only" onChange={onPick} />
         {preview ? (
           <div className="relative w-fit">
             {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-            <img src={preview} alt="" className="h-32 rounded-xl object-cover ring-1 ring-zinc-200" />
+            <img src={preview} alt="" className="h-32 rounded-xl object-cover ring-1 ring-line" />
             <button
               type="button"
               aria-label="Remove photo"
@@ -54,12 +54,12 @@ export function ComplaintForm({ s }: { s: S }) {
             </button>
           </div>
         ) : (
-          <label htmlFor="photo" className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-zinc-300 bg-white px-4 text-center text-sm text-zinc-600 hover:bg-zinc-50">
-            <Camera className="size-6 text-zinc-500" aria-hidden />
+          <label htmlFor="photo" className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line bg-surface px-4 text-center text-sm text-ink-2 hover:bg-muted">
+            <Camera className="size-6 text-ink-3" aria-hidden />
             {s.photoHint}
           </label>
         )}
-        {state.error === "photo" && <p className="mt-1.5 text-sm text-red-700">{s.errPhoto}</p>}
+        {state.error === "photo" && <p className="mt-1.5 text-sm text-red-700 dark:text-red-300">{s.errPhoto}</p>}
       </div>
       <SubmitButton size="lg" className="w-full">
         {s.send}

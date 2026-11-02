@@ -28,7 +28,7 @@ export default async function ReviewPage() {
       />
       {queue.length === 0 ? (
         <EmptyState icon={<CircleCheck className="size-5" aria-hidden />} title="Nothing to review">
-          Every credit from the imported statements is posted or explained. <Link href="/accounts" className="font-medium text-teal-800">Import another statement</Link>
+          Every credit from the imported statements is posted or explained. <Link href="/accounts" className="font-medium text-accent-ink">Import another statement</Link>
         </EmptyState>
       ) : (
         <ul className="space-y-4">
@@ -40,7 +40,7 @@ export default async function ReviewPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-2xl font-semibold tracking-tight tabular-nums">{rupees(t.amount)}</p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-ink-3">
                         {fmtDate(t.txnDate)} · {t.method ?? "Other"}
                         {t.payerName && ` · from ${t.payerName}`}
                         {t.payerVpa && ` · ${t.payerVpa}`}
@@ -54,15 +54,15 @@ export default async function ReviewPage() {
                       ))}
                     </div>
                   </div>
-                  <p className="break-all rounded-lg bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-700">{t.narration}</p>
+                  <p className="break-all rounded-lg bg-muted px-3 py-2 font-mono text-xs text-ink-2">{t.narration}</p>
                   <Notice tone="amber" icon={<TriangleAlert className="size-4" aria-hidden />}>
                     {t.reasons.join(" ")}
                   </Notice>
 
                   {t.suggestions.length > 0 && (
                     <div>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Likely flats</p>
-                      <ul className="divide-y divide-zinc-100 rounded-xl ring-1 ring-zinc-200">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Likely flats</p>
+                      <ul className="divide-y divide-line rounded-xl ring-1 ring-line">
                         {t.suggestions.slice(0, 3).map((s) => (
                           <li key={s.flatId} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
                             <div className="min-w-0">
@@ -70,9 +70,9 @@ export default async function ReviewPage() {
                                 <Link href={`/accounts/flats/${s.flatId}`} className="hover:underline">
                                   {s.flatId}
                                 </Link>{" "}
-                                <span className="text-xs font-normal text-zinc-500">score {s.score}</span>
+                                <span className="text-xs font-normal text-ink-3">score {s.score}</span>
                               </p>
-                              <p className="text-xs text-zinc-600">{s.reasons.join(" · ")}</p>
+                              <p className="text-xs text-ink-2">{s.reasons.join(" · ")}</p>
                             </div>
                             <form action={postToFlat.bind(null, t.id, s.flatId)}>
                               <SubmitButton size="sm">Post to {s.flatId}</SubmitButton>
@@ -83,19 +83,19 @@ export default async function ReviewPage() {
                     </div>
                   )}
 
-                  <div className="grid gap-3 border-t border-zinc-100 pt-4 sm:grid-cols-2">
+                  <div className="grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
                     <OtherFlatForm txnId={t.id} />
                     <form action={ignoreEntry.bind(null, t.id)} className="flex gap-2">
                       <label className="sr-only" htmlFor={`reason-${t.id}`}>
                         Reason
                       </label>
-                      <select id={`reason-${t.id}`} name="reason" className="h-10 min-w-0 flex-1 rounded-xl bg-white px-2 text-sm ring-1 ring-zinc-300">
+                      <select id={`reason-${t.id}`} name="reason" className="h-10 min-w-0 flex-1 rounded-xl bg-surface px-2 text-sm ring-1 ring-line">
                         <option>Bank interest</option>
                         <option>Refund or reversal by the bank</option>
                         <option>Vendor or other income</option>
                         <option>Duplicate of an entry already posted</option>
                       </select>
-                      <SubmitButton size="sm" variant="ghost" className="h-10 ring-1 ring-zinc-300">
+                      <SubmitButton size="sm" variant="ghost" className="h-10 ring-1 ring-line">
                         Not a resident payment
                       </SubmitButton>
                     </form>

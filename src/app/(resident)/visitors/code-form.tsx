@@ -16,10 +16,10 @@ export function CodeForm({ s, place }: { s: S; place: string }) {
   return (
     <div className="space-y-4">
       {state.code && (
-        <div className="rounded-2xl bg-teal-50 p-4 text-center ring-1 ring-teal-200">
-          <p className="text-sm text-teal-900">{s.codeFor.replace("{name}", state.guestName ?? "")}</p>
-          <p className="my-2 font-mono text-4xl font-semibold tracking-[0.25em] text-zinc-950">{state.code}</p>
-          <p className="text-xs text-teal-900">{s.validTill.replace("{time}", till)}</p>
+        <div className="rounded-2xl bg-accent-soft p-4 text-center ring-1 ring-accent/30">
+          <p className="text-sm text-accent-ink">{s.codeFor.replace("{name}", state.guestName ?? "")}</p>
+          <p className="my-2 font-mono text-4xl font-semibold tracking-[0.25em] text-ink">{state.code}</p>
+          <p className="text-xs text-accent-ink">{s.validTill.replace("{time}", till)}</p>
           <Button
             variant="secondary"
             className="mt-3"
@@ -37,14 +37,14 @@ export function CodeForm({ s, place }: { s: S; place: string }) {
           <input id="guestName" name="guestName" required minLength={2} maxLength={60} className={inputCls} />
         </Field>
         <fieldset>
-          <legend className="mb-1.5 text-sm font-medium text-zinc-800">{s.validFor}</legend>
+          <legend className="mb-1.5 text-sm font-medium text-ink-2">{s.validFor}</legend>
           <div className="grid grid-cols-3 gap-2">
             {[
               ["4", s.h4],
               ["24", s.d1],
               ["72", s.d3],
             ].map(([v, label], i) => (
-              <label key={v} className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-white text-sm font-medium ring-1 ring-zinc-300 has-[:checked]:bg-teal-700 has-[:checked]:text-white has-[:checked]:ring-teal-700">
+              <label key={v} className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-surface text-sm font-medium ring-1 ring-line has-[:checked]:bg-accent has-[:checked]:text-white has-[:checked]:ring-accent">
                 <input type="radio" name="hours" value={v} defaultChecked={i === 1} className="sr-only" />
                 {label}
               </label>

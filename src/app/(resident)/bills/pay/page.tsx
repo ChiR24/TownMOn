@@ -22,7 +22,7 @@ export default async function PayPage({ searchParams }: { searchParams: Promise<
           {t("pay.failed")}
         </Notice>
       )}
-      {pos.balance <= 0 && <p className="mb-3 text-[15px] text-zinc-600">{t("pay.nothingDue")}</p>}
+      {pos.balance <= 0 && <p className="mb-3 text-[15px] text-ink-2">{t("pay.nothingDue")}</p>}
       <PayForm
         balance={pos.balance}
         balanceLabel={rupees(Math.max(0, pos.balance))}

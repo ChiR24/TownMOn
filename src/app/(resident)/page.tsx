@@ -1,13 +1,14 @@
 import { and, desc, eq, gte, isNull, ne, or } from "drizzle-orm";
-import { CalendarDays, ChevronRight, CircleCheck, KeyRound, ReceiptIndianRupee, Siren, Wrench } from "lucide-react";
+import { CalendarClock, CalendarDays, CircleCheck, KeyRound, Megaphone, ReceiptIndianRupee, TriangleAlert, Wrench } from "lucide-react";
 import Link from "next/link";
-import { ComplaintStatus, VisitorStatus } from "@/components/badges";
+import { VisitorStatus } from "@/components/badges";
+import { ComplaintRow } from "@/components/complaint-row";
 import { SubmitButton } from "@/components/submit-button";
-import { Avatar, Badge, Card, EmptyState, LinkButton, Money, Section } from "@/components/ui";
+import { Avatar, cardCls, cx, EmptyState, IconChip, Section, type Tone } from "@/components/ui";
 import { db } from "@/db";
 import { complaints, notices, visitors } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
-import { fmtDate, fmtTime, relTime, shiftPeriod, startOfTodayIST, todayIST } from "@/lib/dates";
+import { fmtDate, fmtLongDate, fmtTime, relTime, shiftPeriod, startOfTodayIST, todayIST } from "@/lib/dates";
 import { flatPosition } from "@/lib/data";
 import { getLang } from "@/lib/lang";
 import { translator, type Key } from "@/lib/i18n";
@@ -31,7 +32,7 @@ export default async function HomePage() {
       .orderBy(desc(visitors.arrivedAt))
       .limit(5),
     db
-      .select({ id: complaints.id, title: complaints.title, description: complaints.description, category: complaints.category, status: complaints.status, urgency: complaints.urgency, createdAt: complaints.createdAt })
+      .select({ id: complaints.id, description: complaints.description, category: complaints.category, status: complaints.status, urgency: complaints.urgency, createdAt: complaints.createdAt })
       .from(complaints)
       .where(and(eq(complaints.flatId, flat.flatId), ne(complaints.status, "CLOSED")))
       .orderBy(desc(complaints.createdAt))
@@ -44,28 +45,45 @@ export default async function HomePage() {
       .limit(2),
   ]);
   const nextDue = pos.items.find((i) => i.unpaid > 0)?.charge.dueDate;
+  const quick: { href: string; icon: typeof Wrench; label: string; tone: Tone }[] = [
+    { href: "/bills", icon: ReceiptIndianRupee, label: t("home.quick.pay"), tone: "teal" },
+    { href: "/complaints/new", icon: Wrench, label: t("home.quick.complaint"), tone: "amber" },
+    { href: "/visitors#codes", icon: KeyRound, label: t("home.quick.code"), tone: "violet" },
+    { href: "/amenities", icon: CalendarDays, label: t("home.quick.book"), tone: "sky" },
+  ];
 
   return (
     <div>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">{t("home.hello", { name: user.name.split(" ")[0] })}</h1>
+      <div className="mb-5 mt-1 px-1">
+        <p className="text-sm font-semibold text-ink-3">{fmtLongDate(today, lang)}</p>
+        <h1 className="text-[30px] font-bold leading-tight tracking-tight">{t("home.hello", { name: user.name.split(" ")[0] })}</h1>
+      </div>
 
+      {/* Someone at the gate is the most time-critical thing on this screen, so it comes first. */}
       {waiting.map((v) => (
-        <Card key={v.id} className="mt-4 bg-amber-50/60 ring-amber-200">
-          <div className="flex items-center gap-3">
+        <section key={v.id} className="mb-4 rounded-[28px] bg-amber-50 p-4 ring-1 ring-amber-200/80 dark:bg-amber-400/10 dark:ring-amber-300/20" aria-live="polite">
+          <div className="flex items-center gap-3.5">
             {v.photoId ? (
               // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
-              <img src={`/api/photos/${v.photoId}`} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+              <img src={`/api/photos/${v.photoId}`} alt="" className="size-16 shrink-0 rounded-2xl object-cover" />
             ) : (
-              <Avatar name={v.name} className="size-14 rounded-xl text-base" />
+              <Avatar name={v.name} className="size-16 rounded-2xl text-lg" />
             )}
             <div className="min-w-0">
-              <p className="text-[15px] font-semibold text-zinc-900">{t("home.atGate", { name: v.name, gate: v.gate })}</p>
-              <p className="text-sm text-zinc-600">
+              <p className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full rounded-full bg-amber-500 opacity-60 motion-safe:animate-ping" />
+                  <span className="relative inline-flex size-2 rounded-full bg-amber-500" />
+                </span>
+                {t("v.waiting")}
+              </p>
+              <p className="mt-0.5 text-[17px] font-bold leading-snug">{t("home.atGate", { name: v.name, gate: v.gate })}</p>
+              <p className="text-sm text-ink-2">
                 {t(`v.purpose.${v.purpose}` as Key)} · {relTime(v.arrivedAt, lang)}
               </p>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
             <form action={decideVisitor.bind(null, v.id, "APPROVED")}>
               <SubmitButton className="w-full">{t("home.letIn")}</SubmitButton>
             </form>
@@ -75,78 +93,69 @@ export default async function HomePage() {
               </SubmitButton>
             </form>
           </div>
-        </Card>
+        </section>
       ))}
 
-      <Card className="mt-4">
+      <section className="hero relative overflow-hidden rounded-[28px] p-5">
         {pos.balance > 0 ? (
-          <>
-            <p className="text-sm text-zinc-500">{t("home.due")}</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums text-zinc-950">
-              <Money paise={pos.balance} />
-            </p>
-            <div className="mt-2">
+          <div className="relative">
+            <p className="text-sm font-semibold text-white/75">{t("home.due")}</p>
+            <p className="mt-1 text-[44px] font-bold leading-none tracking-tight tabular-nums">{rupees(pos.balance)}</p>
+            <div className="mt-3">
               {pos.daysOverdue > 0 ? (
-                <Badge tone="red">{t("home.overdue", { days: pos.daysOverdue })}</Badge>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1 text-sm font-semibold">
+                  <TriangleAlert className="size-4 text-amber-300" aria-hidden /> {t("home.overdue", { days: pos.daysOverdue })}
+                </span>
               ) : (
-                nextDue && <span className="text-sm text-zinc-600">{t("home.dueBy", { date: fmtDate(nextDue, lang) })}</span>
+                nextDue && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
+                    <CalendarClock className="size-4" aria-hidden /> {t("home.dueBy", { date: fmtDate(nextDue, lang) })}
+                  </span>
+                )
               )}
             </div>
-            <LinkButton href="/bills/pay" size="lg" className="mt-4 w-full">
+            <Link href="/bills/pay" className="press mt-5 flex h-14 items-center justify-center rounded-2xl bg-white text-base font-bold text-[#0a4b43] shadow-[0_10px_24px_-10px_rgb(0_0_0/0.45)]">
               {t("home.pay", { amount: rupees(pos.balance) })}
-            </LinkButton>
-          </>
+            </Link>
+          </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-              <CircleCheck className="size-6" aria-hidden />
+          <div className="relative flex items-center gap-4">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+              <CircleCheck className="size-8" aria-hidden />
             </span>
             <div>
-              <p className="text-[17px] font-semibold text-zinc-900">{t("home.paid")}</p>
-              <p className="text-sm text-zinc-500">
+              <p className="text-xl font-bold">{t("home.paid")}</p>
+              <p className="text-sm text-white/75">
                 {pos.balance < 0 ? t("home.advance", { amount: rupees(-pos.balance) }) : t("home.nextBill", { date: fmtDate(`${shiftPeriod(today.slice(0, 7), 1)}-01`, lang) })}
               </p>
             </div>
           </div>
         )}
-      </Card>
+      </section>
 
-      <nav className="mt-4 grid grid-cols-4 gap-2" aria-label="Quick actions">
-        {[
-          { href: "/bills", icon: ReceiptIndianRupee, label: t("home.quick.pay") },
-          { href: "/complaints/new", icon: Wrench, label: t("home.quick.complaint") },
-          { href: "/visitors#codes", icon: KeyRound, label: t("home.quick.code") },
-          { href: "/amenities", icon: CalendarDays, label: t("home.quick.book") },
-        ].map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} className="flex flex-col items-center gap-1.5 rounded-2xl bg-white px-1 py-3 text-center text-xs font-medium text-zinc-700 ring-1 ring-zinc-200/80 hover:bg-zinc-50">
-            <Icon className="size-5 text-teal-700" aria-hidden />
+      <nav className="mt-4 grid grid-cols-4 gap-2.5" aria-label="Quick actions">
+        {quick.map(({ href, icon: Icon, label, tone }) => (
+          <Link key={href} href={href} className={cx(cardCls, "press flex flex-col items-center gap-2 !p-3 text-center text-xs font-semibold text-ink-2")}>
+            <IconChip tone={tone} className="size-11">
+              <Icon className="size-[22px]" aria-hidden />
+            </IconChip>
             {label}
           </Link>
         ))}
       </nav>
 
-      <Section title={t("home.complaints")} action={open.length > 0 && <Link href="/complaints" className="text-sm font-medium text-teal-800">{t("common.seeAll")}</Link>}>
+      <Section title={t("home.complaints")} action={open.length > 0 && <Link href="/complaints" className="text-sm font-semibold text-accent-ink">{t("common.seeAll")}</Link>}>
         {open.length === 0 ? (
-          <EmptyState title={t("home.noComplaints")}>
-            <Link href="/complaints/new" className="font-medium text-teal-800">
+          <EmptyState icon={<Wrench className="size-5" aria-hidden />} title={t("home.noComplaints")}>
+            <Link href="/complaints/new" className="font-semibold text-accent-ink">
               {t("home.raise")} →
             </Link>
           </EmptyState>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {open.map((c) => (
               <li key={c.id}>
-                <Link href={`/complaints/${c.id}`} className="flex items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-zinc-200/80 hover:bg-zinc-50">
-                  {c.urgency === "EMERGENCY" && <Siren className="size-5 shrink-0 text-red-600" aria-label="Emergency" />}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium text-zinc-900">{c.title ?? c.description}</p>
-                    <p className="text-xs text-zinc-500">
-                      {t(`cat.${c.category}` as Key)} · {relTime(c.createdAt, lang)}
-                    </p>
-                  </div>
-                  <ComplaintStatus status={c.status} t={t} />
-                  <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
-                </Link>
+                <ComplaintRow c={c} t={t} lang={lang} />
               </li>
             ))}
           </ul>
@@ -155,15 +164,15 @@ export default async function HomePage() {
 
       <Section title={t("home.visitorsToday")}>
         {todays.length === 0 ? (
-          <p className="text-sm text-zinc-500">{t("home.noVisitors")}</p>
+          <p className="px-1 text-sm text-ink-3">{t("home.noVisitors")}</p>
         ) : (
-          <ul className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+          <ul className={cx(cardCls, "divide-y divide-line !p-0")}>
             {todays.map((v) => (
-              <li key={v.id} className="flex items-center gap-3 px-3.5 py-3">
+              <li key={v.id} className="flex items-center gap-3 px-4 py-3">
                 <Avatar name={v.name} className="size-9 text-xs" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] text-zinc-900">{v.name}</p>
-                  <p className="text-xs text-zinc-500">{t("v.at", { gate: v.gate, time: fmtTime(v.arrivedAt, lang) })}</p>
+                  <p className="truncate text-[15px] font-medium">{v.name}</p>
+                  <p className="text-xs text-ink-3">{t("v.at", { gate: v.gate, time: fmtTime(v.arrivedAt, lang) })}</p>
                 </div>
                 <VisitorStatus status={v.status} t={t} />
               </li>
@@ -173,13 +182,18 @@ export default async function HomePage() {
       </Section>
 
       {latest.length > 0 && (
-        <Section title={t("home.notices")} action={<Link href="/more#notices" className="text-sm font-medium text-teal-800">{t("common.seeAll")}</Link>}>
-          <ul className="space-y-2">
+        <Section title={t("home.notices")} action={<Link href="/more#notices" className="text-sm font-semibold text-accent-ink">{t("common.seeAll")}</Link>}>
+          <ul className="space-y-2.5">
             {latest.map((n) => (
-              <li key={n.id} className="rounded-2xl bg-white p-3.5 ring-1 ring-zinc-200/80">
-                <p className="text-[15px] font-medium text-zinc-900">{n.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-sm text-zinc-600">{n.body}</p>
-                <p className="mt-1 text-xs text-zinc-400">{relTime(n.createdAt, lang)}</p>
+              <li key={n.id} className={cx(cardCls, "flex gap-3 !p-3.5")}>
+                <IconChip tone="zinc">
+                  <Megaphone className="size-5" aria-hidden />
+                </IconChip>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold leading-snug">{n.title}</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-ink-2">{n.body}</p>
+                  <p className="mt-1 text-xs text-ink-3">{relTime(n.createdAt, lang)}</p>
+                </div>
               </li>
             ))}
           </ul>

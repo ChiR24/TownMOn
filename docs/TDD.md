@@ -18,6 +18,10 @@ The seed includes three reference flats, exact to the rupee (T07-1203 paid ₹7,
 days overdue, one water leak open; T21-1601 paid ₹5,000 of ₹10,660, 18 days overdue) inside a township of 2,400 flats
 whose monthly billing comes to ₹1.80 crore, which is ₹21.6 crore a year.
 
+All of it lives in the database. The seed is the only code that writes demo data, and every screen (the sign-in
+page's demo list included) reads from the database, so going live means loading the real flats and residents, not
+changing code. What stays simulated is outside services: the payment gateway, SMS and WhatsApp, and the bank file.
+
 ## 2. Architecture, and why
 
 ```
@@ -116,14 +120,22 @@ repeatable and auditable.
   dues with one Pay button, open complaints with their status, today's visitors and notices. Pay, raise a complaint,
   create a guest code and book are one tap from home; nothing is more than two.
 - **Elderly and multilingual.** 15–17 px body text, large touch targets, a bottom tab bar. English, Marathi and Hindi
-  switch on every screen with no JavaScript; Devanagari gets a taller line height and a proper font. Numbers stay in
-  Latin digits so amounts and dates read the same everywhere.
+  switch on every screen with no JavaScript. One type family (Mukta) covers Latin and Devanagari, so the three
+  languages look like one app; Devanagari gets taller lines and never letter-spacing (it breaks how conjuncts join).
+  Numbers stay in Latin digits so amounts and dates read the same everywhere. Residents see their complaints in their
+  own words; the AI's short English title is for the help desk.
 - **The gate tablet** is dark with very large buttons for night shifts. Photos are brightened on the tablet
   (auto-levels) so faces taken at night are readable, and the screen states plainly whether it is online and how
   many entries are waiting to sync.
-- **Restrained palette.** Stone neutrals and one teal accent. Red, amber and green only carry status, and always with
-  an icon and words, never colour alone. Chart colours were checked with a palette validator (ordinal teal ramp for
-  dues by age).
+- **Restrained palette, as roles.** Warm neutrals and one teal accent. Colours are named by role (canvas, surface, ink,
+  accent), so the resident app follows the phone's dark mode while staff consoles and printed reports stay light. Red,
+  amber and green only carry status, and always with an icon and words, never colour alone. Chart colours were checked
+  with a palette validator (ordinal teal ramp for dues by age).
+- **Glass for the navigation layer only.** The top bar, the floating tab bar and the booking sheet are translucent so
+  content stays in view behind them, and content fades softly as it scrolls underneath. Content itself sits on opaque
+  cards, because text on glass is harder to read. Glass turns solid when the phone asks for less transparency or the
+  browser cannot blur. Motion is small (pages ease in, buttons press) and off for people who ask for reduced motion.
+- **One hero per screen.** On home it is the dues card with its Pay button; everything else is a quiet card.
 - **Every list has an empty state**, every page a loading skeleton and an error view with retry. Every form shows its
   error in words next to the field.
 - **Staff screens are dense and English** (assumption A14): queue views with counts, one-tap fixes, and the reason

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { signOut } from "@/app/actions";
 import { LangSwitch } from "@/components/lang-switch";
 import { SubmitButton } from "@/components/submit-button";
-import { Badge, Card, Section } from "@/components/ui";
+import { Avatar, Badge, Card, cardCls, cx, IconChip, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { flatMembers, notices, notifications, users } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
@@ -34,24 +34,27 @@ export default async function MorePage() {
 
   return (
     <div>
-      <h1 className="mb-5 mt-2 text-2xl font-semibold tracking-tight">{t("m.title")}</h1>
+      <PageTitle title={t("m.title")} />
 
-      <Link href="/amenities" className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-zinc-200/80 hover:bg-zinc-50">
-        <CalendarDays className="size-5 text-teal-700" aria-hidden />
-        <span className="flex-1 text-[15px] font-medium">{t("a.title")}</span>
-        <ChevronRight className="size-4 text-zinc-400" aria-hidden />
+      <Link href="/amenities" className={cx(cardCls, "press flex items-center gap-3 !p-3.5")}>
+        <IconChip tone="sky">
+          <CalendarDays className="size-5" aria-hidden />
+        </IconChip>
+        <span className="flex-1 text-[15px] font-semibold">{t("a.title")}</span>
+        <ChevronRight className="size-4 text-ink-3" aria-hidden />
       </Link>
 
       <Section title={t("m.household")}>
         <Card className="space-y-4">
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-line">
             {members.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div>
-                  <p className="text-[15px] font-medium">
-                    {m.name} {m.userId === user.id && <span className="text-xs font-normal text-zinc-500">(you)</span>}
+              <li key={m.id} className="flex items-center gap-3 py-2.5">
+                <Avatar name={m.name} className="size-10 text-sm" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-semibold">
+                    {m.name} {m.userId === user.id && <span className="text-xs font-normal text-ink-3">({t("m.you")})</span>}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-ink-3">
                     {t(`m.rel.${m.relation}` as Key)} · {maskPhone(m.phone)}
                   </p>
                 </div>
@@ -68,7 +71,7 @@ export default async function MorePage() {
           {flat.isPrimary ? (
             <MemberForm s={{ name: t("m.name"), phone: t("login.phone"), add: t("m.add"), hint: t("m.addHint"), taken: t("m.err.phoneTaken"), badPhone: t("login.err.phone"), badName: t("c.err.short") }} />
           ) : (
-            <p className="text-sm text-zinc-500">{t("m.onlyPrimary")}</p>
+            <p className="text-sm text-ink-3">{t("m.onlyPrimary")}</p>
           )}
         </Card>
       </Section>
@@ -80,29 +83,29 @@ export default async function MorePage() {
       <Section title={t("m.notices")}>
         <div id="notices" className="scroll-mt-20" />
         {notes.length === 0 ? (
-          <p className="text-sm text-zinc-500">{t("m.noNotices")}</p>
+          <p className="text-sm text-ink-3">{t("m.noNotices")}</p>
         ) : (
           <ul className="space-y-2">
             {notes.map((n) => (
-              <li key={n.id} className="rounded-2xl bg-white p-3.5 ring-1 ring-zinc-200/80">
+              <li key={n.id} className="card p-3.5">
                 <p className="text-[15px] font-medium">{n.title}</p>
-                <p className="mt-0.5 text-sm text-zinc-600">{n.body}</p>
-                <p className="mt-1 text-xs text-zinc-400">{relTime(n.createdAt, lang)}</p>
+                <p className="mt-0.5 text-sm text-ink-2">{n.body}</p>
+                <p className="mt-1 text-xs text-ink-3">{relTime(n.createdAt, lang)}</p>
               </li>
             ))}
           </ul>
         )}
       </Section>
 
-      <Section title="Messages">
-        <ul className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200/80">
+      <Section title={t("m.messages")}>
+        <ul className="divide-y divide-line card">
           {messages.map((m) => (
             <li key={m.id} className="flex gap-3 px-3.5 py-3">
-              <MessageSquareText className="mt-0.5 size-4 shrink-0 text-zinc-400" aria-hidden />
+              <MessageSquareText className="mt-0.5 size-4 shrink-0 text-ink-3" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="text-[15px]">{m.link ? <Link href={m.link}>{m.title}</Link> : m.title}</p>
-                {m.body && <p className="text-sm text-zinc-500">{m.body}</p>}
-                <p className="mt-0.5 text-xs text-zinc-400">
+                {m.body && <p className="text-sm text-ink-3">{m.body}</p>}
+                <p className="mt-0.5 text-xs text-ink-3">
                   {relTime(m.createdAt, lang)} {m.channel !== "APP" && <Badge tone="zinc">{m.channel === "WHATSAPP" ? "WhatsApp (mock)" : "SMS (mock)"}</Badge>}
                 </p>
               </div>
@@ -111,12 +114,14 @@ export default async function MorePage() {
         </ul>
       </Section>
 
-      <div className="mt-8 space-y-2">
-        <Link href="/welcome?view=1" className="flex items-center gap-3 rounded-2xl bg-white p-4 text-[15px] ring-1 ring-zinc-200/80 hover:bg-zinc-50">
-          <ShieldCheck className="size-5 text-zinc-500" aria-hidden /> {t("m.privacy")}
+      <div className={cx(cardCls, "mt-8 divide-y divide-line overflow-hidden !p-0")}>
+        <Link href="/welcome?view=1" className="flex items-center gap-3 px-4 py-3.5 text-[15px] font-medium hover:bg-muted">
+          <ShieldCheck className="size-5 text-ink-3" aria-hidden />
+          <span className="flex-1">{t("m.privacy")}</span>
+          <ChevronRight className="size-4 text-ink-3" aria-hidden />
         </Link>
         <form action={signOut}>
-          <button className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left text-[15px] text-red-700 ring-1 ring-zinc-200/80 hover:bg-zinc-50">
+          <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-[15px] font-medium text-red-700 hover:bg-muted dark:text-red-300">
             <LogOut className="size-5" aria-hidden /> {t("m.signOut")}
           </button>
         </form>

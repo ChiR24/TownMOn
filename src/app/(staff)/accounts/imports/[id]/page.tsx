@@ -42,26 +42,26 @@ export default async function ImportPage({ params }: { params: Promise<{ id: str
           ["Already imported", i.duplicates],
         ].map(([label, value]) => (
           <Card key={label as string} className="p-3 sm:p-4">
-            <p className="text-xs text-zinc-500">{label}</p>
+            <p className="text-xs text-ink-3">{label}</p>
             <p className="mt-0.5 text-2xl font-semibold tabular-nums">{value}</p>
           </Card>
         ))}
       </div>
       {resident > 0 && (
-        <p className="mt-3 text-sm text-zinc-600">
+        <p className="mt-3 text-sm text-ink-2">
           {Math.round((100 * i.autoMatched) / resident)}% of resident payments in this file were posted without anyone touching them.{" "}
           {i.needsReview > 0 && (
-            <Link href="/accounts/review" className="font-medium text-teal-800">
+            <Link href="/accounts/review" className="font-medium text-accent-ink">
               Review the rest →
             </Link>
           )}
         </p>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl bg-white ring-1 ring-zinc-200/80">
+      <div className="mt-6 overflow-x-auto card">
         <table className="w-full min-w-[760px] text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr className="border-b border-zinc-100">
+          <thead className="text-left text-xs uppercase tracking-wide text-ink-3">
+            <tr className="border-b border-line">
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 text-right font-medium">Amount</th>
               <th className="px-4 py-3 font-medium">Narration</th>
@@ -69,21 +69,21 @@ export default async function ImportPage({ params }: { params: Promise<{ id: str
               <th className="px-4 py-3 font-medium">Why</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 align-top">
+          <tbody className="divide-y divide-line align-top">
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-zinc-600">{fmtDate(r.txnDate)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-ink-2">{fmtDate(r.txnDate)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums">{rupees(r.amount)}</td>
-                <td className="max-w-xs break-all px-4 py-3 font-mono text-xs text-zinc-600">{r.narration}</td>
+                <td className="max-w-xs break-all px-4 py-3 font-mono text-xs text-ink-2">{r.narration}</td>
                 <td className="px-4 py-3">
                   <Badge tone={STATUS[r.status][1]}>{STATUS[r.status][0]}</Badge>
                   {r.flatId && (
-                    <Link href={`/accounts/flats/${r.flatId}`} className="mt-1 block text-xs font-medium text-teal-800">
+                    <Link href={`/accounts/flats/${r.flatId}`} className="mt-1 block text-xs font-medium text-accent-ink">
                       {r.flatId}
                     </Link>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs text-zinc-600">{r.reasons.join(" · ")}</td>
+                <td className="px-4 py-3 text-xs text-ink-2">{r.reasons.join(" · ")}</td>
               </tr>
             ))}
           </tbody>

@@ -1,9 +1,9 @@
 "use client";
 
-import { MessageSquareText } from "lucide-react";
+import { ChevronRight, MessageSquareText } from "lucide-react";
 import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
-import { Field, inputCls } from "@/components/ui";
+import { Avatar, Field, inputCls } from "@/components/ui";
 import { maskPhone } from "@/lib/phone";
 import { login, type LoginState } from "./actions";
 
@@ -17,14 +17,14 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
 
   if (state.step === "code" && state.phone) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 motion-safe:animate-enter">
         {state.demoCode && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-teal-50 px-3.5 py-3 text-sm text-teal-900">
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-accent-soft px-3.5 py-3 text-sm text-accent-ink">
             <span className="flex items-center gap-2">
               <MessageSquareText className="size-4 shrink-0" aria-hidden />
               {s.demoSms.replace("{code}", state.demoCode)}
             </span>
-            <button type="button" onClick={() => setCode(state.demoCode!)} className="rounded-lg bg-white px-2.5 py-1 font-medium text-teal-800 ring-1 ring-teal-200 hover:bg-teal-100">
+            <button type="button" onClick={() => setCode(state.demoCode!)} className="press rounded-xl bg-surface px-3 py-1.5 font-bold text-accent-ink shadow-sm">
               Use
             </button>
           </div>
@@ -43,7 +43,7 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               placeholder="••••••"
-              className={`${inputCls} text-center text-2xl tracking-[0.5em] tabular-nums`}
+              className={`${inputCls} h-16 text-center text-3xl font-bold tracking-[0.45em] tabular-nums`}
               autoFocus
             />
           </Field>
@@ -51,10 +51,10 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
             {s.verify}
           </SubmitButton>
           <div className="flex items-center justify-between text-sm">
-            <button name="intent" value="change" formNoValidate className="rounded-lg px-1 py-2 text-zinc-600 hover:text-zinc-900">
+            <button name="intent" value="change" formNoValidate className="press rounded-xl px-2 py-2 font-medium text-ink-2 hover:text-ink">
               {s.change}
             </button>
-            <button name="intent" value="send" formNoValidate className="rounded-lg px-1 py-2 font-medium text-teal-800 hover:text-teal-900">
+            <button name="intent" value="send" formNoValidate className="press rounded-xl px-2 py-2 font-semibold text-accent-ink">
               {s.resend}
             </button>
           </div>
@@ -64,12 +64,12 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
   }
 
   return (
-    <div className="space-y-8">
+    <div>
       <form action={action} className="space-y-4">
         <Field label={s.phone} error={error} htmlFor="phone">
           <div className="flex">
-            <span className="inline-flex items-center rounded-l-xl bg-zinc-100 px-3 text-base text-zinc-600 ring-1 ring-inset ring-zinc-300">+91</span>
-            <input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="98XXXXXXXX" className={`${inputCls} rounded-l-none`} autoFocus />
+            <span className="inline-flex items-center rounded-l-2xl bg-muted px-4 text-base font-semibold text-ink-2 ring-1 ring-inset ring-line">+91</span>
+            <input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="98XXXXXXXX" className={`${inputCls} rounded-l-none text-lg tracking-wide`} autoFocus />
           </div>
         </Field>
         <SubmitButton name="intent" value="send" size="lg" className="w-full">
@@ -78,24 +78,25 @@ export function LoginForm({ s, demo, initialError }: { s: Strings; demo: readonl
       </form>
 
       {demo.length > 0 && (
-        <section aria-labelledby="demo-heading" className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200/80">
-          <h2 id="demo-heading" className="text-sm font-semibold text-zinc-900">
+        <section aria-labelledby="demo-heading" className="mt-6 border-t border-line pt-5">
+          <h2 id="demo-heading" className="text-sm font-bold text-ink">
             {s.demo}
           </h2>
-          <p className="mt-0.5 text-sm text-zinc-500">{s.demoHint}</p>
-          <ul className="mt-3 divide-y divide-zinc-100">
+          <p className="mt-0.5 text-sm text-ink-3">{s.demoHint}</p>
+          <ul className="-mx-2 mt-2">
             {demo.map((a) => (
               <li key={a.phone}>
                 <form action={action}>
                   <input type="hidden" name="phone" value={a.phone} />
-                  <button name="intent" value="send" className="flex w-full items-center justify-between gap-3 py-2.5 text-left hover:bg-zinc-50">
-                    <span className="min-w-0">
-                      <span className="block text-[15px] font-medium text-zinc-900">{a.name}</span>
-                      <span className="block truncate text-xs text-zinc-500">
+                  <button name="intent" value="send" className="press flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left hover:bg-muted">
+                    <Avatar name={a.name} className="size-10 text-sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-semibold text-ink">{a.name}</span>
+                      <span className="block truncate text-xs text-ink-3">
                         {a.role} · {a.note}
                       </span>
                     </span>
-                    <span className="shrink-0 text-xs tabular-nums text-zinc-400">{a.phone}</span>
+                    <ChevronRight className="size-4 shrink-0 text-ink-3" aria-hidden />
                   </button>
                 </form>
               </li>

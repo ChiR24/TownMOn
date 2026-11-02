@@ -25,9 +25,9 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
 
   return (
     <div>
-      <PageTitle title="Visitor log" subtitle="Every entry at the four gates. Photos are deleted automatically after 90 days." action={<Link href="/gate/notice" className="text-sm font-medium text-teal-800">Gate notice →</Link>} />
+      <PageTitle title="Visitor log" subtitle="Every entry at the four gates. Photos are deleted automatically after 90 days." action={<Link href="/gate/notice" className="text-sm font-medium text-accent-ink">Gate notice →</Link>} />
       <form className="mb-4 flex flex-wrap items-end gap-2">
-        <select name="gate" defaultValue={String(gate)} className="h-10 rounded-xl bg-white px-3 text-sm ring-1 ring-zinc-300" aria-label="Gate">
+        <select name="gate" defaultValue={String(gate)} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" aria-label="Gate">
           <option value="0">All gates</option>
           {[1, 2, 3, 4].map((g) => (
             <option key={g} value={g}>
@@ -35,17 +35,17 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
             </option>
           ))}
         </select>
-        <input name="flat" defaultValue={flat ?? ""} placeholder="Flat, e.g. T07-1203" aria-label="Flat" className="h-10 rounded-xl bg-white px-3 text-sm ring-1 ring-zinc-300" />
-        <select name="days" defaultValue={String(days)} className="h-10 rounded-xl bg-white px-3 text-sm ring-1 ring-zinc-300" aria-label="Period">
+        <input name="flat" defaultValue={flat ?? ""} placeholder="Flat, e.g. T07-1203" aria-label="Flat" className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" />
+        <select name="days" defaultValue={String(days)} className="h-10 rounded-xl bg-surface px-3 text-sm ring-1 ring-line" aria-label="Period">
           <option value="1">Today</option>
           <option value="7">Last 7 days</option>
         </select>
-        <button className="h-10 rounded-xl bg-zinc-900 px-4 text-sm font-medium text-white">Show</button>
+        <button className="press h-10 rounded-xl bg-accent px-4 text-sm font-semibold text-white">Show</button>
       </form>
-      <div className="overflow-x-auto rounded-2xl bg-white ring-1 ring-zinc-200/80">
+      <div className="overflow-x-auto card">
         <table className="w-full min-w-[720px] text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr className="border-b border-zinc-100">
+          <thead className="text-left text-xs uppercase tracking-wide text-ink-3">
+            <tr className="border-b border-line">
               <th className="px-4 py-3 font-medium">Visitor</th>
               <th className="px-4 py-3 font-medium">Flat</th>
               <th className="px-4 py-3 font-medium">Gate</th>
@@ -54,7 +54,7 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
               <th className="px-4 py-3 font-medium">How</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-line">
             {rows.map(({ v, guard }) => (
               <tr key={v.id}>
                 <td className="px-4 py-2.5">
@@ -63,21 +63,21 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
                       // eslint-disable-next-line @next/next/no-img-element -- private, access-checked photo route
                       <img src={`/api/photos/${v.photoId}`} alt="" className="size-8 rounded-lg object-cover" />
                     ) : (
-                      <span className={cx("size-8 rounded-lg bg-zinc-100")} />
+                      <span className={cx("size-8 rounded-lg bg-muted")} />
                     )}
                     <span>
                       <span className="block font-medium">{v.name}</span>
-                      <span className="text-xs text-zinc-500">{v.purpose.toLowerCase()}</span>
+                      <span className="text-xs text-ink-3">{v.purpose.toLowerCase()}</span>
                     </span>
                   </div>
                 </td>
                 <td className="px-4 py-2.5">{v.flatId}</td>
                 <td className="px-4 py-2.5">{v.gate}</td>
-                <td className="whitespace-nowrap px-4 py-2.5 text-zinc-600">{fmtDateTime(v.arrivedAt)}</td>
+                <td className="whitespace-nowrap px-4 py-2.5 text-ink-2">{fmtDateTime(v.arrivedAt)}</td>
                 <td className="px-4 py-2.5">
                   <Badge tone={TONE[v.status]}>{v.status.toLowerCase()}</Badge>
                 </td>
-                <td className="px-4 py-2.5 text-xs text-zinc-600">
+                <td className="px-4 py-2.5 text-xs text-ink-2">
                   {v.approvalMode === "CODE" ? "Guest code" : v.approvalMode === "INTERCOM" ? "Intercom" : v.approvalMode === "APP" ? "Resident in app" : "—"} · {guard}
                 </td>
               </tr>
