@@ -113,6 +113,12 @@ export async function gateFlows(browser: Browser, swati: Page, guestCode: string
     const entry = feed.entries.find((e: { name: string }) => e.name === "Unknown Caller");
     if (entry?.status !== "DENIED") throw new Error(`the gate feed says ${entry?.status}`);
   });
+  await check("gate: the guard signs out at the end of a shift, and the gate then asks to sign in", gate, async () => {
+    await go(gate, "/gate");
+    await submit(gate, gate.getByRole("button", { name: "Sign out" }));
+    await go(gate, "/gate");
+    if (!new URL(gate.url()).pathname.startsWith("/login")) throw new Error("still signed in");
+  });
   return neeraj;
 }
 
@@ -185,5 +191,10 @@ export async function deskFlows(browser: Browser, swati: Page, complaint: string
     await submit(swati, swati.getByRole("button", { name: "No, still a problem" }));
     await see(swati, "Resident says it is not fixed");
     await see(swati, "Response by");
+  });
+  await check("desk: signs out from the sidebar, and the desk then asks to sign in", desk, async () => {
+    await submit(desk, desk.getByRole("button", { name: "Sign out" }));
+    await go(desk, "/desk");
+    if (!new URL(desk.url()).pathname.startsWith("/login")) throw new Error("still signed in");
   });
 }

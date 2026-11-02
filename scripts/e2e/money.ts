@@ -103,4 +103,10 @@ export async function privacyChecks(browser: Browser, other: Page, owner: Page, 
       if (!new URL(page.url()).pathname.startsWith("/login")) throw new Error(`${path} opened without signing in`);
     }
   });
+  await check("resident: signs out from More, and the home page then asks to sign in", other, async () => {
+    await go(other, "/more");
+    await submit(other, other.getByRole("button", { name: "Sign out" }));
+    await go(other, "/");
+    if (!new URL(other.url()).pathname.startsWith("/login")) throw new Error("still signed in");
+  });
 }

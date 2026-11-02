@@ -38,15 +38,17 @@ export default async function StaffLayout({ children }: { children: React.ReactN
           <span className="text-lg font-semibold">Township</span>
         </Link>
         <StaffNav links={links} vertical />
-        <div className="mt-auto flex items-center gap-3 rounded-[22px] bg-[linear-gradient(135deg,#eef8d6,#f3eefe)] p-3">
-          <Avatar name={user.name} className="size-10 text-sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user.name}</p>
-            <p className="text-xs text-ink-3">{ROLE_LABEL[user.role]}</p>
+        <div className="mt-auto rounded-[22px] bg-[linear-gradient(135deg,#eef8d6,#f3eefe)] p-3">
+          <div className="flex items-center gap-3">
+            <Avatar name={user.name} className="size-10 text-sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{user.name}</p>
+              <p className="text-xs text-ink-3">{ROLE_LABEL[user.role]}</p>
+            </div>
           </div>
-          <form action={signOut}>
-            <button className="press rounded-full p-2 text-ink-2 hover:bg-white/70 hover:text-ink" aria-label="Sign out" title="Sign out">
-              <LogOut className="size-4" aria-hidden />
+          <form action={signOut} className="mt-2">
+            <button className="press flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-sm font-medium text-ink-2 hover:bg-white/70 hover:text-ink">
+              <LogOut className="size-4" aria-hidden /> Sign out
             </button>
           </form>
         </div>

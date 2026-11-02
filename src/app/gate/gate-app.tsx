@@ -3,6 +3,7 @@
 import { KeyRound, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { signOut } from "@/app/actions";
 import { CodeEntry } from "./code-entry";
 import { NewVisitor } from "./new-visitor";
 import { Face, GateHeader, InsideList, IntercomButtons } from "./parts";
@@ -239,11 +240,17 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
 
       <InsideList t={t} inside={entries.filter((e) => e.status === "INSIDE")} gate={gate} onLeft={(id) => act(id, "left")} />
 
-      <footer className="mt-8 flex items-center justify-between text-xs text-zinc-500">
+      <footer className="mt-8 flex items-center gap-4 text-xs text-zinc-500">
         <span>{guardName}</span>
-        <a href="/gate/notice" className="underline">
+        <a href="/gate/notice" className="ml-auto underline">
           {t("noticeLink")}
         </a>
+        {/* End of shift. Offered once everything is synced, so queued entries reach the server under this guard. */}
+        {online && !queue.length && (
+          <form action={signOut}>
+            <button className="rounded-full bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-200">{t("signOut")}</button>
+          </form>
+        )}
       </footer>
 
       {view === "new" && <NewVisitor t={t} gate={gate} flats={flats} onClose={() => setView("home")} onSubmit={(q) => (setView("home"), record(q))} />}
