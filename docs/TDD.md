@@ -1,9 +1,6 @@
 # Technical Design Document: Township
 
 **GitHub:** https://github.com/ChiR24/TownMOn
-**Live app:** Not deployed. To run it: `npm install`, then `npm run dev`. The Postgres database runs embedded, so there
-is no database server to install (`deployment.md` section 1; section 2 has the Vercel and hosted Postgres steps). Demo
-logins: `deployment.md` section 4.
 **Scope:** A resident app for maintenance, complaints and visitors in a gated township (Company A, Pune; 2,400 flats in 28 towers)
 **Author:** ChiR24 · November 2026
 
@@ -33,7 +30,7 @@ flowchart LR
   R["Residents' phones<br/>installable web app"] --> A
   G["Gate tablets<br/>work offline, sync later"] -.-> A
   S["Staff in a browser<br/>help desk, accounts, committee"] --> A
-  A["Next.js 16 app<br/>Vercel, Mumbai"] --> D[("Postgres<br/>Mumbai; PGlite locally")]
+  A["Next.js 16 app<br/>Vercel, Singapore"] --> D[("Postgres (Neon)<br/>Singapore; PGlite locally")]
   A -->|after the response| C["Claude API<br/>complaint triage"]
   A <--> M["Mocked services<br/>TestPay gateway, bank CSV,<br/>SMS and WhatsApp"]
   classDef app fill:#15171c,stroke:#15171c,color:#ffffff
@@ -53,8 +50,8 @@ flowchart LR
 | Plain HTML/CSS charts, no chart library | The dashboard needs a meter, columns and bars; a library would add weight and a dependency for that | Fewer chart types on hand |
 | Claude only where judgement on free text helps (complaints); deterministic rules for money | Money must be explainable and repeatable; complaint text is where language understanding pays | Two systems to reason about, kept separate on purpose |
 
-Hosting, as designed (it is not deployed yet): Vercel functions in `bom1` with Postgres in `ap-south-1`, so
-personal data stays in India (assumption A16).
+Hosting: the live app runs on Vercel in Singapore (`sin1`), next to its Postgres on Neon, also in Singapore, because
+Neon's free tier has no Mumbai region. The township's own deployment would put both in Mumbai (assumption A16).
 
 ## 3. Data model
 
@@ -240,7 +237,7 @@ the AI against the Claude API (`npm run ai:check`, section 5):
 | Reports | The reconciliation identity to the paisa; on-time rate; the AI correction rate counting only the AI's calls; amenity rules |
 
 **End to end.** `npm run e2e` drives a real browser through every main flow as each role, against the running app on
-fresh demo data: 47 checks, all passing. They cover sign-in (a wrong code, an unknown number); a failed and a
+fresh demo data: 47 checks, all passing both locally and on the live site. They cover sign-in (a wrong code, an unknown number); a failed and a
 successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
 help desk (note, work started, fixed) and rated by the resident, and another reopened; the one-tap category fix on an
 unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower; guest codes (valid, used,
@@ -256,7 +253,8 @@ and each role is kept out of the others' areas.
 were checked against `next start`. With the network really cut (the browser reaches the server through a plug the
 test pulls, because Playwright's offline switch does not reach a service worker), a reload straight after the guard's
 first sign-in opens the gate screen, and a visitor logged then is synced when the network returns. Chrome's own
-installability check passes for the resident app, and every manifest icon loads at its stated size. This found two
+installability check passes for the resident app, and every manifest icon loads at its stated size; on the live site
+too, the gate's worker caches the screen and its files on the first visit and the app is installable. This found two
 more bugs, both fixed. The service worker cached only what it served, and the first visit (a hop from the sign-in
 page) never passed through it, so the first offline reload showed the browser's error page; it now caches the gate
 screen and its files when it installs. And the gate API's same-origin check compared the page with the server's own
@@ -322,7 +320,7 @@ Choices made where the details were open. Each is configurable or easy to change
 | A13 | Amenities: a weekly limit per flat, a booking window, no booking while dues are over 60 days old, free cancellation up to 24 hours before, fees added to the next bill |
 | A14 | Staff screens in English; resident and gate screens in English, Marathi and Hindi (Marathi and Hindi drafted, to be reviewed by native speakers) |
 | A15 | Owner and tenant both see the flat's dues; the primary member (the tenant if let, else the owner) manages household members |
-| A16 | Hosting in India (Mumbai) for comfort, though the DPDP Act 2023 does not require it |
+| A16 | The demo deployment is in Singapore (free hosted Postgres has no Mumbai region); the township's own would be in Mumbai, for latency and comfort, though the DPDP Act 2023 does not require data in India |
 | A17 | The AI receives complaint texts and flat numbers (for the floor), no names or phone numbers; the AI provider acts as a data processor |
 | A18 | Seed data is synthetic (random name combinations, fictional numbers), with four months of bills (the last three and the current one) so trends exist |
 | A19 | The payment gateway, SMS and WhatsApp are mocked |

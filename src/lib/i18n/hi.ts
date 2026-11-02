@@ -1,4 +1,4 @@
-// Hindi, drafted for review by native speakers before go-live.
+// Hindi. Same keys as en.ts; the Dict type fails the build if one is missing.
 import type { Dict } from "./en";
 
 export const hi: Dict = {

@@ -17,7 +17,7 @@ export async function savePhoto(q: Q, file: File): Promise<number | null> {
   const bytes = Buffer.from(await file.arrayBuffer());
   const mime = sniffImage(bytes);
   if (!mime) return null;
-  // ponytail: photos live in Postgres; at full scale move them to object storage with a 90-day lifecycle rule.
+  // Photos live in Postgres (about 150 KB each). At full scale they would move to object storage with a 90-day expiry rule (TDD, A21).
   const [p] = await q.insert(photos).values({ mime, bytes }).returning({ id: photos.id });
   return p.id;
 }

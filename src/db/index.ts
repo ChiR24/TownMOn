@@ -12,7 +12,7 @@ export type Q = DB | Tx;
 function create(): DB {
   const url = process.env.DATABASE_URL;
   if (url) return pgDrizzle(url, { schema, casing: "snake_case" });
-  // ponytail: PGlite is single-connection; fine for local runs and demos, use DATABASE_URL for production.
+  // PGlite is single-connection: right for local runs and tests. The deployed app uses DATABASE_URL.
   const dir = process.env.PGLITE_DIR ?? ".data/pglite";
   if (!dir.startsWith("memory://")) {
     mkdirSync(dir, { recursive: true });

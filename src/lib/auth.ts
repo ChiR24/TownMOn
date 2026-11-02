@@ -24,7 +24,7 @@ export function homeFor(role: Role) {
   if (role === "GUARD") return "/gate";
   if (role === "ACCOUNTS") return "/accounts";
   if (role === "COMMITTEE") return "/committee";
-  if (role === "TECHNICIAN") return "/login?e=noaccess"; // ponytail: technicians work through the help desk for now
+  if (role === "TECHNICIAN") return "/login?e=noaccess"; // technicians don't use the app in this version; the help desk updates complaints for them (TDD, A10)
   return "/desk";
 }
 

@@ -3,8 +3,8 @@
 Maintenance billing, payments that match themselves, complaints with AI triage, an offline gate tablet,
 amenity booking and a committee dashboard, for a gated township of 2,400 flats in 28 towers (Pune).
 
-Design notes: [docs/TDD.md](docs/TDD.md).
-How to run and deploy: [deployment.md](deployment.md).
+Design: [docs/TDD.md](docs/TDD.md).
+Running it, how it is deployed, and the demo logins: [deployment.md](deployment.md).
 
 ## Run it
 
@@ -33,7 +33,7 @@ any demo account on the sign-in page; in demo mode the one-time code is shown on
 | | |
 |---|---|
 | `npm run dev` | Run locally (seeds the embedded database on first run) |
-| `npm test` | 80+ tests: billing and interest, bank matching, OTP, payments, triage, gate, reports |
+| `npm test` | 87 tests: billing and interest, bank matching, OTP, payments, triage, gate, reports |
 | `npm run ai:check` | The AI triage against the live Claude API: 23 complaints, about $0.006 (needs `ANTHROPIC_API_KEY`) |
 | `npm run e2e` | Every main flow, as each role, in a real browser (Chrome, Edge or Brave). Run `npm run db:seed` and `npm run dev` first; reseed after |
 | `npm run lint` / `npm run typecheck` | ESLint, TypeScript |

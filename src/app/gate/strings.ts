@@ -1,4 +1,4 @@
-// Gate tablet words in English, Marathi and Hindi (guards switch from the header). Drafted; to be checked by native speakers.
+// Gate tablet words in English, Marathi and Hindi (guards switch from the header).
 export const GATE_TEXT = {
   en: {
     gate: "Gate", online: "Online", offline: "Offline: entries are saved on this tablet", toSync: "{n} to sync", newVisitor: "New visitor", guestCode: "Guest code",
