@@ -55,8 +55,8 @@ export default async function ComplaintPage({ params, searchParams }: { params: 
       </Card>
 
       {x.classifiedBy === "AI" && (
-        <AiNote className="mt-3" title={t("c.ai.title", { cat: t(`cat.${x.category}` as Key), pct: x.aiConfidence ?? 0 })}>
-          {t("c.ai.body")}
+        <AiNote className="mt-3" title={x.needsTriage ? t("c.ai.unsureTitle") : t("c.ai.title", { cat: t(`cat.${x.category}` as Key), pct: x.aiConfidence ?? 0 })}>
+          {t(x.needsTriage ? "c.ai.unsureBody" : "c.ai.body")}
         </AiNote>
       )}
 

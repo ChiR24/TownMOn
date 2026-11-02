@@ -66,12 +66,14 @@ export async function seedComplaints({ residents, uid, techFor, staff: { HELPDES
   const add = (o: Seed) => {
     const tech = o.triage ? undefined : techFor(o.category);
     const via = o.via ?? (chance(0.82) ? "AI" : "RULES");
-    const conf = o.confidence ?? (via === "AI" ? between(72, 98) : null);
+    // "STAFF": the AI wasn't sure, so it waited in triage and the help desk set the category.
+    const conf = o.confidence ?? (via === "AI" ? between(72, 98) : via === "STAFF" ? between(30, 59) : null);
     const firstResponseAt = o.respondAfter == null || o.status === "OPEN" ? null : later(o.createdAt, o.respondAfter);
     const resolvedAt = o.status === "RESOLVED" || o.status === "CLOSED" ? later(o.createdAt, o.resolveAfter ?? between(120, 60 * 30)) : null;
     const closedAt = o.status === "CLOSED" && resolvedAt ? later(resolvedAt, o.closeAfter ?? between(30, 60 * 20)) : null;
     const events: Ev[] = [{ kind: "CREATED", actorId: o.by, createdAt: o.createdAt }];
-    events.push({ kind: "CLASSIFIED", note: via === "AI" ? `AI: ${o.category} · ${o.urgency.toLowerCase()} · ${conf}% sure` : `Rules: ${o.category} · ${o.urgency.toLowerCase()}`, createdAt: later(o.createdAt, 0) });
+    events.push({ kind: "CLASSIFIED", note: via === "RULES" ? `Rules: ${o.category} · ${o.urgency.toLowerCase()}` : `AI: ${via === "STAFF" ? "Other" : o.category} · ${o.urgency.toLowerCase()} · ${conf}% sure`, createdAt: later(o.createdAt, 0) });
+    if (via === "STAFF") events.push({ kind: "CATEGORY", note: `Help desk set the category to ${o.category} (AI said Other, ${conf}% sure)`, actorId: HELPDESK, createdAt: later(o.createdAt, 1) });
     if (o.safety) events.push({ kind: "ESCALATED", note: "Safety words found. Duty manager Anil Jadhav alerted.", createdAt: later(o.createdAt, 0) });
     if (tech && o.status !== "OPEN") events.push({ kind: "ASSIGNED", note: `Assigned to ${tech.name}`, createdAt: later(o.createdAt, 1) });
     if (firstResponseAt) events.push({ kind: "STATUS", note: o.note ?? "Technician is on the way", actorId: o.safety ? MANAGER : HELPDESK, createdAt: firstResponseAt });

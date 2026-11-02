@@ -118,6 +118,8 @@ export const en = {
   "c.err.rating": "Pick 1 to 5 stars.",
   "c.ai.title": "AI sorted this as {cat} ({pct}% sure)",
   "c.ai.body": "So it reached the right team at once. The help desk checks it and can change it.",
+  "c.ai.unsureTitle": "AI wasn't sure what this is",
+  "c.ai.unsureBody": "So a person on the help desk will read it and send it to the right team.",
   "c.aiHelp.title": "Just describe it, or say it",
   "c.aiHelp.body": "In English, मराठी or हिंदी. AI picks the team and how urgent it is; fire, gas or a stuck lift goes straight to the duty manager.",
   "c.speak": "Speak",

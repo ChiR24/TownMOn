@@ -33,7 +33,8 @@ mode the one-time code is shown on screen instead of being sent by SMS.
 | | |
 |---|---|
 | `npm run dev` | Run locally (seeds the embedded database on first run) |
-| `npm test` | 75+ tests: billing and interest, bank matching, OTP, payments, triage, gate, reports |
+| `npm test` | 80+ tests: billing and interest, bank matching, OTP, payments, triage, gate, reports |
+| `npm run ai:check` | The AI triage against the live Claude API: 23 complaints, about $0.006 (needs `ANTHROPIC_API_KEY`) |
 | `npm run lint` / `npm run typecheck` | ESLint, TypeScript |
 | `npm run db:seed` | Reset and reseed (stop `npm run dev` first when using the embedded database) |
 | `npm run db:generate` | New SQL migration after a schema change |

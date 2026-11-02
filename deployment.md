@@ -17,7 +17,8 @@ npm run dev
 2. Open http://localhost:3000 and sign in with a demo account (section 4). In demo mode the one-time code appears
    on screen; tap **Use**.
 3. Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to turn on AI complaint triage.
-   Without a key, complaints are classified by the keyword rules and marked "AI unavailable".
+   Without a key, complaints are classified by the keyword rules and marked "AI unavailable". With one,
+   `npm run ai:check` tests the triage against the live API (23 complaints, about $0.006).
 4. To start again from fresh data: stop `npm run dev`, then `npm run db:seed`.
 
 Tests: `npm test` (each test file gets its own in-memory Postgres; nothing touches `.data/`).

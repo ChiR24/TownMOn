@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { DB } from "@/db";
-import { flats, ledger, payments } from "@/db/schema";
+import { complaints, flats, ledger, payments, users } from "@/db/schema";
 import { testDb } from "@/db/testing";
 import { monthReport, onTimeTrend } from "./metrics";
 
@@ -47,5 +47,17 @@ describe("the committee's monthly report", () => {
       { period: "2026-10", rate: 50 },
       { period: "2026-11", rate: 0 },
     ]);
+  });
+
+  it("counts AI corrections only among calls the AI made", async () => {
+    const [u] = await db.insert(users).values({ name: "Resident", phone: "9700000009" }).returning({ id: users.id });
+    const base = { flatId: "A", raisedBy: u.id, description: "x", category: "Plumbing", urgency: "MEDIUM" as const, createdAt: new Date("2026-10-10T10:00:00+05:30"), responseDueAt: new Date("2026-10-10T14:00:00+05:30") };
+    await db.insert(complaints).values([
+      { ...base, classifiedBy: "AI", aiConfidence: 90 }, // AI right
+      { ...base, classifiedBy: "STAFF", aiConfidence: 40 }, // AI unsure, desk fixed it
+      { ...base, classifiedBy: "STAFF" }, // AI was down; desk fixed the keyword rules
+      { ...base, classifiedBy: "RULES" },
+    ]);
+    expect((await monthReport(db, "2026-10", "2026-11-20")).complaints.aiCorrected).toBe(50);
   });
 });

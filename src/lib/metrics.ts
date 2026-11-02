@@ -60,6 +60,7 @@ export async function monthReport(q: Q, period: string, today = todayIST()) {
         reopenCount: complaints.reopenCount,
         rating: complaints.rating,
         classifiedBy: complaints.classifiedBy,
+        aiConfidence: complaints.aiConfidence,
         parentId: complaints.parentId,
       })
       .from(complaints)
@@ -96,7 +97,8 @@ export async function monthReport(q: Q, period: string, today = todayIST()) {
   const roots = cRows.filter((c) => c.parentId == null);
   const answered = roots.filter((c) => c.firstResponseAt);
   const finished = roots.filter((c) => c.resolvedAt || c.status === "CLOSED");
-  const ai = cRows.filter((c) => c.classifiedBy !== "RULES");
+  // Calls the AI made. A desk fix to a rules-only call (the AI was down) is not an AI correction.
+  const ai = cRows.filter((c) => c.aiConfidence != null);
   const rated = roots.filter((c) => c.rating);
   const byCategory = [...new Set(roots.map((c) => c.category))]
     .map((category) => {

@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "ai:check": "tsx scripts/ai-check.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/seed.ts --migrate-only",
     "db:seed": "tsx src/db/seed.ts"
