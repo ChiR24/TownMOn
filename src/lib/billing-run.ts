@@ -20,8 +20,7 @@ export async function generateBills(q: DB, period: string, by: number | null, to
       .select({ flatId: ledger.flatId, kind: ledger.kind, amount: ledger.amount, date: ledger.date, dueDate: ledger.dueDate, paymentId: ledger.paymentId })
       .from(ledger)
       .where(inArray(ledger.flatId, todo.map((f) => f.id)));
-    const byFlat = new Map<string, typeof rows>();
-    for (const r of rows) byFlat.set(r.flatId, [...(byFlat.get(r.flatId) ?? []), r]);
+    const byFlat = Map.groupBy(rows, (r) => r.flatId);
 
     const newBills = todo.map((f) => {
       const { charges, credits } = fromLedger(byFlat.get(f.id) ?? []);

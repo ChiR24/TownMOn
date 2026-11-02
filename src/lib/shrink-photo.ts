@@ -15,7 +15,7 @@ export async function shrinkPhoto(file: File, { max = 1280, quality = 0.78, brig
 }
 
 /** Stretches the darkest 1% to black and the brightest 1% to white: a dim night photo becomes legible. */
-export function autoLevels(ctx: CanvasRenderingContext2D, w: number, h: number) {
+function autoLevels(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const data = ctx.getImageData(0, 0, w, h);
   const px = data.data;
   const hist = new Uint32Array(256);

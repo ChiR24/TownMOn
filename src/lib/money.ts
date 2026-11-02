@@ -4,7 +4,6 @@ const exact = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR
 
 /** 747500 -> "₹7,475"; 747550 -> "₹7,475.50" */
 export const rupees = (paise: number) => (paise % 100 === 0 ? whole : exact).format(paise / 100);
-export const toPaise = (rupeeAmount: number) => Math.round(rupeeAmount * 100);
 
 /** Indian compact form for dashboards: ₹1.80 Cr, ₹12.4 L, ₹8.9K. */
 export function compactINR(paise: number) {

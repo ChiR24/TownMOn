@@ -14,7 +14,7 @@ const median = (xs: number[]) => {
 const pct = (part: number, whole: number) => (whole ? Math.round((1000 * part) / whole) / 10 : null);
 
 /** Share of a month's bills paid in full by their due date. Null until the due date has passed. */
-export function onTimeRate(positions: Map<string, { items: Settled[] }>, period: string, today: string) {
+function onTimeRate(positions: Map<string, { items: Settled[] }>, period: string, today: string) {
   const due = `${period}-15`;
   if (due >= today) return null;
   let billed = 0;
@@ -140,8 +140,6 @@ export async function monthReport(q: Q, period: string, today = todayIST()) {
     matching: { credits: residentCredits, auto: t("AUTO_MATCHED"), manual: t("MATCHED"), waiting: t("NEEDS_REVIEW"), autoRate: pct(t("AUTO_MATCHED"), residentCredits), payouts: t("SETTLEMENT") },
   };
 }
-export type MonthReport = Awaited<ReturnType<typeof monthReport>>;
-
 /** On-time rate for the last few months whose due date has passed: the committee's headline trend. */
 export async function onTimeTrend(q: Q, months = 4, today = todayIST()) {
   const positions = await flatPositions(q, { today });

@@ -1,7 +1,7 @@
 import { addDays, daysBetween, TZ } from "./dates";
 
-export type AmenityRules = { slotMinutes: number; openMinute: number; closeMinute: number; maxPerWeek: number; advanceDays: number };
-export type BookingError = "slot" | "past" | "window" | "dues" | "limit";
+type AmenityRules = { slotMinutes: number; openMinute: number; closeMinute: number; maxPerWeek: number; advanceDays: number };
+type BookingError = "slot" | "past" | "window" | "dues" | "limit";
 
 export function slotsFor(a: AmenityRules) {
   const out: number[] = [];

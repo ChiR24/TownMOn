@@ -1,18 +1,19 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { Q } from "@/db";
-import { complaintEvents, complaints, notifications } from "@/db/schema";
-import { flatPeople } from "./data";
+import { complaintEvents, complaints, flatMembers, notifications, users } from "@/db/schema";
 import { linkedIds } from "./triage";
 
-export type UpdateIntent = "note" | "start" | "resolve";
+type UpdateIntent = "note" | "start" | "resolve";
 
-/** Tells everyone in the flats behind these complaints, with a link to the complaint. */
-export async function tellResidents(q: Q, complaintIds: number[], title: string, body: string | null) {
-  const rows = await q.select({ id: complaints.id, flatId: complaints.flatId }).from(complaints).where(inArray(complaints.id, complaintIds));
-  for (const r of rows) {
-    const people = await flatPeople(r.flatId, q);
-    if (people.length) await q.insert(notifications).values(people.map((p) => ({ userId: p.id, title: `Complaint #${r.id}: ${title}`, body, link: `/complaints/${r.id}` })));
-  }
+/** Tells everyone in the flats behind these complaints, with a link to the complaint: one query, one insert. */
+async function tellResidents(q: Q, complaintIds: number[], title: string, body: string | null) {
+  const rows = await q
+    .select({ complaintId: complaints.id, userId: users.id })
+    .from(complaints)
+    .innerJoin(flatMembers, and(eq(flatMembers.flatId, complaints.flatId), eq(flatMembers.active, true)))
+    .innerJoin(users, and(eq(users.id, flatMembers.userId), eq(users.active, true)))
+    .where(inArray(complaints.id, complaintIds));
+  if (rows.length) await q.insert(notifications).values(rows.map((r) => ({ userId: r.userId, title: `Complaint #${r.complaintId}: ${title}`, body, link: `/complaints/${r.complaintId}` })));
 }
 
 /**

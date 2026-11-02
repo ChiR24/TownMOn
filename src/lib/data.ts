@@ -19,9 +19,7 @@ export async function flatPositions(q: Q = db, { flatIds, today = todayIST(), un
     .from(ledger)
     .where(and(flatIds ? inArray(ledger.flatId, flatIds) : undefined, until ? lt(ledger.date, until) : undefined))
     .orderBy(ledger.id);
-  const byFlat = new Map<string, typeof rows>();
-  for (const r of rows) byFlat.set(r.flatId, [...(byFlat.get(r.flatId) ?? []), r]);
-  return new Map([...byFlat].map(([flatId, rs]) => [flatId, position(rs, today)]));
+  return new Map([...Map.groupBy(rows, (r) => r.flatId)].map(([flatId, rs]) => [flatId, position(rs, today)]));
 }
 
 /** Everyone who should hear about something happening at a flat. */

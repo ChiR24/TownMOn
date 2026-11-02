@@ -116,7 +116,7 @@ export async function pickTechnician(q: Q, category: Category) {
 
 const event = (q: Q, complaintId: number, kind: string, note: string | null, actorId: number | null = null) => q.insert(complaintEvents).values({ complaintId, kind, note, actorId });
 
-export async function alertDutyManagers(q: Q, complaintId: number, flatId: string, why: string) {
+async function alertDutyManagers(q: Q, complaintId: number, flatId: string, why: string) {
   const managers = await q.select({ id: users.id }).from(users).where(and(eq(users.role, "MANAGER"), eq(users.active, true)));
   if (managers.length)
     await q.insert(notifications).values(managers.map((m) => ({ userId: m.id, channel: "SMS", title: `Emergency at ${flatId}: ${why}`, body: `Complaint #${complaintId}. Respond within 15 minutes.`, link: `/desk/complaints/${complaintId}` })));

@@ -1,6 +1,6 @@
 // Reading a bank statement CSV exported from net banking: whatever the bank's column names and date format.
 
-export type StatementRow = { line: number; date: string; narration: string; ref: string; debit: number; credit: number; balance: number | null };
+type StatementRow = { line: number; date: string; narration: string; ref: string; debit: number; credit: number; balance: number | null };
 
 /** RFC-4180-ish CSV: quoted cells, doubled quotes, CRLF, BOM. */
 export function parseCsv(text: string): string[][] {

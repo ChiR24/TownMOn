@@ -3,10 +3,10 @@ import { sum } from "./money";
 
 // ₹6.50 per sq ft per month. Bye-law terms below are labelled assumptions in the TDD.
 export const RATE_PAISE_PER_SQFT = 650;
-export const INTEREST_BPS = 2100; // 21% a year, simple, on overdue maintenance only
-export const DUE_DAY = 15; // bills dated the 1st, due on the 15th
+const INTEREST_BPS = 2100; // 21% a year, simple, on overdue maintenance only
+const DUE_DAY = 15; // bills dated the 1st, due on the 15th
 
-export type ChargeKind = "MAINTENANCE" | "INTEREST" | "AMENITY" | "ADJUSTMENT";
+type ChargeKind = "MAINTENANCE" | "INTEREST" | "AMENITY" | "ADJUSTMENT";
 export type Charge = { kind: ChargeKind; amount: number; date: string; dueDate: string };
 export type Credit = { amount: number; date: string };
 export type Settled = { charge: Charge; paid: { amount: number; on: string }[]; unpaid: number };

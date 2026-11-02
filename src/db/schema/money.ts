@@ -87,7 +87,7 @@ export const bankImports = pgTable("bank_imports", {
   createdAt: ts().notNull().defaultNow(),
 });
 
-export type Suggestion = { flatId: string; score: number; reasons: string[] };
+type Suggestion = { flatId: string; score: number; reasons: string[] };
 
 export const bankTxns = pgTable(
   "bank_txns",

@@ -6,8 +6,8 @@ import { keyedHash, randomDigits, randomToken, sha256 } from "./crypto";
 import { flatPeople } from "./data";
 import { savePhoto } from "./photos";
 
-export const PURPOSES = ["GUEST", "DELIVERY", "CAB", "SERVICE", "OTHER"] as const;
-export const PHOTO_DAYS = 90; // DPDP: visitor photos are deleted after 90 days
+const PURPOSES = ["GUEST", "DELIVERY", "CAB", "SERVICE", "OTHER"] as const;
+const PHOTO_DAYS = 90; // DPDP: visitor photos are deleted after 90 days
 
 const codeHash = (code: string) => keyedHash(`guest:${code}`);
 export const offlineHashOf = (salt: string, code: string) => sha256(`${salt}:${code}`);
@@ -47,7 +47,7 @@ export const Entry = z.object({
   outcome: z.enum(["PENDING", "INTERCOM_APPROVED", "INTERCOM_DENIED", "CODE"]).default("PENDING"),
   guestCodeId: z.number().int().optional(),
 });
-export type EntryInput = z.infer<typeof Entry>;
+type EntryInput = z.infer<typeof Entry>;
 
 /**
  * Records a visitor at the gate. Idempotent on the tablet's clientId, so an entry synced twice after a network

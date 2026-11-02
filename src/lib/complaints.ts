@@ -6,7 +6,7 @@ export const URGENCIES = ["LOW", "MEDIUM", "HIGH", "EMERGENCY"] as const;
 export type Urgency = (typeof URGENCIES)[number];
 
 // Minutes the help desk has to respond (assumption, labelled in the TDD).
-export const RESPONSE_MINUTES: Record<Urgency, number> = { EMERGENCY: 15, HIGH: 60, MEDIUM: 240, LOW: 1440 };
+const RESPONSE_MINUTES: Record<Urgency, number> = { EMERGENCY: 15, HIGH: 60, MEDIUM: 240, LOW: 1440 };
 export const responseDue = (u: Urgency, from = new Date()) => new Date(from.getTime() + RESPONSE_MINUTES[u] * 60_000);
 
 // Latin words use word boundaries. Devanagari (Marathi/Hindi) is matched as substrings: JS \b doesn't know Devanagari.
@@ -68,4 +68,3 @@ export function classifyByRules(text: string): RuleResult {
 export const teamFor = (c: Category): Category | null => (c === "Parking" || c === "Noise" ? "Security" : c === "Other" ? null : c);
 
 export const URGENCY_LABEL: Record<Urgency, string> = { EMERGENCY: "Emergency", HIGH: "High", MEDIUM: "Medium", LOW: "Low" };
-export const higher = (a: Urgency, b: Urgency) => (URGENCIES.indexOf(a) >= URGENCIES.indexOf(b) ? a : b);

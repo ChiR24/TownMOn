@@ -47,7 +47,7 @@ export async function postPayment(
 // Same shape as a real gateway: the server creates the order (so the amount can't be changed in the browser),
 // the gateway signs its callback with a shared secret, and capture is idempotent on the gateway's payment id.
 
-export function gatewaySecret() {
+function gatewaySecret() {
   const s = process.env.GATEWAY_SECRET;
   if (s) return s;
   if (process.env.NODE_ENV === "production") throw new Error("GATEWAY_SECRET is not set");

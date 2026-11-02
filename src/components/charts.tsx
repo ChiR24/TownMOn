@@ -5,7 +5,7 @@ import { cx } from "./ui";
 // Plain HTML/CSS charts: server-rendered, no chart library, tooltips on hover and keyboard focus.
 // Colours validated with the dataviz palette checks (ordinal green ramp; status colours never alone).
 
-export const STATUS_COLOR = { good: "#0ca30c", warning: "#fab219", critical: "#d03b3b" } as const;
+const STATUS_COLOR = { good: "#0ca30c", warning: "#fab219", critical: "#d03b3b" } as const;
 export type Status = keyof typeof STATUS_COLOR;
 
 /** Status = an icon in the status colour + words in ordinary ink. Never colour alone. */

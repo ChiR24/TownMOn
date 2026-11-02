@@ -39,7 +39,7 @@ export const currentUser = cache(async () => {
     .where(and(eq(sessions.id, sha256(token)), gt(sessions.expiresAt, new Date()), eq(users.active, true)));
   return u ?? null;
 });
-export type User = NonNullable<Awaited<ReturnType<typeof currentUser>>>;
+type User = NonNullable<Awaited<ReturnType<typeof currentUser>>>;
 
 /** Every page and server action starts here. Wrong role goes home; nobody gets data they shouldn't. */
 export async function requireUser(roles?: readonly Role[]): Promise<User> {

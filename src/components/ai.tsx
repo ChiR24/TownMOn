@@ -25,7 +25,7 @@ export function AiBadge({ confidence, unsure, className }: { confidence: number 
 }
 
 /** The sparkle in its gradient circle. */
-export function AiMark({ className }: { className?: string }) {
+function AiMark({ className }: { className?: string }) {
   return (
     <span className={cx("ai-grad flex size-11 shrink-0 items-center justify-center rounded-full text-white shadow-[0_8px_20px_-8px_rgb(109_93_252/0.7)]", className)}>
       <Sparkles className="size-5" aria-hidden />

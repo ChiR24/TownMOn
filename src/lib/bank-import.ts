@@ -31,29 +31,27 @@ export async function matchContext(q: Q, today = todayIST()) {
   ]);
   const current = new Map(currentBills.map((b) => [b.flatId, Number(b.amount)]));
   const dues = new Map(flatRows.map(({ id }) => [id, { outstanding: Math.max(0, positions.get(id)?.balance ?? 0), current: current.get(id) ?? 0 }]));
-  const owing = new Map<number, string[]>();
-  for (const [id, d] of dues) for (const a of new Set([d.outstanding, d.current])) if (a > 0) owing.set(a, [...(owing.get(a) ?? []), id]);
-  const group = <T>(rows: T[], key: (r: T) => string, val: (r: T) => string) => {
-    const m = new Map<string, string[]>();
-    for (const r of rows) m.set(key(r), [...(m.get(key(r)) ?? []), val(r)]);
-    return m;
-  };
-  const byVpa = group(vpas, (r) => r.vpa, (r) => r.flatId);
-  const names = group(members, (r) => r.flatId, (r) => r.name);
-  const byTower = group(flatRows, (r) => r.id.slice(0, 3), (r) => r.id);
+  // Which flats owe a given amount, as their whole dues or as this month's bill.
+  const owing = Map.groupBy(
+    [...dues].flatMap(([id, d]) => [...new Set([d.outstanding, d.current])].filter((a) => a > 0).map((amount) => ({ id, amount }))),
+    (o) => o.amount,
+  );
+  const byVpa = Map.groupBy(vpas, (r) => r.vpa);
+  const names = Map.groupBy(members, (r) => r.flatId);
+  const byTower = Map.groupBy(flatRows, (r) => r.id.slice(0, 3));
   const ids = new Set(flatRows.map((f) => f.id));
   const payout = new Map(payouts.map((p) => [p.id!, { amount: Number(p.amount), count: Number(p.count) }]));
 
   const ctx: MatchContext = {
     flatExists: (id) => ids.has(id),
     nearestFlat: (code) => {
-      const near = (byTower.get(code.slice(0, 3)) ?? []).filter((id) => oneSlip(id.slice(4), code.slice(4)));
-      return near.length === 1 ? near[0] : undefined;
+      const near = (byTower.get(code.slice(0, 3)) ?? []).filter(({ id }) => oneSlip(id.slice(4), code.slice(4)));
+      return near.length === 1 ? near[0].id : undefined;
     },
-    flatsForVpa: (v) => byVpa.get(v) ?? [],
+    flatsForVpa: (v) => (byVpa.get(v) ?? []).map((r) => r.flatId),
     due: (id) => dues.get(id),
-    names: (id) => names.get(id) ?? [],
-    flatsOwing: (a) => owing.get(a) ?? [],
+    names: (id) => (names.get(id) ?? []).map((r) => r.name),
+    flatsOwing: (a) => (owing.get(a) ?? []).map((o) => o.id),
     settlement: (id) => payout.get(id),
   };
   return { ctx, dues };

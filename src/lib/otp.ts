@@ -3,9 +3,9 @@ import type { Q } from "@/db";
 import { otpChallenges } from "@/db/schema";
 import { keyedHash, randomDigits, sameHex } from "./crypto";
 
-export const OTP_TTL_MINUTES = 5;
-export const OTP_MAX_ATTEMPTS = 5;
-export const OTP_MAX_PER_10_MIN = 3;
+const OTP_TTL_MINUTES = 5;
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_MAX_PER_10_MIN = 3;
 
 const hashFor = (phone: string, code: string) => keyedHash(`otp:${phone}:${code}`);
 
@@ -21,7 +21,7 @@ export async function issueOtp(q: Q, phone: string, now = new Date()) {
   return { ok: true as const, code };
 }
 
-export type OtpCheck = "ok" | "wrong" | "expired" | "locked";
+type OtpCheck = "ok" | "wrong" | "expired" | "locked";
 
 /**
  * Checks the latest unused code. Every try counts; five wrong tries lock it; a code works once. The try is taken

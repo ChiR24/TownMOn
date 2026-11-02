@@ -84,7 +84,7 @@ export type MatchContext = {
   settlement(id: string): { amount: number; count: number } | undefined;
 };
 
-export type MatchResult = {
+type MatchResult = {
   status: "AUTO_MATCHED" | "NEEDS_REVIEW" | "SETTLEMENT" | "IGNORED";
   flatId?: string;
   confidence: number;
