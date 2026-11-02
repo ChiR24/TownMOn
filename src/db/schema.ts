@@ -247,7 +247,10 @@ export const guestCodes = pgTable(
     id: id(),
     flatId: text().notNull().references(() => flats.id),
     createdBy: integer().notNull().references(() => users.id),
-    codeHash: text().notNull(),
+    codeHash: text().notNull(), // keyed with APP_SECRET: the server's lookup
+    // For checking codes on a gate tablet with no network: sha256(salt:code). Tablets get only these, never codes.
+    salt: text().notNull().default(""),
+    offlineHash: text().notNull().default(""),
     guestName: text().notNull(),
     validFrom: ts().notNull(),
     validTo: ts().notNull(),

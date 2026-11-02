@@ -15,7 +15,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     can("accounts") && { href: "/accounts", label: "Accounts" },
     can("accounts") && { href: "/accounts/review", label: "Review queue" },
     can("committee") && { href: "/committee", label: "Dashboard" },
-    can("gate") && { href: "/desk/visitors", label: "Visitor log" },
+    can("desk") && { href: "/desk/visitors", label: "Visitor log" },
   ].filter((l): l is { href: string; label: string } => !!l);
 
   return (

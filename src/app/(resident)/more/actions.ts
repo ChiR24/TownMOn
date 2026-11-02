@@ -1,0 +1,40 @@
+"use server";
+
+import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { db } from "@/db";
+import { flatMembers, users } from "@/db/schema";
+import { requireResident } from "@/lib/auth";
+import { normalizePhone } from "@/lib/phone";
+
+export type MemberState = { error?: "name" | "phone" | "taken" | "notPrimary"; ok?: boolean };
+
+/** Only the owner or tenant on record manages the household, so nobody can add themselves to a flat. */
+export async function addMember(_: MemberState, form: FormData): Promise<MemberState> {
+  const { flat } = await requireResident();
+  if (!flat.isPrimary) return { error: "notPrimary" };
+  const name = z.string().trim().min(2).max(60).safeParse(form.get("name"));
+  if (!name.success) return { error: "name" };
+  const phone = normalizePhone(String(form.get("phone") ?? ""));
+  if (!phone) return { error: "phone" };
+  // An existing number is never linked silently: that would let one household pull in someone else's account.
+  const [exists] = await db.select({ id: users.id }).from(users).where(eq(users.phone, phone));
+  if (exists) return { error: "taken" };
+  await db.transaction(async (tx) => {
+    const [u] = await tx.insert(users).values({ name: name.data, phone }).returning({ id: users.id });
+    await tx.insert(flatMembers).values({ flatId: flat.flatId, userId: u.id, relation: "FAMILY" });
+  });
+  revalidatePath("/more");
+  return { ok: true };
+}
+
+export async function removeMember(memberId: number) {
+  const { flat } = await requireResident();
+  if (!flat.isPrimary) return;
+  await db
+    .update(flatMembers)
+    .set({ active: false })
+    .where(and(eq(flatMembers.id, memberId), eq(flatMembers.flatId, flat.flatId), eq(flatMembers.isPrimary, false), eq(flatMembers.relation, "FAMILY")));
+  revalidatePath("/more");
+}

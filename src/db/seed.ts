@@ -15,6 +15,7 @@ import { billFor, type Charge, type Credit } from "../lib/billing";
 import { responseDue, teamFor, type Category, type Urgency } from "../lib/complaints";
 import { keyedHash, sha256 } from "../lib/crypto";
 import { addDays, fmtDate, fmtMonth, shiftPeriod, todayIST } from "../lib/dates";
+import { offlineHashOf } from "../lib/gate";
 import { sum } from "../lib/money";
 import { BANKS, narrationFor, refFor, vpaFor, type Bank } from "../lib/narrations";
 import { db } from "./index";
@@ -367,8 +368,8 @@ async function seed() {
   const [usedCode, liveCode] = await db
     .insert(s.guestCodes)
     .values([
-      { flatId: "T07-1203", createdBy: neeraj, codeHash: keyedHash("guest:482913"), guestName: "Asha (cook)", validFrom: ago(60 * 6), validTo: ago(60 * 2), usedAt: ago(60 * 5) },
-      { flatId: "T07-1203", createdBy: neeraj, codeHash: keyedHash("guest:315760"), guestName: "Kavya (niece)", validFrom: ago(60), validTo: new Date(now.getTime() + 2 * 86_400_000) },
+      { flatId: "T07-1203", createdBy: neeraj, codeHash: keyedHash("guest:482913"), salt: "s1", offlineHash: offlineHashOf("s1", "482913"), guestName: "Asha (cook)", validFrom: ago(60 * 6), validTo: ago(60 * 2), usedAt: ago(60 * 5) },
+      { flatId: "T07-1203", createdBy: neeraj, codeHash: keyedHash("guest:315760"), salt: "s2", offlineHash: offlineHashOf("s2", "315760"), guestName: "Kavya (niece)", validFrom: ago(60), validTo: new Date(now.getTime() + 2 * 86_400_000) },
     ])
     .returning({ id: s.guestCodes.id });
   void liveCode;
