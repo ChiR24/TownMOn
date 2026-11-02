@@ -292,7 +292,7 @@ async function seed() {
 
   const billIds = await chunked(billRows, (part) => db.insert(s.bills).values(part).returning({ id: s.bills.id }));
   const payIds = await chunked(
-    payRows.map(({ _flat, _bank, _withFlat, _method, ...p }) => p),
+    payRows.map((p) => Object.fromEntries(Object.entries(p).filter(([k]) => !k.startsWith("_"))) as typeof s.payments.$inferInsert),
     (part) => db.insert(s.payments).values(part).returning({ id: s.payments.id }),
   );
 

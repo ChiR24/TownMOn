@@ -6,6 +6,7 @@ import { Badge, Card, EmptyState, LinkButton, Money, Notice, PageTitle, Section 
 import { db } from "@/db";
 import { bills, ledger } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
+import { withRunningBalance } from "@/lib/billing";
 import { fmtDate, fmtMonth } from "@/lib/dates";
 import { flatPosition } from "@/lib/data";
 import { getLang } from "@/lib/lang";
@@ -37,8 +38,7 @@ export default async function BillsPage() {
       .where(eq(ledger.flatId, flat.flatId))
       .orderBy(ledger.date, ledger.id),
   ]);
-  let running = 0;
-  const history = rows.map((r) => ({ ...r, balance: (running += r.amount) })).reverse();
+  const history = withRunningBalance(rows);
   const nextDue = pos.items.find((i) => i.unpaid > 0)?.charge.dueDate;
 
   return (

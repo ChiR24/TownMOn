@@ -8,7 +8,7 @@ import { db } from "@/db";
 import { guestCodes, visitors } from "@/db/schema";
 import { requireResident } from "@/lib/auth";
 import { TOWNSHIP } from "@/lib/config";
-import { fmtDateTime, fmtTime, relTime } from "@/lib/dates";
+import { daysAgo, fmtDateTime, fmtTime, relTime } from "@/lib/dates";
 import { getLang } from "@/lib/lang";
 import { translator, type Key } from "@/lib/i18n";
 import { decideVisitor } from "./actions";
@@ -21,7 +21,7 @@ export default async function VisitorsPage() {
   const { flat } = await requireResident();
   const lang = await getLang();
   const t = translator(lang);
-  const week = new Date(Date.now() - 7 * 86_400_000);
+  const week = daysAgo(7);
   const cols = { id: visitors.id, name: visitors.name, purpose: visitors.purpose, gate: visitors.gate, status: visitors.status, photoId: visitors.photoId, arrivedAt: visitors.arrivedAt, approvalMode: visitors.approvalMode };
   const [waiting, recent, codes] = await Promise.all([
     db.select(cols).from(visitors).where(and(eq(visitors.flatId, flat.flatId), eq(visitors.status, "PENDING"))).orderBy(desc(visitors.arrivedAt)),

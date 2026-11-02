@@ -40,5 +40,8 @@ export function relTime(d: Date, lang = "en", now = new Date()) {
   return rtf.format(Math.round(h / 24), "day");
 }
 
+/** A moment n days before now (kept out of components so renders stay pure). */
+export const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
+
 /** Midnight today in India time, as a Date. */
 export const startOfTodayIST = (now = new Date()) => new Date(`${todayIST(now)}T00:00:00+05:30`);

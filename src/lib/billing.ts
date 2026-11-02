@@ -112,6 +112,13 @@ export function ageing(items: Settled[], today: string) {
   return out;
 }
 
+/** Ledger rows (oldest first) with the balance after each, returned newest first for display. */
+export function withRunningBalance<T extends { amount: number }>(rows: T[]) {
+  const out: (T & { balance: number })[] = [];
+  rows.reduce((bal, r) => (out.push({ ...r, balance: bal + r.amount }), bal + r.amount), 0);
+  return out.reverse();
+}
+
 /** One-call summary of a flat's position, used by the resident home, the matcher and the dashboard. */
 export function position(rows: LedgerRow[], today: string) {
   const { charges, credits } = fromLedger(rows);

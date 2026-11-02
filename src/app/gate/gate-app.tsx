@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Check, CircleCheck, CloudOff, Delete, KeyRound, Phone, UserPlus, Wifi, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { findFlatCodes } from "@/lib/bank";
 import { shrinkPhoto } from "@/lib/shrink-photo";
@@ -50,7 +51,9 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const [queue, setQueue] = useState<Queued[]>([]);
   const [view, setView] = useState<"home" | "new" | "code">("home");
   const [toast, setToast] = useState<{ text: string; ok: boolean } | null>(null);
+  const [now, setNow] = useState(0); // ticks with each poll, so "waiting 3 min" stays honest without impure renders
   const queueRef = useRef<Queued[]>([]);
+  const router = useRouter();
 
   const say = (text: string, ok = true) => {
     setToast({ text, ok });
@@ -62,14 +65,18 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
     await kvSet("queue", q);
   };
 
-  // Load what the tablet remembers, then keep it fresh.
+  // Load what the tablet remembers (localStorage, IndexedDB), then keep it fresh.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading the tablet's saved gate once, after hydration
     setGate(Number(localStorage.getItem("gate")) || 1);
     (async () => {
       queueRef.current = (await kvGet<Queued[]>("queue")) ?? [];
       setQueue(queueRef.current);
       const cached = await kvGet<{ entries: Entry[]; codes: Code[] }>("feed");
-      if (cached) (setEntries(cached.entries), setCodes(cached.codes));
+      if (cached) {
+        setEntries(cached.entries);
+        setCodes(cached.codes);
+      }
       setFlats((await kvGet<string[]>("flats")) ?? []);
     })();
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) navigator.serviceWorker.register("/gate-sw.js", { scope: "/gate" }).catch(() => {});
@@ -77,7 +84,10 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
     const off = () => setOnline(false);
     addEventListener("online", on);
     addEventListener("offline", off);
-    return () => (removeEventListener("online", on), removeEventListener("offline", off));
+    return () => {
+      removeEventListener("online", on);
+      removeEventListener("offline", off);
+    };
   }, []);
 
   const send = useCallback(async (q: Queued) => {
@@ -93,12 +103,16 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const refresh = useCallback(async () => {
     try {
       const r = await fetch(`/api/gate/feed?gate=${gate}${flats.length ? "" : "&flats=1"}`, { cache: "no-store" });
-      if (r.status === 403) return location.assign("/login");
+      if (r.status === 403) return router.push("/login");
       const data = await r.json();
       setEntries(data.entries);
       setCodes(data.codes);
+      setNow(Date.now());
       await kvSet("feed", { entries: data.entries, codes: data.codes });
-      if (data.flats) (setFlats(data.flats), await kvSet("flats", data.flats));
+      if (data.flats) {
+        setFlats(data.flats);
+        await kvSet("flats", data.flats);
+      }
       setOnline(true);
       // Back online: replay the offline queue. Same clientId -> the server records each entry once.
       let q = queueRef.current;
@@ -113,13 +127,18 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
       }
     } catch {
       setOnline(false);
+      setNow(Date.now());
     }
-  }, [gate, flats.length, send]);
+  }, [gate, flats.length, send, router]);
 
+  // Poll every 5 s: the gate's equivalent of a live feed, and the moment queued entries get replayed.
   useEffect(() => {
-    refresh();
+    const first = setTimeout(refresh, 0);
     const id = setInterval(refresh, 5000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [refresh]);
 
   const act = async (id: number, action: string) => {
@@ -146,9 +165,9 @@ export function GateApp({ guardName, initialLang }: { guardName: string; initial
   const settleQueued = async (clientId: string, outcome: Outcome) => saveQueue(queueRef.current.map((x) => (x.clientId === clientId ? { ...x, outcome } : x)));
 
   const waiting = entries.filter((e) => e.status === "PENDING");
-  const decided = entries.filter((e) => (e.status === "APPROVED" || e.status === "DENIED") && Date.now() - new Date(e.arrivedAt).getTime() < 30 * 60_000);
+  const decided = entries.filter((e) => (e.status === "APPROVED" || e.status === "DENIED") && now - new Date(e.arrivedAt).getTime() < 30 * 60_000);
   const inside = entries.filter((e) => e.status === "INSIDE");
-  const mins = (iso: string) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  const mins = (iso: string) => Math.max(0, Math.round((now - new Date(iso).getTime()) / 60_000));
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-3 text-zinc-100">

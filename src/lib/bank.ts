@@ -17,16 +17,26 @@ export function parseCsv(text: string): string[][] {
     const ch = s[i];
     if (quoted) {
       if (ch !== '"') cell += ch;
-      else if (s[i + 1] === '"') (cell += '"'), i++;
-      else quoted = false;
+      else if (s[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else quoted = false;
     } else if (ch === '"') quoted = true;
-    else if (ch === ",") row.push(cell), (cell = "");
-    else if (ch === "\n" || ch === "\r") {
+    else if (ch === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n" || ch === "\r") {
       if (ch === "\r" && s[i + 1] === "\n") i++;
-      row.push(cell), rows.push(row), (row = []), (cell = "");
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
     } else cell += ch;
   }
-  if (cell || row.length) row.push(cell), rows.push(row);
+  if (cell || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
   return rows.map((r) => r.map((c) => c.trim()));
 }
 

@@ -12,6 +12,8 @@ import { rupees } from "@/lib/money";
 
 export const metadata: Metadata = { title: "Monthly report" };
 
+const H = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 text-base font-semibold text-zinc-900 print:mt-6">{children}</h2>;
+
 function Table({ head, rows, align }: { head: string[]; rows: (string | number)[][]; align?: ("l" | "r")[] }) {
   return (
     <table className="w-full text-sm">
@@ -48,7 +50,6 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   const r = await monthReport(db, period);
   const m = r.money;
   const ok = m.difference === 0;
-  const H = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-8 text-base font-semibold text-zinc-900 print:mt-6">{children}</h2>;
 
   return (
     <div className="mx-auto max-w-3xl">

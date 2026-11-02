@@ -6,7 +6,7 @@ import { Badge, Card, PageTitle, Section } from "@/components/ui";
 import { db } from "@/db";
 import { flatMembers, flats, ledger, payments, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
-import { AGEING_BUCKETS } from "@/lib/billing";
+import { AGEING_BUCKETS, withRunningBalance } from "@/lib/billing";
 import { fmtDate } from "@/lib/dates";
 import { flatPosition } from "@/lib/data";
 import { rupees } from "@/lib/money";
@@ -28,8 +28,7 @@ export default async function FlatAccountPage({ params }: { params: Promise<{ id
     db.select().from(payments).where(eq(payments.flatId, flatId)),
   ]);
   const payById = new Map(pays.map((p) => [p.id, p]));
-  let running = 0;
-  const history = rows.map((r) => ({ ...r, balance: (running += r.amount) })).reverse();
+  const history = withRunningBalance(rows);
 
   return (
     <div>

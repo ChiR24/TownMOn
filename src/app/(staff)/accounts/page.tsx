@@ -8,7 +8,7 @@ import { db } from "@/db";
 import { bankImports, bankTxns, bills, flats, payments, users } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
 import { DEMO_MODE } from "@/lib/config";
-import { fmtDateTime, fmtMonth, todayIST } from "@/lib/dates";
+import { daysAgo, fmtDateTime, fmtMonth, todayIST } from "@/lib/dates";
 import { rupees } from "@/lib/money";
 import { findFlat, runBills } from "./actions";
 import { UploadForm } from "./forms";
@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Accounts" };
 export default async function AccountsPage() {
   await requireUser(AREAS.accounts);
   const period = todayIST().slice(0, 7);
-  const monthAgo = new Date(Date.now() - 30 * 86_400_000);
+  const monthAgo = daysAgo(30);
   const [[billed], [collected], [queue], matching, imports, [billCount], [flatCount]] = await Promise.all([
     db.select({ total: sum(sql`${bills.maintenance} + ${bills.interest}`) }).from(bills).where(eq(bills.period, period)),
     db.select({ total: sum(payments.amount) }).from(payments).where(and(gte(payments.paidOn, `${period}-01`), isNull(payments.reversedAt))),

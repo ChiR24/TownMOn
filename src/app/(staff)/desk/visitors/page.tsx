@@ -5,7 +5,7 @@ import { Badge, cx, PageTitle, type Tone } from "@/components/ui";
 import { db } from "@/db";
 import { users, visitors } from "@/db/schema";
 import { AREAS, requireUser } from "@/lib/auth";
-import { fmtDateTime, startOfTodayIST } from "@/lib/dates";
+import { daysAgo, fmtDateTime, startOfTodayIST } from "@/lib/dates";
 import { findFlatCodes } from "@/lib/bank";
 
 export const metadata: Metadata = { title: "Visitor log" };
@@ -17,7 +17,7 @@ export default async function VisitorLogPage({ searchParams }: { searchParams: P
   const gate = Number(sp.gate) || 0;
   const flat = sp.flat ? findFlatCodes(sp.flat)[0] : undefined;
   const days = sp.days === "7" ? 7 : 1;
-  const since = days === 1 ? startOfTodayIST() : new Date(Date.now() - 7 * 86_400_000);
+  const since = days === 1 ? startOfTodayIST() : daysAgo(7);
   const where: SQL[] = [gte(visitors.arrivedAt, since)];
   if (gate) where.push(eq(visitors.gate, gate));
   if (flat) where.push(eq(visitors.flatId, flat));
