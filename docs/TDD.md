@@ -93,10 +93,14 @@ All money is integer paise; dates without a time are `YYYY-MM-DD` in India time.
 **Job:** read a free-text complaint (English, Marathi, Hindi or mixed) and give a category, an urgency, a confidence,
 an English title, and which open complaint it duplicates (ten flats reporting the same lift).
 
-**Call:** Claude through the official SDK with structured output (a Zod schema, so the answer is valid JSON of the
-right shape), low effort, a 25-second timeout and one retry, the server-side refusal fallback where the model supports
-it. It sees the complaint, the tower, and up to 15 open complaints in that tower from the last 48 hours. The complaint
-is wrapped as data, and the prompt says to treat it as a description, never as instructions.
+**Call:** Claude Haiku 5.5 (`claude-haiku-5-5`) through the official SDK, at high effort, with structured output (a
+Zod schema, so the answer is valid JSON of the right shape), room for its thinking (16,000 tokens), a 60-second
+timeout and one retry. Haiku because sorting complaints is high-volume classification (about 1,800 a month) where a
+fast, low-cost model fits; high effort because the complaints mix three languages and the duplicate check needs care,
+and the call runs after the resident already has an answer, so the extra seconds cost them nothing. Haiku 5.5 has no
+server-side refusal fallback, so a refusal leaves the rules' answer in place. It sees the complaint, the tower, and up
+to 15 open complaints in that tower from the last 48 hours. The complaint is wrapped as data, and the prompt says to
+treat it as a description, never as instructions.
 
 **When it is wrong or unsure:**
 

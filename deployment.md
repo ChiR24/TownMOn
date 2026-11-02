@@ -60,7 +60,7 @@ the production database before deploying the code that needs it.
 | `GATEWAY_SECRET` | Production | Shared secret that signs the mock payment gateway's callbacks |
 | `CRON_SECRET` | Production | Bearer token for `/api/cron/daily` |
 | `ANTHROPIC_API_KEY` | Optional | Claude API key for complaint triage. Without it the keyword rules decide |
-| `ANTHROPIC_MODEL` | Optional | Claude model for triage (default `claude-opus-5-5`) |
+| `ANTHROPIC_MODEL` | Optional | Claude model for triage (default `claude-haiku-5-5`) |
 | `DEMO_MODE` | Optional | `true` shows the one-time code on screen, the demo accounts and the sample statement. Default: on locally, off in production. Set `true` for the demo deployment |
 
 Generate secrets with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
