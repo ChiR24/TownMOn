@@ -64,7 +64,7 @@ All money is integer paise; dates without a time are `YYYY-MM-DD` in India time.
 |---|---|---|
 | People | `users`, `flat_members`, `sessions`, `otp_challenges` | One user can belong to several flats (owner of two); role on the user. Only hashes of session tokens and codes are stored |
 | Flats and money | `flats`, `bills`, `ledger`, `payments`, `gateway_orders` | **The ledger is the source of truth**: charges are positive, credits negative, balance = sum. It is append-only; a wrong posting is reversed with a dated line, never deleted. Bills snapshot the area and rate used |
-| Bank matching | `bank_imports`, `bank_txns`, `payer_accounts` | Each credit's fingerprint is unique, so re-importing a statement posts nothing twice. `payer_accounts` holds UPI IDs learned from confirmed payments |
+| Bank matching | `bank_imports`, `bank_txns`, `payer_accounts` | Each credit's fingerprint (date, narration, amount, reference and running balance) is unique, so re-importing a statement posts nothing twice while two identical cash deposits on one day stay two. `payer_accounts` holds UPI IDs learned from confirmed payments; reversing a wrong posting forgets the one it taught |
 | Complaints | `complaints`, `complaint_events`, `photos` | Who classified it (AI, rules or staff) and how sure the AI was; `parent_id` links duplicates; every change is an event |
 | Gate | `visitors`, `guest_codes` | `client_id` from the tablet makes offline replays idempotent. Guest codes are stored as a keyed hash, plus a per-code salted hash for offline checks |
 | Amenities | `amenities`, `bookings` | A partial unique index allows one confirmed booking per slot |
@@ -84,7 +84,8 @@ All money is integer paise; dates without a time are `YYYY-MM-DD` in India time.
    for method, UPI ID, payer name, reference and flat numbers written many ways (`T7 1203`, `tower 7 flat 1203`).
    **The rule: post automatically only when exactly one flat has a strong identifier (its flat number in the note,
    or a UPI ID that has paid for it before) and a second, independent signal agrees (the other identifier, the exact
-   dues, or the payer being a resident of that flat).** Everything else goes to the review queue with the reason and
+   dues, or the payer being a resident of that flat).** A shared surname or a mistyped flat number only ranks the
+   suggestions; neither counts as the second signal. Everything else goes to the review queue with the reason and
    ranked suggestions, and is never posted to a flat automatically. Confirming a match teaches the payer's UPI ID, so
    next month it matches itself. Gateway payouts are reconciled against online payments instead of posted twice;
    bank interest is set aside; typos one digit off are suggested, not posted.
@@ -128,7 +129,8 @@ as a description, never as instructions.
   AI was down).
 - **Duplicates are linked, never closed.** The AI may only link to a complaint it was shown. Updates on the parent reach
   every linked resident, and each confirms and rates their own.
-- **People win.** Once the help desk has touched a complaint, the AI only adds a note; it never changes a human's decision.
+- **People win.** Once the help desk has touched a complaint, the AI only adds a note; it never changes a human's
+  decision, including one made in the seconds while it was thinking (it re-checks, with the row locked, before writing).
 - **The API down or no key:** the rules' answer stands, and the timeline says "AI unavailable".
 - **No latency for residents:** the rules answer instantly and the AI runs after the response, off the request.
 
@@ -212,8 +214,11 @@ Why they look the way they do:
 - **Validation at every boundary:** Zod schemas; uploads are checked by their bytes (JPEG/PNG/WebP only) and size.
 - **Payments:** signed callbacks with constant-time comparison; the browser never sets an amount.
 - **Gate API:** same-origin check plus guard role. **Cron:** bearer secret.
-- **Headers and cookies:** `nosniff`, `DENY` framing, a strict referrer policy and a camera-only permissions policy;
-  HttpOnly `SameSite=Lax` cookies.
+- **Headers and cookies:** `nosniff`, `DENY` framing, a strict referrer policy, and a permissions policy that lets only
+  this site use the camera (photos) and microphone (speaking a complaint); HttpOnly `SameSite=Lax` cookies.
+- **Races closed in the database, not in hope:** a one-time code's tries are counted in one conditional update (guesses
+  sent all at once still get five between them); a booking cancel refunds only if it changed the booking; a flat's
+  bookings are taken one at a time, so the weekly limit holds.
 - **Secrets:** environment only; `.env*` is git-ignored except `.env.example`.
 - **DPDP:** consent recorded at first sign-in; visitor photos deleted after 90 days by the daily job (the visit
   record stays); a printable notice for the gates in three languages; phone numbers masked wherever staff don't need
@@ -221,7 +226,7 @@ Why they look the way they do:
 
 ## 8. Testing
 
-81 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
+87 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
 the AI against the Claude API (`npm run ai:check`, section 5):
 
 | Area | What the tests pin down |
@@ -253,6 +258,14 @@ reassign, notes, unlink), bank import (wrong file, re-import, review queue, type
 (codes valid, used and wrong; intercom; offline queue and replay), bookings (weekly limit, cancel), the household, and
 the daily job. That pass found and fixed ten bugs, the worst being a crash when the help desk posted a plain note and
 "gas smell" being filed as cleaning (both now have tests).
+
+Last, a line-by-line review of the whole codebase found 15 issues that neither the tests nor the hand pass had caught,
+all now fixed, most with a test. The worst: a visitor logged while the gate tablet was replaying its offline queue
+could be dropped; a help-desk change made while the AI was thinking could be overwritten; two identical cash deposits
+on one day merged into one; a shared surname counted as the second matching signal; and the site's own security
+header blocked the microphone, so the Speak button failed. The rest were smaller races (one-time code tries, booking
+refunds and limits, closing or reopening a complaint twice), a replayed gate entry leaving a second copy of a photo
+that the 90-day purge would never find, and a receipt's balance counting a later payment made the same day.
 
 ## 9. The numbers
 
