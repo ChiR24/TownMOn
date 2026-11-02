@@ -164,8 +164,9 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
           </Card>
 
           <Card className="space-y-3">
-            <form action={setUrgency.bind(null, c.id)} className="flex items-end gap-2">
-              <label className="min-w-0 flex-1 text-sm font-semibold">
+            {/* Each dropdown keeps room for a technician's full name; its button goes under it where both don't fit. */}
+            <form action={setUrgency.bind(null, c.id)} className="flex flex-wrap items-end gap-2">
+              <label className="min-w-56 flex-1 text-sm font-semibold">
                 Urgency
                 <Select compact key={c.urgency} name="urgency" defaultValue={c.urgency} wrap="mt-1.5" className="font-normal">
                   {URGENCIES.map((u) => (
@@ -180,8 +181,8 @@ export default async function DeskComplaintPage({ params }: { params: Promise<{ 
               </SubmitButton>
             </form>
             {open && (
-              <form action={assign.bind(null, c.id)} className="flex items-end gap-2">
-                <label className="min-w-0 flex-1 text-sm font-semibold">
+              <form action={assign.bind(null, c.id)} className="flex flex-wrap items-end gap-2">
+                <label className="min-w-56 flex-1 text-sm font-semibold">
                   Technician
                   <Select compact key={c.assignedTo ?? "none"} name="techId" defaultValue={c.assignedTo ?? ""} wrap="mt-1.5" className="font-normal">
                     <option value="" disabled>

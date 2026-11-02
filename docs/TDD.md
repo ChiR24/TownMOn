@@ -323,13 +323,13 @@ plural, or the form before "of") went unsorted. The rules now match word stems, 
 Signing out at the gate now also clears what the tablet keeps for offline use (today's visitors, the guest-code
 hashes, the cached screen). The rest: a reply the gate couldn't read leaving an entry stuck at the head of its queue;
 the photo error giving the wrong size limit; the two light-only pages (test payment, gate notice) picking up
-dark-mode colours, among them an invisible focus ring; a phone's tab bar too narrow for the duty manager's six tabs
-(and, found while checking it, for "Complaints" on a 360 px phone); the page's own scrollbar staying light in dark
-mode; the visitor log keeping its own copy of the residents' words; and each photo's full-size image held in memory
-until garbage collection. A sweep of every page at 360 and 320 px wide, the narrowest phones in common use, then
-found five layout faults the 390 px screenshots had missed, all fixed: a page title running under its button, the
-monthly report's wide tables widening the whole page, the accounts tiles' crore-scale amounts spilling out, the gate
-squeezing a visitor's name beside the guard's answer on a phone, and a date splitting "2" from "November".
+dark-mode colours, among them an invisible focus ring; a phone tab bar too narrow for the duty manager's six tabs;
+the page's own scrollbar staying light in dark mode; the visitor log keeping its own copy of the residents' words;
+and each photo's full-size image held in memory until garbage collection. A sweep of every page at 360 and 320 px
+and at laptop widths then found eight layout faults the 390 px screenshots had missed, all fixed: a page title
+running under its button; the report's wide tables widening the page; the accounts tiles' crore-scale amounts
+spilling out; the gate squeezing a visitor's name on a phone; "Complaints" and a receipt's "Print or save PDF" cut
+or wrapped; two dropdowns cut to a few letters; and a date splitting "2" from "November".
 
 ## 9. The numbers
 

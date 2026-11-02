@@ -84,7 +84,8 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
         )}
         <p className="mt-5 text-xs text-ink-3">This is a computer-generated receipt and needs no signature.</p>
       </article>
-      <div className="no-print mt-4 grid grid-cols-2 gap-2">
+      {/* Side by side from tablets; stacked on a phone, where "Print or save PDF" would wrap inside its button. */}
+      <div className="no-print mt-4 grid gap-2 sm:grid-cols-2">
         <PrintButton />
         <LinkButton href={user.role === "RESIDENT" ? "/bills" : homeFor(user.role)} variant="secondary">
           Done

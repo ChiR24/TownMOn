@@ -85,11 +85,12 @@ export default async function ReviewPage() {
 
                   <div className="grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
                     <OtherFlatForm txnId={t.id} />
-                    <form action={ignoreEntry.bind(null, t.id)} className="flex gap-2">
+                    {/* Where the reason and the button don't both fit (a phone), the button goes under it, not over it. */}
+                    <form action={ignoreEntry.bind(null, t.id)} className="flex flex-wrap gap-2">
                       <label className="sr-only" htmlFor={`reason-${t.id}`}>
                         Reason
                       </label>
-                      <Select compact id={`reason-${t.id}`} name="reason" wrap="min-w-0 flex-1">
+                      <Select compact id={`reason-${t.id}`} name="reason" wrap="min-w-40 flex-1">
                         <option>Bank interest</option>
                         <option>Refund or reversal by the bank</option>
                         <option>Vendor or other income</option>
