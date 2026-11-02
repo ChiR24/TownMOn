@@ -33,7 +33,7 @@ any demo account on the sign-in page; in demo mode the one-time code is shown on
 | | |
 |---|---|
 | `npm run dev` | Run locally (seeds the embedded database on first run) |
-| `npm test` | 89 tests: billing and interest, bank matching, OTP, payments, triage, gate, reports, translations |
+| `npm test` | 88 tests: billing and interest, bank matching, OTP, payments, triage, gate, reports, translations |
 | `npm run ai:check` | The AI triage against the live Claude API: 23 complaints, about $0.006 (needs `ANTHROPIC_API_KEY`) |
 | `npm run e2e` | Every main flow, as each role, in a real browser (Chrome, Edge or Brave). Run `npm run db:seed` and `npm run dev` first; reseed after |
 | `npm run lint` / `npm run typecheck` | ESLint, TypeScript |

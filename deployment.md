@@ -24,6 +24,8 @@ it, complaints are sorted by the keyword rules and marked "AI unavailable". `npm
   token. It raises the month's bills on the 1st and deletes visitor photos older than 90 days.
 - **No AI key on the live app,** so complaints there are sorted by the keyword rules. AI triage runs wherever
   `ANTHROPIC_API_KEY` is set (section 1).
+- **Installs like an app:** Android, Chrome menu → Install app; iPhone, Safari → Share → Add to Home Screen; a computer,
+  the install icon in Chrome, Edge or Brave's address bar.
 
 Environment variables (names only):
 
@@ -40,7 +42,9 @@ Environment variables (names only):
 ## 3. Demo logins
 
 Sign in with the mobile number. The 6-digit code is shown on screen (no SMS is sent), and the sign-in page lists these
-accounts, so a tap is enough.
+accounts, so a tap is enough. Each account opens its own role's screens; to try another role, sign out (residents:
+More → Sign out; staff: the sidebar; guard: the gate footer) and tap the next one. There is no sign-up, by design:
+accounts come from the federation's register of flats (TDD, A22), and residents add family under More → Household.
 
 | Role | Name | Mobile | What to look at |
 |---|---|---|---|

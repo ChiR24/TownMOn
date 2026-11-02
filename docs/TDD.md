@@ -71,7 +71,11 @@ All money is integer paise; dates without a time are `YYYY-MM-DD` in India time.
 
 1. **Sign in.** Mobile number, then a 6-digit code. The code is hashed with a server secret, lasts 5 minutes, works
    once, locks after 5 wrong tries, and a number can request 3 codes per 10 minutes. The response is the same for
-   unregistered numbers. First sign-in shows the privacy notice and records consent (DPDP).
+   unregistered numbers. First sign-in shows the privacy notice and records consent (DPDP). There is no self sign-up:
+   accounts come from the federation's register of owners and tenants, so nobody can claim a flat and then see its
+   dues or let its visitors in. The owner or tenant adds family members in the app (More → Household), and they sign
+   in with their own number. Staff accounts come from the federation too (A22). Every role has a sign-out: More for
+   residents, the sidebar for staff, and the footer on the gate tablet for the change of shift.
 2. **Monthly bill run.** On the 1st (daily job, idempotent) every flat gets area × ₹6.50, plus simple interest for
    last month's overdue days on unpaid maintenance only. Households get a notification.
 3. **Pay in the app.** The server creates the order, so the amount can't be changed in the browser. The test-mode
@@ -150,7 +154,8 @@ repeatable and auditable.
 
 ## 6. UI and design decisions
 
-The key screens, on the demo data (a phone for residents, a desktop for staff, a tablet at the gate):
+The key screens, on the demo data (a phone for residents, a desktop for staff, a tablet at the gate; the last row is
+the same app on a computer and in dark mode):
 
 | Resident home | A complaint, with the AI's note | Paying |
 |---|---|---|
@@ -168,6 +173,10 @@ The key screens, on the demo data (a phone for residents, a desktop for staff, a
 |---|---|
 | ![Committee dashboard: collections, four targets as gauges, on-time trend, dues ageing](screens/committee.jpg) | ![Gate tablet: very large buttons, a visitor waiting with the intercom fallback](screens/gate.jpg) |
 
+| The resident app on a computer | Dark mode, the same for every role |
+|---|---|
+| ![Resident home on a computer: the shared sidebar and two columns](screens/resident-desktop.jpg) | ![The help desk queue in dark mode](screens/desk-dark.jpg) |
+
 Why they look the way they do:
 
 - **Residents open the app for seconds.** Home shows, in order, anyone waiting at the gate (with Let in / Deny),
@@ -180,13 +189,18 @@ Why they look the way they do:
   own words; the AI's short English title is for the help desk.
 - **Always see where a complaint stands:** a five-step tracker, Received → Assigned → Being fixed →
   Fixed → Closed, on the complaint and as a mini track on every complaint card.
-- **The gate tablet** is dark with very large buttons for night shifts. Photos are brightened on the tablet
-  (auto-levels) so faces taken at night are readable, and the screen states plainly whether it is online and how
-  many entries are waiting to sync.
+- **One layout for every screen, one shell for every role.** On phones and tablets every role gets a glass top bar
+  and a floating tab bar; on a computer, a sidebar with the same links, the person signed in and Sign out. The
+  resident app widens on a tablet (home in two columns) and takes the sidebar on a computer; staff screens take the
+  tab bar on a phone. The gate is the one kiosk: no navigation, by design.
+- **The gate tablet** is the app's dark mode, always, with very large buttons for night shifts. Photos are
+  brightened on the tablet (auto-levels) so faces taken at night are readable, and the screen states plainly whether
+  it is online and how many entries are waiting to sync.
 - **Restrained palette, as roles.** A warm light-grey canvas, white cards with large radii and soft shadows, near-black
   for the one primary action on a screen, and a single lime accent for highlights and progress. Colours are named by
-  role (canvas, surface, ink, cta, accent), so the resident app follows the phone's dark mode (where the primary
-  action turns lime) while staff consoles and printed reports stay light. Red, amber and green only carry status, and
+  role (canvas, surface, ink, cta, accent), so every screen, for every role, follows the device's light or dark mode
+  (in the dark the primary action turns lime), and anything printed (receipts, the monthly report) is always black
+  on white. Red, amber and green only carry status, and
   always with an icon and words, never colour alone. Chart colours were checked with a palette validator (ordinal green
   ramp for dues by age); the committee's four targets are gauges with the target marked.
 - **The AI has a visible signature.** Anything Claude decided (a category, an urgency, a duplicate link) carries a
@@ -200,7 +214,7 @@ Why they look the way they do:
 - **One hero per screen.** On home it is the dues card with its Pay button; everything else is a quiet card.
 - **Every list has an empty state**, every page a loading skeleton and an error view with retry. Every form shows its
   error in words next to the field, and keeps what was typed so nobody types a complaint twice.
-- **Staff screens are dense and English** (assumption A14): a sidebar with live queue counts, queue views, one-tap
+- **Staff screens are dense and English** (assumption A14): live queue counts in the sidebar, queue views, one-tap
   fixes, and the reason next to every automated decision ("Payment note says T07-1203 · Amount equals the full dues").
 
 ## 7. Security and privacy
@@ -222,7 +236,7 @@ Why they look the way they do:
 
 ## 8. Testing
 
-89 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
+88 tests (Vitest), each database test on its own in-memory Postgres with the real migrations, plus a live check of
 the AI against the Claude API (`npm run ai:check`, section 5):
 
 | Area | What the tests pin down |
@@ -237,8 +251,8 @@ the AI against the Claude API (`npm run ai:check`, section 5):
 | Reports | The reconciliation identity to the paisa; on-time rate; the AI correction rate counting only the AI's calls; amenity rules |
 
 **End to end.** `npm run e2e` drives a real browser through every main flow as each role, against the running app on
-fresh demo data: 47 checks, all passing both locally and on the live site. They cover sign-in (a wrong code, an unknown number); a failed and a
-successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
+fresh demo data: 50 checks, all passing both locally and on the live site. They cover sign-in (a wrong code, an
+unknown number) and signing out as each role; a failed and a successful test payment and the receipt; a complaint with a photo, sorted by the rules and then by Claude, worked by the
 help desk (note, work started, fixed) and rated by the resident, and another reopened; the one-tap category fix on an
 unsure AI call, urgency, assignment and unlinking a duplicate; a notice for one tower; guest codes (valid, used,
 wrong); visitors approved from a phone, denied, settled on the intercom, and entered offline then synced, including
@@ -267,6 +281,11 @@ one word spelled two ways; the real ones were a mistranslated "how urgent", a hi
 helped, and an ungrammatical list. The keyword rules also learned the Hindi spellings of "window" and "door". A test
 now holds every Marathi and Hindi string to its English original: the same placeholders, and written in Devanagari.
 A native speaker's read is still planned (A14).
+
+A screenshot sweep then took every role's main screens at phone, tablet and computer sizes, in light and in dark,
+and laid them side by side. It is why every role now shares one theme and one shell (section 6), and it found two
+faults, both fixed: an unreadable count on the active help-desk tab in dark mode, and a sidebar whose sign-out
+squeezed the name beside it.
 
 Every screen and button was also exercised by hand for each role on phone, tablet and desktop sizes, in light and dark
 mode and in Marathi: sign-in (wrong code, change number, first-time consent), paying (failed and successful test
@@ -327,6 +346,7 @@ Choices made where the details were open. Each is configurable or easy to change
 | A19 | The payment gateway, SMS and WhatsApp are mocked |
 | A20 | "Committee view" = a read-only dashboard and monthly report; the duty manager sees every staff area |
 | A21 | Visitor photos (about 150 KB each after shrinking) are kept in Postgres; at full scale they would move to object storage with a 90-day expiry rule |
+| A22 | No self sign-up. The federation's register of flats, owners and tenants is the source of accounts (loaded by the seed here; imported from the society's records when going live), and staff accounts are created by the federation |
 
 ## 11. What I cut, and what I would do next
 
@@ -335,6 +355,8 @@ Choices made where the details were open. Each is configurable or easy to change
   - WhatsApp Business templates and DLT-registered SMS.
   - A bank or account-aggregator feed instead of CSV uploads.
 - **Technician view:** a small screen for assigned jobs, with a photo of the fix.
+- **Register screen for the help desk:** add a new owner or tenant, and move one out. Today the register is loaded
+  from the society's records, and households add their own family members.
 - **Web push for visitor approvals.** Today it is in-app, polling every 5 seconds, plus mocked WhatsApp.
 - **Split payments:** one transfer covering two flats, from the review queue.
 - **Bye-law settings screen** for rate, interest and due day. Today these are constants, snapshotted on every bill.
